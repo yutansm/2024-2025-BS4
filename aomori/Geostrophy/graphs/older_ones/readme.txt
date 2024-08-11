@@ -1,0 +1,4 @@
+これはyuta edit median potemp を call calibrated_dataした水温塩分から算出したもの。
+古いcalibrated data subroutineなので表層30くらいまでデータが存在しない。
+後々分かったが，元となった水温データにメジアンフィルタがかかっていなかった
+のでとりあえずは不要

@@ -1,0 +1,8 @@
+ホスト名 laurel.kudpc.kyoto-u.ac.jp
+ユーザー名 b36156
+パスフレーズ 5H-lrigsurohc
+
+WINSCP用
+パスワードIsoisoisoda2024
+
+鍵 京都くん.ppk

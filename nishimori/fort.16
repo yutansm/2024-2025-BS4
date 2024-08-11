@@ -1,0 +1,5 @@
+ % begin newpen            4
+ sn
+ [] 0 sd
+  0.04  sl 
+ % end newpen
