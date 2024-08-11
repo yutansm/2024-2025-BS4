@@ -1,0 +1,23 @@
+# Add pre-commit file to .git/hooks
+chmod 777 .git/hooks/pre-commit
+# Add deploy.yml file to .github/workflows
+
+git init
+git branch -M main
+# create a .gitignore file
+echo -e ".gitignore\n.DS_Store\n*.ps" > .gitignore
+# make sure the .gitignore file is created
+cat .gitignore
+
+git add -A 
+
+git remote add origin git@github.com:yutansm/2024-2025-BS4.git
+
+git push
+
+
+
+#IN GITHUB
+# create a new repository
+# In settings -> Secrets and variables -> Actions -> New repository secret
+# name: DEPLOY_KEY value: {Copy from 京都くん-nopass.pem}
