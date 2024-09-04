@@ -28,15 +28,14 @@ Local:
 Kyoto:
 - Code execution (generate ps files)
 
-## When (and what) files get synced?
+## What files get synced at git push?
+When : at `git push`
 
 ### Local to Github and Kyoto:
-When : at `git push`
-What : Everything except `.ps` files
+What : Everything
 See : .github/workflows/deploy.yml
 
 ### Kyoto to Local:
-When : at `git commit'
 What : only `.ps` files 
 
 # What the hell is going on in this boomdabbo kind of world that we were forced to live in as young children of the Republic?
