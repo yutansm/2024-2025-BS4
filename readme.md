@@ -1,6 +1,6 @@
 # Guide
-`git push` をすることで
-ギットハブと京都は`git push`イベントでシンクされる（.psファイルを除く）
+近本的に1 wayのsyncだと思って欲しい。このパソコン => github => Kyoto 
+`.ps`ファイルに関しては特別扱い。Kyotoで作成された図は Kyoto => local のsyncあり。こうすることで，スーパーパソコンを製図に使える。それ以外は全部ローカルでしてね。はい
 
 ## Commands
 ### See current status
@@ -22,11 +22,11 @@ or
 
 Local:
 - Software development
-- Code execution
+- Code execution (generate ps files)
 - File management
 
 Kyoto:
-- Code execution
+- Code execution (generate ps files)
 
 ## When (and what) files get synced?
 
@@ -49,3 +49,5 @@ What : only `.ps` files
 ## Pre-commit hook
 1. The pre-commit hook is triggered by the git commit command.
 2. The pre-commit hook looks for 
+
+## Q and A
