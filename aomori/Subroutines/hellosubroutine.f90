@@ -14,8 +14,8 @@ subroutine temsal(temp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '/LARGE0/gr10291/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01tem'//trim(yyyy)//'.csv'
-                    salfile = '/LARGE0/gr10291/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01sal'//trim(yyyy)//'.csv'
+                    tempfile = '/Users/yuta/Desktop/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01tem'//trim(yyyy)//'.csv'
+                    salfile = '/Users/yuta/Desktop/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(temp_5(y,m,l,st,d),st = 1,stations)
@@ -47,8 +47,8 @@ subroutine potempsal_51(potemp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '/LARGE0/gr10291/nishimori2/aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/'//'51potemp'//trim(yyyy)//'.csv'  
-                    salfile = '/LARGE0/gr10291/nishimori2/aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/51sal'//trim(yyyy)//'.csv'
+                    tempfile = '../../aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/'//'51potemp'//trim(yyyy)//'.csv'  
+                    salfile = '../../aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/51sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(potemp_5(y,m,l,st,d),st = 1,stations)
@@ -81,8 +81,8 @@ subroutine potempsal_25(potemp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '/LARGE0/gr10291/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25potemp'//trim(yyyy)//'.csv'
-                    salfile = '/LARGE0/gr10291/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25sal'//trim(yyyy)//'.csv'
+                    tempfile = '/Users/yuta/Desktop/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25potemp'//trim(yyyy)//'.csv'
+                    salfile = '/Users/yuta/Desktop/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(potemp_5(y,m,l,st,d),st = 1,stations)
@@ -99,20 +99,43 @@ subroutine potempsal_25(potemp_5,sal_5)
     
 end subroutine
 
+
+
                                             !ABOVE DATA IS NOT REALLY FOR USE!
 
                                             ! SUBROUTINES FOR DATA OBTAINMENT !
+
+! from a rectangle numeric file to a 2D array
+subroutine csv2array(filename,format,column_quan,row_quan,twoD_array)
+    implicit none
+    real,dimension(column_quan,row_quan),intent(out)::twoD_array
+    integer,intent(in)::column_quan,row_quan
+    character,intent(in)::filename*999,format*99
+    integer::c,r,ios
+
+    open(11,file = filename,status = 'old',action='read')
+    do r = 1, row_quan
+        read(11,format,iostat=ios)(twoD_array(c,r),c = 1, column_quan)
+        if(ios /= 0) then
+            exit
+        else;end if
+    end do
+    close(11)
+end subroutine
 
 ! calibrated data for potempsal_51
 subroutine calibrated_data51(potemp_c5,sal_c5)
     implicit none
     integer,parameter:: years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth)::potemp_5,sal_5
+    real,dimension(:,:,:,:,:),allocatable::potemp_5,sal_5
     real,dimension(years,months,lines,stations,depth),intent(out)::potemp_c5,sal_c5
     real,parameter::standard_sal_400 = 34.07
     real::diff,initial_num
     integer::y,m,l,st,d,initial_depth
 
+    allocate(potemp_5(years,months,lines,stations,depth))
+    allocate(sal_5(years,months,lines,stations,depth))
+    potemp_5 = 0.;sal_5 = 0.
     call potempsal_51(potemp_5,sal_5)
     sal_5(1,12,2,5,1:depth)=0.;sal_5(1,12,2,6,1:depth)=0.;sal_5(1,12,2,7,1:depth)=0.!May 10 金サロ前 Sline dgf
     sal_5(2,4,1,4,1:depth)=0. ! 2010 april Nline station 4 erased
@@ -179,6 +202,7 @@ subroutine calibrated_data51(potemp_c5,sal_c5)
 
     potemp_c5(1:years,1:months,1:lines,1:stations,1:depth) = potemp_5(1:years,1:months,1:lines,1:stations,1:depth)
     sal_c5(1:years,1:months,1:lines,1:stations,1:depth) = sal_5(1:years,1:months,1:lines,1:stations,1:depth)
+    deallocate(potemp_5);deallocate(sal_5)
     
 end subroutine
 
@@ -186,12 +210,15 @@ end subroutine
 subroutine calibrated_data25(potemp_c5,sal_c5)
     implicit none
     integer,parameter:: years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth)::potemp_5,sal_5
+    real,dimension(:,:,:,:,:),allocatable::potemp_5,sal_5
     real,dimension(years,months,lines,stations,depth),intent(out)::potemp_c5,sal_c5
     real,parameter::standard_sal_400 = 34.07
     real::diff,initial_num
     integer::y,m,l,st,d,initial_depth
 
+    allocate(potemp_5(years,months,lines,stations,depth))
+    allocate(sal_5(years,months,lines,stations,depth))
+    potemp_5 = 0.;sal_5 = 0.
     call potempsal_25(potemp_5,sal_5)
     sal_5(1,12,2,5,1:depth)=0.;sal_5(1,12,2,6,1:depth)=0.;sal_5(1,12,2,7,1:depth)=0.!May 10 金サロ前 Sline dgf
     sal_5(2,4,1,4,1:depth)=0. ! 2010 april Nline station 4 erased
@@ -260,6 +287,7 @@ subroutine calibrated_data25(potemp_c5,sal_c5)
 
     potemp_c5(1:years,1:months,1:lines,1:stations,1:depth) = potemp_5(1:years,1:months,1:lines,1:stations,1:depth)
     sal_c5(1:years,1:months,1:lines,1:stations,1:depth) = sal_5(1:years,1:months,1:lines,1:stations,1:depth)
+    deallocate(potemp_5);deallocate(sal_5)
     
 end subroutine
 
@@ -280,7 +308,7 @@ subroutine geovel_array(medianfiltertype,geovel_5)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(aaaa,'(i4.4)')y+2008
-                    filename = '/LARGE0/gr10291/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_25median'//trim(aaaa)//'.csv'
+                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_25median'//trim(aaaa)//'.csv'
                     open(77,file = filename,status = 'old',action = 'read')
                     do d = 1,depth
                         read(77,102)(geovel_5(y,m,l,st,d),st = 1,stations)
@@ -295,7 +323,7 @@ subroutine geovel_array(medianfiltertype,geovel_5)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(aaaa,'(i4.4)')y+2008
-                    filename = '/LARGE0/gr10291/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_51median'//trim(aaaa)//'.csv'
+                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_51median'//trim(aaaa)//'.csv'
                     open(77,file = filename,status = 'old',action = 'read')
                     do d = 1,depth
                         read(77,102)(geovel_5(y,m,l,st,d),st = 1,stations)
@@ -326,7 +354,7 @@ subroutine geotransport(medianfiltertype,geotrans)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    filename = '/LARGE0/gr10291/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_25Median'//trim(yyyy)//'.csv'
+                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_25Median'//trim(yyyy)//'.csv'
                     open(21,file = filename,status = 'old',action = 'read')
                         read(21,102)geotrans(y,m,l)
                     close(21)
@@ -340,7 +368,7 @@ subroutine geotransport(medianfiltertype,geotrans)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    filename = '/LARGE0/gr10291/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_51Median'//trim(yyyy)//'.csv'
+                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_51Median'//trim(yyyy)//'.csv'
                     open(31,file = filename,status = 'old',action = 'read')
                         read(31,102)geotrans(y,m,l)
                     close(31)
@@ -363,7 +391,7 @@ subroutine fukauraSSH(SSH_array,SSP_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/LARGE0/gr10291/nishimori2/aomori/SSH/Fukaura_Tides.csv'
+    filename = '/Users/yuta/Desktop/nishimori2/aomori/SSH/Fukaura_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -373,20 +401,27 @@ subroutine fukauraSSH(SSH_array,SSP_array)
         end do
     end do
     close(92)
+    do y = 1, years
+        do m = 1, months
+            if(SSH_array(y,m)/=0.) then
+                SSH_array(y,m) = SSH_array(y,m) + (SSP_array(y,m)-10130)
+            else;end if 
+        end do
+    end do
 end subroutine
 
 subroutine calibrated_fukauraSSH(calibrated_SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
     real,dimension(years,months),intent(out)::calibrated_SSH_array
-    real,dimension(years,months)::SSH_array,SSP_array
+    real,dimension(years,months)::SSH_array=0.,SSP_array=0.
     integer::y,m,ios,yyyy,mm,nodata
     real::SSH,SSP
     character::filename*999
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/LARGE0/gr10291/nishimori2/aomori/SSH/Fukaura_Tides.csv'
+    filename = '../SSH/Fukaura_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -418,7 +453,7 @@ subroutine tappiSSH(SSH_array,SSP_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/LARGE0/gr10291/nishimori2/aomori/SSH/Tappi_Tides.csv'
+    filename = '/Users/yuta/Desktop/nishimori2/aomori/SSH/Tappi_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -428,20 +463,27 @@ subroutine tappiSSH(SSH_array,SSP_array)
         end do
     end do
     close(92)
+    do y = 1, years
+        do m = 1, months
+            if(SSH_array(y,m)/=0.) then
+                SSH_array(y,m) = SSH_array(y,m) + (SSP_array(y,m)-10130)
+            else;end if 
+        end do
+    end do
 end subroutine
 
 subroutine calibrated_tappiSSH(calibrated_SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
     real,dimension(years,months),intent(out)::calibrated_SSH_array
-    real,dimension(years,months)::SSH_array,SSP_array
+    real,dimension(years,months)::SSH_array=0.,SSP_array=0.
     integer::y,m,ios,yyyy,mm,nodata
     real::SSH,SSP
     character::filename*999
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/LARGE0/gr10291/nishimori2/aomori/SSH/Tappi_Tides.csv'
+    filename = '../SSH/Tappi_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -461,7 +503,7 @@ subroutine calibrated_tappiSSH(calibrated_SSH_array)
     end do
 
 end subroutine
-    
+
                                             ! SUBROUTINES FOR DATA OBTAINMENT !
 
                                             ! SUBROUTINES FOR DATA MANIPULATION !
@@ -473,8 +515,8 @@ subroutine avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
     real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array
     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum,first_sum,average,variance,SD,devsq_sum,first_devsq
-    integer::y,m,l,st,d,data_quan
+    real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
+    integer::y,m,l,st,d,data_quan=0
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
     do l = 1,lines
@@ -512,7 +554,7 @@ subroutine avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
     end do
 
 
-end subroutine !5D to 4D
+end subroutine
 
 ! getting monthly average and sd from (years,months,lines) to array(months,lines) single precision for geostrophic transport
 subroutine avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
@@ -521,8 +563,8 @@ subroutine avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
     real,dimension(years,months,lines),intent(in)::input_array
     real,dimension(months,lines),intent(out)::average_array,sd_array
     integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
-    real::sum,first_sum,average,variance,SD,devsq_sum,first_devsq
-    integer::y,m,l,data_quan
+    real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
+    integer::y,m,l,data_quan=0
 
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
@@ -556,7 +598,7 @@ subroutine avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
         end do
     end do
 
-end subroutine ! 3D to 2D
+end subroutine
 
 ! getting monthly average and (an estimate of) standard error of the mean(SEM). 5D to 4D 
 subroutine avsem_dataquan(input_array,average_array,sem_array,dataquan_array)
@@ -565,8 +607,8 @@ subroutine avsem_dataquan(input_array,average_array,sem_array,dataquan_array)
     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
     real,dimension(months,lines,stations,depth),intent(out)::average_array,sem_array
     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum,first_sum,average,variance,SEM,devsq_sum,first_devsq
-    integer::y,m,l,st,d,data_quan
+    real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
+    integer::y,m,l,st,d,data_quan=0
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準誤差を計算してくれるだけ。後全年データ数
     do l = 1,lines
@@ -603,20 +645,19 @@ subroutine avsem_dataquan(input_array,average_array,sem_array,dataquan_array)
         end do
     end do
 
-end subroutine !5D to 4D 
-
-! getting monthly average and SEM (year,months) to (months)
+end subroutine
+! array(years,months) to array(months)
 subroutine avsem_dataquan3(input_array,average_array,sem_array,dataquan_array)
     implicit none
     integer,parameter::years=15, months=12
-    real,dimension(years,months),intent(in)::input_array
+    real,dimension(years,months),intent(in)::input_array 
     real,dimension(months),intent(out)::average_array,sem_array
-    integer,dimension(months),intent(out)::dataquan_array !データ数は月々
-    real::sum,first_sum,average,variance,SEM,devsq_sum,first_devsq
-    integer::y,m,data_quan
+    integer,dimension(months),intent(out)::dataquan_array !�f�[�^���͌��X
+    real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
+    integer::y,m,data_quan=0
 
 
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
+    !�f�[�^�̑I�ʂ͂��̃T�u���[�`����ʂ��O�ɍs���B����͕��ςƕW���΍����v�Z���Ă���邾���B��S�N�f�[�^��
         do m = 1, months 
             do y = 1, years
                 if (input_array(y,m)/=0.) then
@@ -653,8 +694,8 @@ subroutine avsdsem_dataquan(input_array,average_array,sd_array,sem_array,dataqua
     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
     real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array,sem_array
     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum,first_sum,average,variance,SD,SEM,devsq_sum,first_devsq
-    integer::y,m,l,st,d,data_quan
+    real::sum,first_sum=0.,average,variance,SD,SEM,devsq_sum,first_devsq=0.
+    integer::y,m,l,st,d,data_quan=0
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差と標準誤差を計算してくれるだけ。後全年データ数
     do l = 1,lines
@@ -704,10 +745,10 @@ subroutine dp_avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
     double precision,intent(out)::sd_array(months,lines,stations,depth)
     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
     ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
-    double precision:: sum; double precision::first_sum; double precision::average
-    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq
+    double precision:: sum; double precision::first_sum=0.0d0; double precision::average
+    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
     ! double precision::one
-    integer::y,m,l,st,d,data_quan
+    integer::y,m,l,st,d,data_quan=0
 
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
@@ -757,10 +798,10 @@ subroutine dp_avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
     double precision,intent(out)::sd_array(months,lines)
     integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
     ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
-    double precision:: sum; double precision::first_sum; double precision::average
-    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq
+    double precision:: sum; double precision::first_sum=0.0d0; double precision::average
+    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
     ! double precision::one
-    integer::y,m,l,data_quan
+    integer::y,m,l,data_quan=0
 
 
     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
@@ -829,7 +870,7 @@ subroutine create_DH_array(sigma_array,DH_array)
     double precision::hiyou
     double precision::zero;double precision::one;double precision::four;double precision::ten;double precision::thousand
     double precision::firstsum;double precision::DH;double precision::g
-    one = 1.0d0;four = 4.0d0;ten = 10.0d0;thousand = 1000.0d0;g = 9.81d0
+    one = 1.0d0;four = 4.0d0;ten = 10.0d0;thousand = 1000.0d0; g = 9.8d0
 
     do y = 1, years
         do m = 1, months
@@ -840,7 +881,7 @@ subroutine create_DH_array(sigma_array,DH_array)
                             hiyou = one/((thousand+sigma_array(y,m,l,st,d))) !m^3/kg
                         else;hiyou = zero
                         end if
-                        DH = firstsum + hiyou*ten**(four)/g ! now the unit is in meters
+                        DH = firstsum + hiyou*ten**(four)/g
                         firstsum = DH
                         DH_array(y,m,l,st,d) = real(DH)
                     end do
@@ -1025,6 +1066,7 @@ subroutine potemp_T_S_depth(potemp,tem,sal,depth)
     
 end subroutine
 
+!for calbrating SSH using SSP units must be in mm 
 subroutine calibrate_SSH(SSH,SSP,calibratedSSH)
     implicit none
     real,intent(in)::SSH,SSP
@@ -1065,28 +1107,25 @@ subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_q
             do n = 0, iterations
                 if(mod(n,symbol_freq)==0) then
                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+                    call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                 else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
                 end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
             end do
         else if(angle == 90) then
             do n = 0, iterations
                 if(mod(n,symbol_freq)==0) then
                     call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+                    call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
                 end if
-                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
             end do
         else if (angle == -90) then
             do n = 0, iterations
                 if(mod(n,symbol_freq)==0) then
                     call plot(0.,real(n)*memori_diff,3);call plot(-0.1,real(n)*memori_diff,2)
+                    call numberr(-0.1,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                 else;call plot(0.,real(n)*memori_diff,3);call plot(-0.05,real(n)*memori_diff,2)
                 end if
-                if(mod(n,symbol_freq)==0) then;call numberr(-0.1,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
             end do
         else;end if
     else;end if
@@ -1096,17 +1135,19 @@ subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_q
         memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
         if(angle == 0) then
             do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
+                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+                end if
             end do
-            call symbolr(-memori_diff*1.6,-1.5*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-1.5*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            call symbol(length+memori_diff*1.6,-1.5*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-1.5*symbol_size,symbol_size,fin_num,0.,float_quantity)
+            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
         else !(angle == 90)
             do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
                 if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
+                call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
+                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+                end if
             end do
             call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
             call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
@@ -1118,16 +1159,18 @@ subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_q
         memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
         if(angle == 0) then
             do n = 0, iterations
-                call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
                 if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
+                call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+                else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+                end if
             end do
-            call symbol(length+memori_diff*1.6,-1.5*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-1.5*symbol_size,symbol_size,fin_num,0.,float_quantity)
+            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
         else !(angle == 90)
             do n = 0, iterations
-                call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
                 if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
+                call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
+                else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+                end if
             end do
             call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
         end if
@@ -1138,16 +1181,18 @@ subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_q
             memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
             if(angle == 0) then
                 do n = 0, iterations
-                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
                     if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    else;end if
+                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+                    else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+                    end if
                 end do
-                call symbolr(-memori_diff*1.6,-1.5*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-1.5*symbol_size,symbol_size,ini_num,0.,float_quantity)
+                call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
             else !(angle == 90)
                 do n = 0, iterations
-                    call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
                     if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    else;end if
+                    call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
+                    else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+                    end if
                 end do
                 call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
             end if
@@ -1239,14 +1284,16 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
     real,intent(in):: width
     intrinsic sin,cos,tan,asin,acos
     integer,parameter::imax = 2080,jmax = 2640,station_x = 9, station_y = 2
-    real,dimension(imax,jmax)::dep
-    integer,dimension(imax,jmax)::dep_m
+    real,dimension(:,:),allocatable::dep
+    integer,dimension(:,:),allocatable::dep_m
     integer::i,j,is,ie,js,je,n,line_num
     real::dx,dy,height,ratio,pi,xco,NLineYco,SLineYco
     character::line_name*10,filename*999
     real,dimension(station_y,station_x)::lon
 
-    open(21,file='/LARGE0/gr10291/nishimori2/aomori/japan1km122-148_24-46.bin',form='unformatted',status='old')
+    allocate(dep(imax,jmax));allocate(dep_m(imax,jmax))
+    dep = 0.;dep_m = 0
+    open(21,file='/Users/yuta/Desktop/nishimori2/aomori/japan1km122-148_24-46.bin',form='unformatted',status='old')
     do j=jmax,1,-1
         read(21)(dep(i,j),i=1,imax)
         dep(i,j)=-dep(i,j)    
@@ -1275,7 +1322,7 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
         ! call plot(x,y,-3)
         call newpen2(3)
         call rgbk(0.,0.,0.)
-        call pscont3(dx,dy,dep,dep_m,is,ie,js,je,imax,jmax,1,0.,10)
+        call pscont3(dx,dy,dep,dep_m,is,ie,js,je,imax,jmax,1,0.,10.)
     end if
     call rgbk(0.,0.,0.)
     call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
@@ -1289,7 +1336,7 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
     call symbolc(-0.6,height/2.,0.2,'Lat (N)',90.,len('Lat (n)'))
     if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
         do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
-            filename = '/LARGE0/gr10291/nishimori2/aomori/Yuta_edit_median_potemp/'//trim(line_name)//'/lon.csv'
+            filename = '/Users/yuta/Desktop/nishimori2/aomori/Coordinates/'//trim(line_name)//'/lon.csv'
             NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
             open(32,file=filename,status = 'old',action = 'read')
             read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
@@ -1312,54 +1359,58 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
     else
         print*,'stations are just outside of your map, like a perfect flower that is just beyond your reach...(mj)'
     end if
+    deallocate(dep);deallocate(dep_m)
 
     ! call plot(-x,-y,-3)
         
 end subroutine
 
-! TS diagram                    this only create a frame, should make subroutine that plots data of an array to the frame later 
-subroutine TS_diagram(temp_min,temp_max,sal_min,sal_max,cont_quantity,first_sigma,cont_inc,width,height)
+! only creates a frame unfortunately
+subroutine TS_diagram(temp_min,temp_max,sal_min,sal_max,sal_memoriterations,sal_symbolfreq,symbol_size,width,height)
     implicit none
-    integer,parameter::ds_total = 101, dt_total =101, sigma_grids = ds_total*dt_total
-    ! integer,parameter::s_memori = 10,t_memori = 10
+    integer,parameter::ds_total = 101, dt_total =101
     integer,parameter::xs = 1,xe = ds_total,ys = 1,ye = dt_total
-    real,intent(in)::sal_min,sal_max,width,height,first_sigma,cont_inc
-    integer,intent(in)::cont_quantity
-    real::sal,temp,sal_range,whatyouneed,dx,dy,real_sigma,y,sigma_print_y,min_sigma,max_sigma
-    integer::n,s,t,axis_sal_range,temp_min,temp_max,temp_range
-    integer,dimension(ds_total,dt_total)::mask
-    real,dimension(ds_total,dt_total)::sigma_array
-
+    real,parameter:: cont_inc = 0.2
+    real,intent(in)::sal_min,sal_max,width,height,symbol_size
+    ! integer,intent(in)::arraysize
+    integer,intent(in)::temp_min,temp_max,sal_memoriterations,sal_symbolfreq
+    ! real,dimension(arraysize),intent(in)::temp_array,sal_array
+    real::sal,temp,sal_range,whatyouneed,dx,dy,real_sigma,y,sigma_print_y,min_sigma,max_sigma,first_sigma,sal_memoridiff,sal_numdiff
+    integer::n,s,t,temp_range,cont_quantity
+    integer,dimension(ds_total,dt_total)::mask=0
+    real,dimension(ds_total,dt_total)::sigma_array=0.
     dx = width/real(ds_total-1); dy = height/real(dt_total-1)
-    temp_range = temp_max - temp_min; sal_range = sal_max -sal_min;axis_sal_range = int(sal_range/0.1)
+    temp_range = temp_max - temp_min; sal_range = sal_max - sal_min
     do s=1,ds_total
         do t=1,dt_total
             mask(s,t)=1
         end do
-    end do
+    end do  !just for the use of Kuroda's subroutine
 
     
     call newpen2(3)
     call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
-    call symbolc(width/2.,-0.15*width,0.06*width,'Salinity',0.,len('salinity'))
-    call symbolc(-0.15*width,height/2.,0.06*width,'Temperature',90.,len('temperature'))
+    call symbolc(width/2.,-2.2*symbol_size,symbol_size,'Salinity',0.,len('salinity'))
+    call symbolc(-2.5*symbol_size,height/2.,symbol_size,'Temperature',90.,len('temperature'))
     call newpen2(3)
 
-
-    do n = 0,axis_sal_range
-        if (mod(n,5)==0) then
-            call plot(real(n)*real(width)/real(axis_sal_range),0.,3);call plot(real(n)*real(width)/real(axis_sal_range),-0.03*width,2)
-            call numberc(real(n)*real(width)/real(axis_sal_range),-0.07*width,0.04*width,sal_min+sal_range*real(n)/real(axis_sal_range),0.,2)
+    do n = 0,sal_memoriterations
+        call newpen2(4)
+        sal_memoridiff = width/real(sal_memoriterations);sal_numdiff = (sal_max-sal_min)/real(sal_memoriterations)
+        if (mod(n,sal_symbolfreq)==0) then
+            call plot(real(n)*sal_memoridiff,0.,3);call plot(real(n)*sal_memoridiff,-0.2,2)
+            call numberc(real(n)*sal_memoridiff,-1.2*symbol_size,symbol_size,sal_min+real(n)*sal_numdiff,0.,2)
         else
-            call plot(real(n)*real(width)/real(axis_sal_range),0.,3);call plot(real(n)*real(width)/real(axis_sal_range),-0.015*width,2)
+            call plot(real(n)*sal_memoridiff,0.,3);call plot(real(n)*sal_memoridiff,-0.1,2)
         end if
     end do
     do n = 0,temp_range
+        call newpen2(4)
         if(mod(n,5)==0) then
-            call plot(0.,real(n)*real(height)/real(temp_range),3);call plot(-0.03*width,real(n)*real(height)/real(temp_range),2)
-            call numberc(-0.08*width,real(n)*real(height)/real(temp_range),0.04*width,real(temp_min+temp_range)*real(n)/real(temp_range),0.,1)
+            call plot(0.,real(n)*real(height)/real(temp_range),3);call plot(-0.2,real(n)*real(height)/real(temp_range),2)
+            call numberr(-0.3,real(n)*real(height)/real(temp_range),symbol_size*0.9,real(temp_min+temp_range)*real(n)/real(temp_range),0.,1)
         else
-            call plot(0.,real(n)*real(height)/real(temp_range),3);call plot(-0.015*width,real(n)*real(height)/real(temp_range),2)  
+            call plot(0.,real(n)*real(height)/real(temp_range),3);call plot(-0.1,real(n)*real(height)/real(temp_range),2)  
         end if
     end do
 
@@ -1373,16 +1424,19 @@ subroutine TS_diagram(temp_min,temp_max,sal_min,sal_max,cont_quantity,first_sigm
     min_sigma = minval(sigma_array) 
     max_sigma = maxval(sigma_array)  
     ! print*,min_sigma,max_sigma
-
+    y = 0.
+    call newpen2(3)
+    cont_quantity = int(max_sigma-min_sigma)*5+10
+    first_sigma = int(min_sigma)
     call plot(-dx/2.,-dy/2.,-3)
-    call symbolc(width+0.2,height+0.15,0.25,'sigma:',0.,len('sigma:'))
-    do n = 0, cont_quantity
-        real_sigma = first_sigma+real(n)*real(cont_inc)
+    call symbol(width+symbol_size*0.2,height+symbol_size*0.4,symbol_size*0.8,'sigma:',0.,len('sigma:'))
+    do n = 0,cont_quantity
+        real_sigma = first_sigma+real(n)*cont_inc
         if(int(real_sigma)==real_sigma .and. real_sigma>=min_sigma .and. real_sigma<=max_sigma) then
             call newpen2(5);call rgbk(0.,0.,0.);call pscont3(dx,dy,sigma_array,mask,xs,xe,ys,ye,ds_total,dt_total,1,real_sigma,0.)
-            sigma_print_y = height-0.2-y
-            call numberc(width+0.25,sigma_print_y,0.2,real_sigma,0.,1)
-            y = y +0.2
+            sigma_print_y = height-0.8*symbol_size-y
+            call numberc(width+symbol_size,sigma_print_y,0.8*symbol_size,real_sigma,0.,1)
+            y = y +0.8*symbol_size
         else
             call newpen2(2);call rgbk(0.,0.,0.);call pscont3(dx,dy,sigma_array,mask,xs,xe,ys,ye,ds_total,dt_total,1,real_sigma,0.)
         end if
@@ -1390,6 +1444,23 @@ subroutine TS_diagram(temp_min,temp_max,sal_min,sal_max,cont_quantity,first_sigm
     y = 0.
     call plot(dx/2.,dy/2.,-3)
 
+    ! do n = 1, arraysize
+    !     if(temp_array(n)/=0. .and. sal_array(n)/=0.)then
+    !         plot_x = (sal_array(n)-sal_min)*width/real(sal_range)
+    !         plot_y = (temp_array(n)-real(temp_min))*height/real(temp_range)
+    !         call gmark(plot_x,plot_y,0.05,1)
+    !     else;end if
+    ! end do
+
+end subroutine
+
+! gives a 1D coordinate of input_value 
+subroutine gmark_ratio(input_value,min,max,length,output)
+    implicit none
+    real,intent(in)::input_value,min,max,length
+    real,intent(out)::output
+
+    output = (input_value-min)*length/(max-min)
 
 end subroutine
 
@@ -1670,7 +1741,7 @@ subroutine colorscale_creator(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbo
     real,dimension(0:iterations+1),intent(in)::r,g,b
     integer::n
     real::memori_diff,num_diff
-    real,dimension(3)::lefty_x,lefty_y,righty_x,righty_y,bottomy_x,bottomy_y,toppy_x,toppy_y
+    real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.,bottomy_x=0.,bottomy_y=0.,toppy_x=0.,toppy_y=0.
     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
 
     lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
@@ -1897,6 +1968,33 @@ subroutine colorscale_data(iterations,r,g,b,min,max,symbol_freq,symbol_size,leng
 
 end subroutine
 
+! an array of 12 bright colors
+subroutine brightcolors(r,g,b)
+    implicit none
+    real,dimension(12),intent(out)::r,g,b
+    integer::n
+
+    do n = 1,2
+        r(n)=1.;g(n)=real(n-1)/2.;b(n)=0.
+    end do
+    do n = 1,2
+        r(n+2)=1.-real(n-1)/2.;g(n+2)=1.;b(n+2)= 0.
+    end do
+    do n = 1,2
+        r(n+4)=0.;g(n+4)=1.;b(n+4)=real(n-1)/2.
+    end do
+    do n = 1,2
+        r(n+6)=0.;g(n+6)=1.-real(n-1)/2.;b(n+6)=1.
+    end do
+    do n = 1,2
+        r(n+8)=real(n-1)/2.;g(n+8)=0.;b(n+8)=1.
+    end do
+    do n = 1,2
+        r(n+10)=1.;g(n+10)=0.;b(n+10)=1.-real(n-1)/2.
+    end do
+
+end subroutine
+
                                             ! Statistics !
 
 ! creates standard normal distribution curve for some fucking reason lol
@@ -1944,7 +2042,7 @@ subroutine welchttest(mean1,s1,dataquan1,mean2,s2,dataquan2,result,larger_or_sma
     real,intent(in)::mean1,s1,mean2,s2
     integer,intent(in)::dataquan1,dataquan2
     integer,intent(out)::result
-    real,dimension(0:30)::t_95
+    real,dimension(0:30)::t_95=0.
     real::diff_mean,n1,n2,df,sem,bottomCI,topCI
     character::larger_or_smaller*5
 

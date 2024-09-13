@@ -1,17 +1,18 @@
 program examining_2011
     implicit none
     integer,parameter::years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    integer,parameter::l = 1, st = 9
+    integer,parameter::l = 1, st = 9 
     real,parameter::length = 26., height = 10.
     real,dimension(years,months)::SSH_f,SSH_t,dot_y
     integer::y,m,n
     real::dx
 
     dx = length/(12.*15.+1.)
+    
 
     call calibrated_fukauraSSH(SSH_f);call calibrated_tappiSSH(SSH_t)
 
-    call plots(0.5,4.,13,'/LARGE0/gr10291/nishimori2/aomori/Errorbar_plots/timeseries_SSH_FandT.ps')
+    call plots(0.5,4.,13,'../Errorbar_plots/timeseries_SSH_FandT_MAC.ps')
     call symbol(8.,14.,0.6,('Time Series of SSH at Fukaura'),0.,len('time series of ssh at fukaura'))
     call create_box(length,height,3);call mod12_memori(12*15,0.2,length,0.,0.);call num_memori(1400.,2000.,12,2,0.4,-1,height,-90,0,0)
 
@@ -52,5 +53,6 @@ program examining_2011
             n = n+1
         end do
     end do
+  
     call plote
 end program

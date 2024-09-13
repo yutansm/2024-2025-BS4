@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Rsync deployments
+      uses: burnett01/rsync-deployments@7.0.1
+      with:
+        switches: -avzr --delete
+        path: /  # Adjust this path to your source directory
+        remote_path: /LARGE0/gr10291/nishimori2/this_is_a_test  # Adjust this to your target directory on the server
+        remote_host: laurel.kudpc.kyoto-u.ac.jp
+        remote_user: b36156
+        remote_key: ${{ secrets.DEPLOY_KEY }}
+~                                              
