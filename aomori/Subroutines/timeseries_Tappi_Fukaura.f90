@@ -14,12 +14,12 @@ program examining_2011
 
     call plots(0.5,4.,13,'../Errorbar_plots/timeseries_SSH_FandT_MAC.ps')
     call symbol(8.,14.,0.6,('Time Series of SSH at Fukaura'),0.,len('time series of ssh at fukaura'))
-    call create_box(length,height,3);call mod12_memori(12*15,0.2,length,0.,0.);call num_memori(1400.,2000.,12,2,0.4,-1,height,-90,0,0)
+    call create_box(length,height,3);call mod12_memori(12*15,0.2,length,0.,0.);call num_memori(1300.,1900.,12,2,0.4,-1,height,-90,0,0)
 
     n = 1
     do y = 1,years
         do m = 1, months
-            dot_y(y,m) = (SSH_f(y,m)-1400.)*height/600.
+            dot_y(y,m) = (SSH_f(y,m)-1300.)*height/600.
             call gmark(real(n)*dx,dot_y(y,m),0.1,1)
             if (m == 1 .and.y /=1 .and. SSH_f(y,m)/=0. .and. SSH_f(y-1,12)/=0.) then
                 call plot(real(n-1)*dx,dot_y(y-1,12),3);call plot(real(n)*dx,dot_y(y,1),2)

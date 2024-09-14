@@ -1,18 +1,13 @@
 program monthlymean_15years
     implicit none
     integer,parameter::years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    integer,parameter::l = 1, st = 9 
-    real,parameter::length = 26., height = 10.
-    real,dimension(years,months)::SSH_f,SSH_t,devSSH_f,devSSH_t,array
+    real,parameter::length = 24., height = 10.
+    real,dimension(years,months)::SSH_f,SSH_t,devSSH_f=0.,devSSH_t,array
     real,dimension(years)::yearlyav_f,yearlyav_t
     integer,dimension(months)::dataSSH_f,dataSSH_t
     real,dimension(months)::monthlyav_f,monthlyav_t,semSSH_f,semSSH_t,dot_y
     integer::y,n,count,m
-    real::dx,summation,mean_excluding_zeros
-
-    call plots(.5,4.,13,'../Errorbar_plots/yearlymean_SSH_FandT_MAC.ps')
-    call symbol(6.,14.,0.6,('Time Series of SSH at Fukaura (yearly mean)'),0.,len('time series of ssh at fukaura (yearly mean)')) 
-    ! call num_memori(-200.,200.,8,1,0.4,-1,height,-90,0.0)
+    real::dx,summation,mean_excluding_zeros,sem
 
     call calibrated_fukauraSSH(SSH_f);call calibrated_tappiSSH(SSH_t)
     !getting mean of each year
@@ -41,60 +36,77 @@ program monthlymean_15years
             end if
         end do
     end do
-    do y = 1,15
-        print*,yearlyav_f(y),yearlyav_t(y)
+    do y = 1,years
+        ! print*,yearlyav_f(y),yearlyav_t(y)
     end do
     !getting deviation from yearly mean
     do y = 1,years
         do m = 1, months
             if(SSH_f(y,m) == 0.0) then
                 devSSH_f(y,m) = 0.0
-            else if(SSH_t(y,m) == 0.0) then
+            else
+                devSSH_f(y,m) = SSH_f(y,m) - yearlyav_f(y)
+            end if
+            if(SSH_t(y,m) == 0.0) then
                 devSSH_t(y,m) = 0.0
             else
-            devSSH_f(y,m) = SSH_f(y,m) - yearlyav_f(y)
-            devSSH_t(y,m) = SSH_t(y,m) - yearlyav_t(y)
+                devSSH_t(y,m) = SSH_t(y,m) - yearlyav_t(y)
             end if
         end do
     end do
-    print*,devSSH_f(1,:)
+    ! print*,devSSH_f(1:3,1:12)
 
 ! where math ends
 
-    call create_box(length,height,3);call mod12_memori(12*15,0.2,length,0.,0.)
+    call plots(2.5,5.,13,'../Errorbar_plots/yearlymean_SSH_FandT_MAC.ps')
+    call symbol(1.,12.,.8,('Monthly Time Series of SSH at Fukaura (15y mean)'),0.,len('Monthly time series of ssh at fukaura (15y mean)')) 
+    call num_memori(-200.,200.,8,1,0.6,-1,height,-90,0,0)
+    call create_box(length,height,4);call mod12_memori(13,1.,length,0.,0.)
     call plot(0.,height/2.,3);call plot(length,height/2.,2)
     call avsem_dataquan3(devSSH_f,monthlyav_f,semSSH_f,dataSSH_f)
-    ! print*, dataSSH_f
+    call symbolc(-1.5,height/2.,0.6,'diff from mean (mm)',90.,len('diff from mean (mm)'))
+    ! print*,monthlyav_f,semSSH_f,dataSSH_f
+    ! SAKUZU
+    dx = length/14.
+    do n = 1,13
+        if(n>12) then;m = mod(n,12);else;m = n
+        end if
+            dot_y(m) = (monthlyav_f(m)-(-200.))*height/400.
+            sem = semSSH_f(m)*height/400.
+            ! print*,real(n)
+            call gmark(real(n)*dx,dot_y(m),0.1,1)
+            call plot(real(n)*dx,dot_y(m)-sem,3);call plot(real(n)*dx,dot_y(m)+sem,2)
+            if(n/=1 .and. n/=13)then
+                call plot(real(n-1)*dx,dot_y(m-1),3);call plot(real(n)*dx,dot_y(m),2)
+            else if (n==13) then
+                call plot(real(n-1)*dx,dot_y(12),3);call plot(real(n)*dx,dot_y(1),2)
+            end if
+    end do
+    
+   
+   
 
-    ! do y = 1,years
-    !         dot_y(y) = (devSSH_f(y,m)-400.)*height/400.
-    !         call gmark(real(y)*dx,dot_y(y),0.1,1)
-    !         call numberc(real(y)*dx,-0.5,0.4,real(y+2008),0.,-1)
-    !         if(y/=1 .and.dot_y(y)/=0. .and. dot_y(y-1)/=0.) then
-    !             call plot(real(y-1)*dx,dot_y(y-1),3);call plot(real(y)*dx,dot_y(y),2)
-    !         end if
-    ! end do
-
-    ! call newpage
-    ! call symbol(8.,14.,0.6,('Time Series of SSH at Tappi'),0.,len('time series of ssh at tappi'))
-    ! call create_box(length,height,3);call mod12_memori(12*15,0.2,length,0.,0.);call num_memori(800.,1300.,10,2,0.4,-1,height,-90,0,0)
-
-    ! n = 1
-    ! do y = 1,years
-    !     do m = 1, months
-    !         dot_y(y,m) = (SSH_t(y,m)-800.)*height/500.
-    !         call gmark(real(n)*dx,dot_y(y,m),0.1,1)
-    !         if (m == 1 .and.y /=1 .and. SSH_t(y,m)/=0. .and. SSH_t(y-1,12)/=0.) then
-    !             call plot(real(n-1)*dx,dot_y(y-1,12),3);call plot(real(n)*dx,dot_y(y,1),2)
-    !         else if(m /= 1 .and. SSH_t(y,m)/=0. .and. SSH_t(y,m-1)/=0.) then
-    !             call plot(real(n-1)*dx,dot_y(y,m-1),3);call plot(real(n)*dx,dot_y(y,m),2)
-    !         else;end if
-
-    !         if(m ==6) then; call numberc(real(n)*dx,height+1.,0.4,real(y+2008),0.,-1)
-    !     else; end if
-    !         n = n+1
-    !     end do
-    ! end do
-  
+    call newpage
+    call symbol(1.,12.,.8,('Monthly Time Series of SSH at Tappi (15y mean)'),0.,len('Monthly time series of ssh at tappi (15y mean)')) 
+    call num_memori(-200.,200.,8,1,0.6,-1,height,-90,0,0)
+    call create_box(length,height,4);call mod12_memori(13,1.,length,0.,0.)
+    call plot(0.,height/2.,3);call plot(length,height/2.,2)
+    call avsem_dataquan3(devSSH_t,monthlyav_t,semSSH_t,dataSSH_t)
+    call symbolc(-1.5,height/2.,0.6,'diff from mean (mm)',90.,len('diff from mean (mm)'))
+    print*,monthlyav_t,semSSH_t,dataSSH_t
+    do n = 1,13
+        if(n>12) then;m = mod(n,12);else;m = n
+        end if
+            dot_y(m) = (monthlyav_t(m)-(-200.))*height/400.
+            sem = semSSH_t(m)*height/400.
+            ! print*,real(n)
+            call gmark(real(n)*dx,dot_y(m),0.1,1)
+            call plot(real(n)*dx,dot_y(m)-sem,3);call plot(real(n)*dx,dot_y(m)+sem,2)
+            if(n/=1 .and. n/=13)then
+                call plot(real(n-1)*dx,dot_y(m-1),3);call plot(real(n)*dx,dot_y(m),2)
+            else if (n==13) then
+                call plot(real(n-1)*dx,dot_y(12),3);call plot(real(n)*dx,dot_y(1),2)
+            end if
+    end do
     call plote
 end program

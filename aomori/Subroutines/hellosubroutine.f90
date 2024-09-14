@@ -1240,7 +1240,7 @@ subroutine mod12_memori(iterations,symbol_size,length,x,y)
         call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
         call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(m),0.,-1)
     end do
-    call symbolc(length/2.,-symbol_size*2.,symbol_size*0.8,'Months',0.,len('months'))
+    call symbolc(length/2.,-symbol_size*3.,symbol_size*0.8,'Months',0.,len('months'))
 
     call plot(-x,-y,-3)
 end subroutine
