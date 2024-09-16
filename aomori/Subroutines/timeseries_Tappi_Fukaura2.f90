@@ -58,8 +58,8 @@ program monthlymean_15years
 
 ! where math ends
 
-    call plots(2.5,5.,13,'../Errorbar_plots/yearlymean_SSH_FandT_MAC.ps')
-    call symbol(1.,12.,.8,('Monthly Time Series of SSH at Fukaura (15y mean)'),0.,len('Monthly time series of ssh at fukaura (15y mean)')) 
+    call plots(2.5,4.,13,'../Errorbar_plots/monthlymean_SSH_FandT_MAC.ps')
+    call symbol(1.,13.,.8,('Monthly Time Series of SSH at Fukaura (15y mean)'),0.,len('Monthly time series of ssh at fukaura (15y mean)')) 
     call num_memori(-200.,200.,8,1,0.6,-1,height,-90,0,0)
     call create_box(length,height,4);call mod12_memori(13,1.,length,0.,0.)
     call plot(0.,height/2.,3);call plot(length,height/2.,2)
@@ -68,13 +68,14 @@ program monthlymean_15years
     ! print*,monthlyav_f,semSSH_f,dataSSH_f
     ! SAKUZU
     dx = length/14.
+    call symbolc(0.,0.6+height,0.6,'n',0.,1)
     do n = 1,13
         if(n>12) then;m = mod(n,12);else;m = n
         end if
             dot_y(m) = (monthlyav_f(m)-(-200.))*height/400.
             sem = semSSH_f(m)*height/400.
             ! print*,real(n)
-            call gmark(real(n)*dx,dot_y(m),0.1,1)
+            call gmark(real(n)*dx,dot_y(m),0.1,1);call numberc(real(n)*dx,0.6+height,0.6,real(dataSSH_f(m)),0.,-1)
             call plot(real(n)*dx,dot_y(m)-sem,3);call plot(real(n)*dx,dot_y(m)+sem,2)
             if(n/=1 .and. n/=13)then
                 call plot(real(n-1)*dx,dot_y(m-1),3);call plot(real(n)*dx,dot_y(m),2)
@@ -87,20 +88,21 @@ program monthlymean_15years
    
 
     call newpage
-    call symbol(1.,12.,.8,('Monthly Time Series of SSH at Tappi (15y mean)'),0.,len('Monthly time series of ssh at tappi (15y mean)')) 
+    call symbol(1.,13.,.8,('Monthly Time Series of SSH at Tappi (15y mean)'),0.,len('Monthly time series of ssh at tappi (15y mean)')) 
     call num_memori(-200.,200.,8,1,0.6,-1,height,-90,0,0)
     call create_box(length,height,4);call mod12_memori(13,1.,length,0.,0.)
     call plot(0.,height/2.,3);call plot(length,height/2.,2)
     call avsem_dataquan3(devSSH_t,monthlyav_t,semSSH_t,dataSSH_t)
     call symbolc(-1.5,height/2.,0.6,'diff from mean (mm)',90.,len('diff from mean (mm)'))
-    print*,monthlyav_t,semSSH_t,dataSSH_t
+    ! print*,monthlyav_t,semSSH_t,dataSSH_t
+    call symbolc(0.,0.6+height,0.6,'n',0.,1)
     do n = 1,13
         if(n>12) then;m = mod(n,12);else;m = n
         end if
             dot_y(m) = (monthlyav_t(m)-(-200.))*height/400.
             sem = semSSH_t(m)*height/400.
             ! print*,real(n)
-            call gmark(real(n)*dx,dot_y(m),0.1,1)
+            call gmark(real(n)*dx,dot_y(m),0.1,1);call numberc(real(n)*dx,0.6+height,0.6,real(dataSSH_t(m)),0.,-1)
             call plot(real(n)*dx,dot_y(m)-sem,3);call plot(real(n)*dx,dot_y(m)+sem,2)
             if(n/=1 .and. n/=13)then
                 call plot(real(n-1)*dx,dot_y(m-1),3);call plot(real(n)*dx,dot_y(m),2)
