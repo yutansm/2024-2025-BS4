@@ -14,8 +14,8 @@ subroutine temsal(temp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '/Users/yuta/Desktop/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01tem'//trim(yyyy)//'.csv'
-                    salfile = '/Users/yuta/Desktop/nishimori2/aomori/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01sal'//trim(yyyy)//'.csv'
+                    tempfile = '../Data/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01tem'//trim(yyyy)//'.csv'
+                    salfile = '../Data/Yuta_unedited/'//'/'//trim(line)//'/'//trim(mm)//'/01sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(temp_5(y,m,l,st,d),st = 1,stations)
@@ -47,8 +47,8 @@ subroutine potempsal_51(potemp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '../../aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/'//'51potemp'//trim(yyyy)//'.csv'  
-                    salfile = '../../aomori/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/51sal'//trim(yyyy)//'.csv'
+                    tempfile = '../Data/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/'//'51potemp'//trim(yyyy)//'.csv'  
+                    salfile = '../Data/51_Median'//'/'//trim(line)//'/'//trim(mm)//'/51sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(potemp_5(y,m,l,st,d),st = 1,stations)
@@ -81,8 +81,8 @@ subroutine potempsal_25(potemp_5,sal_5)
             else;line = 'S-Line';end if
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    tempfile = '/Users/yuta/Desktop/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25potemp'//trim(yyyy)//'.csv'
-                    salfile = '/Users/yuta/Desktop/nishimori2/aomori/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25sal'//trim(yyyy)//'.csv'
+                    tempfile = '../Data/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25potemp'//trim(yyyy)//'.csv'
+                    salfile = '../Data/25_Median'//'/'//trim(line)//'/'//trim(mm)//'/25sal'//trim(yyyy)//'.csv'
                     open(11,file = tempfile,status = 'old', action = 'read')
                     do d = 1, depth
                         read(11,102)(potemp_5(y,m,l,st,d),st = 1,stations)
@@ -128,6 +128,7 @@ subroutine calibrated_data51(potemp_c5,sal_c5)
     implicit none
     integer,parameter:: years = 15, months = 12, lines = 2, stations = 9, depth = 400
     real,dimension(:,:,:,:,:),allocatable::potemp_5,sal_5
+    ! real,dimension(years,months,lines,stations,depth)::potemp_5,sal_5
     real,dimension(years,months,lines,stations,depth),intent(out)::potemp_c5,sal_c5
     real,parameter::standard_sal_400 = 34.07
     real::diff,initial_num
@@ -137,6 +138,7 @@ subroutine calibrated_data51(potemp_c5,sal_c5)
     allocate(sal_5(years,months,lines,stations,depth))
     potemp_5 = 0.;sal_5 = 0.
     call potempsal_51(potemp_5,sal_5)
+    ! print*,sal_5(1,8,1,7,1:depth)
     sal_5(1,12,2,5,1:depth)=0.;sal_5(1,12,2,6,1:depth)=0.;sal_5(1,12,2,7,1:depth)=0.!May 10 金サロ前 Sline dgf
     sal_5(2,4,1,4,1:depth)=0. ! 2010 april Nline station 4 erased
     sal_5(4,1:months,1:lines,1:stations,1:depth)=0. !2012 data all erased
@@ -202,6 +204,7 @@ subroutine calibrated_data51(potemp_c5,sal_c5)
 
     potemp_c5(1:years,1:months,1:lines,1:stations,1:depth) = potemp_5(1:years,1:months,1:lines,1:stations,1:depth)
     sal_c5(1:years,1:months,1:lines,1:stations,1:depth) = sal_5(1:years,1:months,1:lines,1:stations,1:depth)
+    ! print*,sal_c5(1,8,1,7,1:depth)
     deallocate(potemp_5);deallocate(sal_5)
     
 end subroutine
@@ -308,7 +311,7 @@ subroutine geovel_array(medianfiltertype,geovel_5)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(aaaa,'(i4.4)')y+2008
-                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_25median'//trim(aaaa)//'.csv'
+                    filename = '../Data/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_25median'//trim(aaaa)//'.csv'
                     open(77,file = filename,status = 'old',action = 'read')
                     do d = 1,depth
                         read(77,102)(geovel_5(y,m,l,st,d),st = 1,stations)
@@ -323,7 +326,7 @@ subroutine geovel_array(medianfiltertype,geovel_5)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(aaaa,'(i4.4)')y+2008
-                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_51median'//trim(aaaa)//'.csv'
+                    filename = '../Data/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Velocity_51median'//trim(aaaa)//'.csv'
                     open(77,file = filename,status = 'old',action = 'read')
                     do d = 1,depth
                         read(77,102)(geovel_5(y,m,l,st,d),st = 1,stations)
@@ -354,7 +357,7 @@ subroutine geotransport(medianfiltertype,geotrans)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_25Median'//trim(yyyy)//'.csv'
+                    filename = '../Data/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_25Median'//trim(yyyy)//'.csv'
                     open(21,file = filename,status = 'old',action = 'read')
                         read(21,102)geotrans(y,m,l)
                     close(21)
@@ -368,7 +371,7 @@ subroutine geotransport(medianfiltertype,geotrans)
                 write(mm,'(i2.2)')m
                 do y = 1, years
                     write(yyyy,'(i4.4)')y+2008
-                    filename = '/Users/yuta/Desktop/nishimori2/aomori/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_51Median'//trim(yyyy)//'.csv'
+                    filename = '../Data/Geostrophy/'//trim(line)//'/'//trim(mm)//'/Transport_51Median'//trim(yyyy)//'.csv'
                     open(31,file = filename,status = 'old',action = 'read')
                         read(31,102)geotrans(y,m,l)
                     close(31)
@@ -391,7 +394,7 @@ subroutine fukauraSSH(SSH_array,SSP_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/Users/yuta/Desktop/nishimori2/aomori/SSH/Fukaura_Tides.csv'
+    filename = '../Data/SSH/Fukaura_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -421,7 +424,7 @@ subroutine calibrated_fukauraSSH(calibrated_SSH_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '../SSH/Fukaura_Tides.csv'
+    filename = '../Data/SSH/Fukaura_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -453,7 +456,7 @@ subroutine tappiSSH(SSH_array,SSP_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '/Users/yuta/Desktop/nishimori2/aomori/SSH/Tappi_Tides.csv'
+    filename = '../Data/SSH/Tappi_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -483,7 +486,7 @@ subroutine calibrated_tappiSSH(calibrated_SSH_array)
 
     ! 102 format((i4),(i2.2),(f9.4))
     ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
-    filename = '../SSH/Tappi_Tides.csv'
+    filename = '../Data/SSH/Tappi_Tides.csv'
     open(92,file = filename, status = 'old',action = 'read')
     do y = 1,years
         do m = 1,12
@@ -1293,7 +1296,7 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
 
     allocate(dep(imax,jmax));allocate(dep_m(imax,jmax))
     dep = 0.;dep_m = 0
-    open(21,file='/Users/yuta/Desktop/nishimori2/aomori/japan1km122-148_24-46.bin',form='unformatted',status='old')
+    open(21,file='../Data/japan1km122-148_24-46.bin',form='unformatted',status='old')
     do j=jmax,1,-1
         read(21)(dep(i,j),i=1,imax)
         dep(i,j)=-dep(i,j)    
@@ -1336,7 +1339,7 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
     call symbolc(-0.6,height/2.,0.2,'Lat (N)',90.,len('Lat (n)'))
     if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
         do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
-            filename = '/Users/yuta/Desktop/nishimori2/aomori/Coordinates/'//trim(line_name)//'/lon.csv'
+            filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
             NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
             open(32,file=filename,status = 'old',action = 'read')
             read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
