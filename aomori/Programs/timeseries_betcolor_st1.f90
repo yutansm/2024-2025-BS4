@@ -16,7 +16,7 @@ program betcolor_st1_monthly
     integer:: m,d,n,i
     real:: dx,dy
 
-    call plots(3.,16.5,13,'/LARGE0/gr10291/nishimori2/aomori/Monthly_color/timeseries_betcolor_st1.ps')
+    call plots(3.,16.5,13,'../timeseries_betcolor_st1.ps')
     call symbol(2.,2.5,0.7,'Time Series of Monthly Mean and SD (Station 1,N-Line)',0.,len('Time Series of Monthly Mean and SD (Station 1,N-Line)'))
     dx = width/14.; dy = -height/real(depth)
     call calibrated_data51(potemp_c5,sal_c5)
@@ -25,7 +25,7 @@ program betcolor_st1_monthly
     call avsdsem_dataquan(sal_c5,sal_av,sal_sd,sal_sem,sal_data)
     call avsdsem_dataquan(sigma_5,sigma_av,sigma_sd,sigma_sem,sigma_data)
 
-    print*,sigma_sem(1,1,9,1:400)
+    ! print*,potemp_c5(8,8,1,1:stations,100:200)
 
 ! mean temp
     call create_box(width,-height,3);call mod12_memori(13,0.4,width,0.,-height);call num_memori(0.,400.,40,5,0.3,-1,-height,-90,0,0)
@@ -45,10 +45,12 @@ program betcolor_st1_monthly
                 else;mask(d) = 1
                 end if
             end do
-            call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,r1(0),g1(0),b1(0))
-            call betcolork(dx,dy,bet_array,depth,mask,24.,100.,r1(iterations_temp+1),g1(iterations_temp+1),b1(iterations_temp+1))
+            ! print*,mask(1:depth)
+            call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,r1(0),g1(0),b1(0))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,24.,100.,r1(iterations_temp+1),g1(iterations_temp+1),b1(iterations_temp+1))
             do n = 1, iterations_temp
-            call betcolork(dx,dy,bet_array,depth,mask,real(n-1),real(n),r1(n),g1(n),b1(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1),real(n),r1(n),g1(n),b1(n))
+            ! print*,n,r1(n),g1(n),b1(n)
             end do
             call plot(dx,0.,-3)
         end do
@@ -73,10 +75,10 @@ program betcolor_st1_monthly
                 else;mask(d) = 1
                 end if
             end do
-            call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,r2(0),g2(0),b2(0))
-            call betcolork(dx,dy,bet_array,depth,mask,2.5,100.,r2(26),g2(26),b2(26))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,r2(0),g2(0),b2(0))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,2.5,100.,r2(26),g2(26),b2(26))
             do n = 1, 25
-                call betcolork(dx,dy,bet_array,depth,mask,real(n-1)/10.,real(n)/10.,r2(n),g2(n),b2(n))
+                call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1)/10.,real(n)/10.,r2(n),g2(n),b2(n))
             end do
             call plot(dx,0.,-3)
         end do
@@ -101,10 +103,10 @@ program betcolor_st1_monthly
             else;mask(d) = 1
             end if
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,rsem1(0),gsem1(0),bsem1(0))
-        call betcolork(dx,dy,bet_array,depth,mask,.7,100.,rsem1(29),gsem1(29),bsem1(29))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,rsem1(0),gsem1(0),bsem1(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,.7,100.,rsem1(29),gsem1(29),bsem1(29))
         do n = 1, 28
-            call betcolork(dx,dy,bet_array,depth,mask,real(n-1)/40.,real(n)/40.,rsem1(n),gsem1(n),bsem1(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1)/40.,real(n)/40.,rsem1(n),gsem1(n),bsem1(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -132,10 +134,10 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(28,rsem1,gsem1,bsem1,0
                 else;mask(d) = 1
                 end if   
             end do
-            call betcolork(dx,dy,bet_array,depth,mask,0.,33.7,r3(0),g3(0),b3(0))
-            call betcolork(dx,dy,bet_array,depth,mask,34.2,100.,r3(26),g3(26),b3(26)) 
+            call betcolork(0.,dx,dy,bet_array,depth,mask,0.,33.7,r3(0),g3(0),b3(0))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,34.2,100.,r3(26),g3(26),b3(26)) 
             do n = 1, 25
-                call betcolork(dx,dy,bet_array,depth,mask,33.7+real(n-1)/50.,33.7+real(n)/50.,r3(n),g3(n),b3(n))
+                call betcolork(0.,dx,dy,bet_array,depth,mask,33.7+real(n-1)/50.,33.7+real(n)/50.,r3(n),g3(n),b3(n))
             end do
             call plot(dx,0.,-3)
         end do
@@ -159,10 +161,10 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(28,rsem1,gsem1,bsem1,0
             else;mask(d) = 1
             end if   
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,r4(0),g4(0),b4(0))
-        call betcolork(dx,dy,bet_array,depth,mask,0.4,100.,r4(21),g4(21),b4(21)) 
+        call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,r4(0),g4(0),b4(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,0.4,100.,r4(21),g4(21),b4(21)) 
         do n = 1, 20
-            call betcolork(dx,dy,bet_array,depth,mask,real(n-1)/50.,real(n)/50.,r4(n),g4(n),b4(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1)/50.,real(n)/50.,r4(n),g4(n),b4(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -179,17 +181,17 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(28,rsem1,gsem1,bsem1,0
         else;m = 12;end if
         
         bet_array(1:depth) = sal_sem(m,l,st,1:depth)
-        print*,m,bet_array(1:depth)
+        ! print*,m,bet_array(1:depth)
         do d = 1, depth
             if(bet_array(d)==0.) then
                 mask(d) = 0
             else;mask(d) = 1
             end if
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,rsem2(0),gsem2(0),bsem2(0))
-        call betcolork(dx,dy,bet_array,depth,mask,.12,100.,rsem2(25),gsem2(25),bsem2(25))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,rsem2(0),gsem2(0),bsem2(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,.12,100.,rsem2(25),gsem2(25),bsem2(25))
         do n = 1, 24
-            call betcolork(dx,dy,bet_array,depth,mask,real(n-1)/200.,real(n)/200.,rsem2(n),gsem2(n),bsem2(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1)/200.,real(n)/200.,rsem2(n),gsem2(n),bsem2(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -216,10 +218,10 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(24,rsem2,gsem2,bsem2,0
             else;mask(d) = 1
             end if   
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,0.,24.0,r5(0),g5(0),b5(0))
-        call betcolork(dx,dy,bet_array,depth,mask,27.2,100.,r5(33),g5(33),b5(33)) 
+        call betcolork(0.,dx,dy,bet_array,depth,mask,0.,24.0,r5(0),g5(0),b5(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,27.2,100.,r5(33),g5(33),b5(33)) 
         do n = 1, 32
-            call betcolork(dx,dy,bet_array,depth,mask,24.0+real(n-1)/10.,24.0+real(n)/10.,r5(n),g5(n),b5(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,24.0+real(n-1)/10.,24.0+real(n)/10.,r5(n),g5(n),b5(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -243,10 +245,10 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(24,rsem2,gsem2,bsem2,0
             else;mask(d) = 1
             end if   
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,r6(0),g6(0),b6(0))
-        call betcolork(dx,dy,bet_array,depth,mask,0.7,100.,r6(29),g6(29),b6(29)) 
+        call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,r6(0),g6(0),b6(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,0.7,100.,r6(29),g6(29),b6(29)) 
         do n = 1, 28
-            call betcolork(dx,dy,bet_array,depth,mask,0.+real(n-1)/40.,0.+real(n)/40.,r6(n),g6(n),b6(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,0.+real(n-1)/40.,0.+real(n)/40.,r6(n),g6(n),b6(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -263,17 +265,17 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(24,rsem2,gsem2,bsem2,0
         else;m = 12;end if
         
         bet_array(1:depth) = sigma_sem(m,l,st,1:depth)
-        print*,m,bet_array(1:depth)
+        ! print*,m,bet_array(1:depth)
         do d = 1, depth
             if(bet_array(d)==0.) then
                 mask(d) = 0
             else;mask(d) = 1
             end if
         end do
-        call betcolork(dx,dy,bet_array,depth,mask,-100.,0.,rsem3(0),gsem3(0),bsem3(0))
-        call betcolork(dx,dy,bet_array,depth,mask,.1,100.,rsem3(21),gsem3(21),bsem3(21))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,-100.,0.,rsem3(0),gsem3(0),bsem3(0))
+        call betcolork(0.,dx,dy,bet_array,depth,mask,.1,100.,rsem3(21),gsem3(21),bsem3(21))
         do n = 1, 20
-            call betcolork(dx,dy,bet_array,depth,mask,real(n-1)/100.,real(n)/100.,rsem3(n),gsem3(n),bsem3(n))
+            call betcolork(0.,dx,dy,bet_array,depth,mask,real(n-1)/100.,real(n)/100.,rsem3(n),gsem3(n),bsem3(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -325,7 +327,7 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(20,rsem3,gsem3,bsem3,0
             end if   
         end do
         do n = 1,5
-            call betcolorI(dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
+            call betcolorI(0.,dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -348,7 +350,7 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(20,rsem3,gsem3,bsem3,0
             end if   
         end do
         do n = 1,5
-            call betcolorI(dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
+            call betcolorI(0.,dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
         end do
         call plot(dx,0.,-3)
     end do
@@ -371,7 +373,7 @@ call plot(-13.*dx,-height-1.5,-3);call colorscale_creator(20,rsem3,gsem3,bsem3,0
             end if   
         end do
         do n = 1,5
-            call betcolorI(dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
+            call betcolorI(0.,dx,dy,bet_arrayi,depth,mask,n+10,rdata(n),gdata(n),bdata(n))
         end do
         call plot(dx,0.,-3)
     end do

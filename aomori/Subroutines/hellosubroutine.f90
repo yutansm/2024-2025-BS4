@@ -384,10 +384,10 @@ subroutine geotransport(medianfiltertype,geotrans)
 end subroutine
 
 ! gives an array of monthly mean sea surface height and pressure in Fukaura 2009-2023
-subroutine fukauraSSH(SSH_array,SSP_array)
+subroutine fukauraSSH(SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
-    real,dimension(years,months),intent(out)::SSH_array,SSP_array
+    real,dimension(years,months),intent(out)::SSH_array
     integer::y,m,ios,yyyy,mm,nodata
     real::SSH,SSP
     character::filename*999
@@ -400,17 +400,12 @@ subroutine fukauraSSH(SSH_array,SSP_array)
         do m = 1,12
             read(92,*,iostat = ios)yyyy,mm,SSH,nodata,SSP
             ! print*,yyyy,mm,SSH,nodata,SSP
-            SSH_array(y,m) = SSH;SSP_array(y,m) = SSP
+            SSH_array(y,m) = SSH
         end do
     end do
     close(92)
-    do y = 1, years
-        do m = 1, months
-            if(SSH_array(y,m)/=0.) then
-                SSH_array(y,m) = SSH_array(y,m) + (SSP_array(y,m)-10130)
-            else;end if 
-        end do
-    end do
+    ! calibratedの方から逆補正，SSPの影響を足す
+    ! SSH_array(2,11) = 1677.7 - (10163.-10130.)
 end subroutine
 
 subroutine calibrated_fukauraSSH(calibrated_SSH_array)
@@ -442,14 +437,15 @@ subroutine calibrated_fukauraSSH(calibrated_SSH_array)
             end if
         end do
     end do
+    ! calibrated_SSH_array(2,11) = (sum(calibrated_SSH_array(1:15,11))/real(years-1))
 
 end subroutine
 
 ! SSH and SSP at Tappi
-subroutine tappiSSH(SSH_array,SSP_array)
+subroutine tappiSSH(SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
-    real,dimension(years,months),intent(out)::SSH_array,SSP_array
+    real,dimension(years,months),intent(out)::SSH_array
     integer::y,m,ios,yyyy,mm,nodata
     real::SSH,SSP
     character::filename*999
@@ -462,17 +458,12 @@ subroutine tappiSSH(SSH_array,SSP_array)
         do m = 1,12
             read(92,*,iostat = ios)yyyy,mm,SSH,nodata,SSP
             ! print*,yyyy,mm,SSH,nodata,SSP
-            SSH_array(y,m) = SSH;SSP_array(y,m) = SSP
+            SSH_array(y,m) = SSH
         end do
     end do
     close(92)
-    do y = 1, years
-        do m = 1, months
-            if(SSH_array(y,m)/=0.) then
-                SSH_array(y,m) = SSH_array(y,m) + (SSP_array(y,m)-10130)
-            else;end if 
-        end do
-    end do
+    ! calibratedの方から逆補正，SSPの影響を足す
+    ! SSH_array(11,2) = 983.5 - (10177.-10130.)
 end subroutine
 
 subroutine calibrated_tappiSSH(calibrated_SSH_array)
@@ -504,8 +495,65 @@ subroutine calibrated_tappiSSH(calibrated_SSH_array)
             end if
         end do
     end do
+    ! calibrated_SSH_array(11,2) = sum(calibrated_SSH_array(1:15,2))/real(years-2)
+end subroutine
+
+subroutine matsumaeSSH(SSH_array)
+    implicit none
+    integer,parameter::years = 15, months = 12
+    real,dimension(years,months),intent(out)::SSH_array
+    integer::y,m,ios,yyyy,mm,nodata
+    real::SSH,SSP
+    character::filename*999
+
+    ! 102 format((i4),(i2.2),(f9.4))
+    ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
+    filename = '../Data/SSH/Matsumae_Tides.csv'
+    open(92,file = filename, status = 'old',action = 'read')
+    do y = 1,years
+        do m = 1,12
+            read(92,*,iostat = ios)yyyy,mm,SSH,nodata,SSP
+            ! print*,yyyy,mm,SSH,nodata,SSP
+            SSH_array(y,m) = SSH
+        end do
+    end do
+    close(92)
+end subroutine
+
+subroutine calibrated_matsumaeSSH(calibrated_SSH_array)
+    implicit none
+    integer,parameter::years = 15, months = 12
+    real,dimension(years,months),intent(out)::calibrated_SSH_array
+    real,dimension(years,months)::SSH_array=0.,SSP_array=0.
+    integer::y,m,ios,yyyy,mm,nodata
+    real::SSH,SSP
+    character::filename*999
+
+    ! 102 format((i4),(i2.2),(f9.4))
+    ! 103 format((i4),(i2.2),(f9.4),(i2),(f9.4))
+    filename = '../Data/SSH/Matsumae_Tides.csv'
+    open(92,file = filename, status = 'old',action = 'read')
+    do y = 1,years
+        do m = 1,12
+            read(92,*,iostat = ios)yyyy,mm,SSH,nodata,SSP
+            ! print*,ios,yyyy,mm,SSH,nodata,SSP
+            SSH_array(y,m) = SSH;SSP_array(y,m) = SSP
+        end do
+    end do
+    close(92)
+    do y = 1,years
+        do m = 1,months
+            if(SSH_array(y,m)/=0.) then
+                calibrated_SSH_array(y,m) = SSH_array(y,m) + (SSP_array(y,m)-10130)
+            else;calibrated_SSH_array(y,m) = 0.
+            end if
+        end do
+    end do
 
 end subroutine
+
+
+
 
                                             ! SUBROUTINES FOR DATA OBTAINMENT !
 
@@ -872,8 +920,8 @@ subroutine create_DH_array(sigma_array,DH_array)
     integer::y,m,l,st,d
     double precision::hiyou
     double precision::zero;double precision::one;double precision::four;double precision::ten;double precision::thousand
-    double precision::firstsum;double precision::DH;double precision::g
-    one = 1.0d0;four = 4.0d0;ten = 10.0d0;thousand = 1000.0d0; g = 9.8d0
+    double precision::firstsum=0.0d0;double precision::DH=0.0d0;double precision::g
+    zero = 0.0d0;one = 1.0d0;four = 4.0d0;ten = 10.0d0;thousand = 1000.0d0; g = 9.8d0
 
     do y = 1, years
         do m = 1, months
@@ -1248,6 +1296,43 @@ subroutine mod12_memori(iterations,symbol_size,length,x,y)
     call plot(-x,-y,-3)
 end subroutine
 
+! inc_dec == 0 means 1 -> 12, inc_dec == 1 means 12 -> 1
+subroutine mod12_memori2(iterations,symbol_size,angle,length,inc_dec)
+    implicit none
+    real,intent(in)::symbol_size,length
+    integer,intent(in)::iterations,angle,inc_dec
+    real::dx
+    integer::n,m,printm
+
+    dx = length/real(iterations+1)
+    if(angle==0) then
+        call newpen2(3)
+        call plot(0.,0.,3);call plot(length,0.,2)
+        do n = 1,iterations
+            if (mod(n,12)/=0) then;m = mod(n,12)
+            else if(mod(n,12)==0) then;m = 12
+            else;end if
+            call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
+            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+            call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+        end do
+    else if(angle == -90) then
+        call newpen2(3)
+        call plot(0.,0.,3);call plot(0.,length,2)
+        do n = 1,iterations
+            if (mod(n,12)/=0) then;m = mod(n,12)
+            else if(mod(n,12)==0) then;m = 12
+            else;end if
+            call plot(0.,real(n)*dx,3);call plot(-0.1,real(n)*dx,2)
+            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+            call numberc(-1.3*symbol_size,real(n)*dx,symbol_size,real(printm),0.,-1)
+        end do
+    end if
+
+       
+
+end subroutine
+
 ! month names array
 subroutine month_str_array(month_names)
     implicit none
@@ -1280,11 +1365,33 @@ subroutine psframe(ini_st,fin_st,depth,width,height,memori_size)
     end do
 end subroutine
 
-! creating map 
-subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
+! top_bottom == 0 means bottom, top_bottom == 1 means top
+subroutine st_memori(ini_st,fin_st,length,top_bottom,symbol_size)
     implicit none
-    integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st
-    real,intent(in):: width
+    integer,intent(in)::ini_st,fin_st,top_bottom
+    real,intent(in)::length,symbol_size
+    real::dx
+    integer::n
+
+    dx = length/real(fin_st-ini_st+1)
+    if(top_bottom == 0) then
+        do n = 1,fin_st-ini_st+1
+            call plot(dx/2.+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,-symbol_size*0.2,2)
+            call numberc(dx/2.+real(n-1)*dx,-symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+        end do
+    else if(top_bottom == 1) then
+        do n = 1,fin_st-ini_st+1
+            call plot(dx/2.+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,symbol_size*0.2,2)
+            call numberc(dx/2.+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+        end do
+    end if
+end subroutine
+
+! creating map   line_opt == 1 means NLine, line_opt == 2 means SLine, line_opt == 3 means both
+subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,line_opt,width,symbol_size)
+    implicit none
+    integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,line_opt
+    real,intent(in):: width,symbol_size
     intrinsic sin,cos,tan,asin,acos
     integer,parameter::imax = 2080,jmax = 2640,station_x = 9, station_y = 2
     real,dimension(:,:),allocatable::dep
@@ -1323,20 +1430,30 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
         dy = height/real(je-js)
 
         ! call plot(x,y,-3)
-        call newpen2(3)
+        if (symbol_size<=0.2) then;call newpen2(2);else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3);else;call newpen2(4);end if
         call rgbk(0.,0.,0.)
         call pscont3(dx,dy,dep,dep_m,is,ie,js,je,imax,jmax,1,0.,10.)
     end if
     call rgbk(0.,0.,0.)
     call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
     do n = 0,fin_long-ini_long
-        call plot(dx*80.*real(n),0.,3);call plot(dx*80.*real(n),-0.1,2);call numberc(dx*80.*real(n),-0.4,0.2,real(n+ini_long),0.,-1)
+        call plot(dx*80.*real(n),0.,3);call plot(dx*80.*real(n),-symbol_size*0.5,2);call numberc(dx*80.*real(n),-symbol_size*1.4,symbol_size,real(n+ini_long),0.,-1)
+        if(n/=fin_long-ini_long) then
+            do i = 1, 9
+                call plot(dx*80.*(real(n)+real(i)/10.),0.,3);call plot(dx*80.*(real(n)+real(i)/10.),-symbol_size*0.25,2)
+            end do
+        end if
     end do
     do n = 0,fin_lat-ini_lat
-        call plot(0.,dy*120.*real(n),3);call plot(-0.1,dy*120.*real(n),2);call numberc(-0.3,dy*120.*real(n),0.2,real(n+ini_lat),0.,-1)
+        call plot(0.,dy*120.*real(n),3);call plot(-symbol_size*0.5,dy*120.*real(n),2);call numberc(-symbol_size*1.2,dy*120.*real(n),symbol_size,real(n+ini_lat),0.,-1)
+        if(n/=fin_lat - ini_lat) then
+            do i = 1,9
+                call plot(0.,dy*120.*(real(n)+real(i)/10.),3);call plot(-symbol_size*0.25,dy*120.*(real(n)+real(i)/10.),2)
+            end do
+        end if
     end do
-    call symbolc(width/2.,-0.6,0.2,'Long (E)',0.,len('Long (e)'))
-    call symbolc(-0.6,height/2.,0.2,'Lat (N)',90.,len('Lat (n)'))
+    call symbolc(width/2.,-symbol_size*2.5,symbol_size*0.8,'Long (E)',0.,len('Long (e)'))
+    call symbolc(-symbol_size*2.5,height/2.,symbol_size*0.8,'Lat (N)',90.,len('Lat (n)'))
     if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
         do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
             filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
@@ -1344,21 +1461,27 @@ subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,width)
             open(32,file=filename,status = 'old',action = 'read')
             read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
             close(32)
-            do n = ini_st,fin_st; xco = dx*(lon(line_num,n)-real(ini_long))*80.
-                if (line_num ==1) then
-                    if(n==1.or.n==2.or.n==3)then;call gmark(xco,NLineYco,0.1,1);call numberc(xco,NLineYco+0.1,0.15,real(10-n),0.,-1)
-                    else if(n==4.or.n==5.or.n==6)then;call gmark(xco,NLineYco,0.1,6);call numberc(xco,NLineYco+0.1,0.15,real(10-n),0.,-1)
-                    else if(n==7.or.n==8.or.n==9)then;call gmark(xco,NLineYco,0.1,8);call numberc(xco,NLineYco+0.1,0.15,real(10-n),0.,-1)
+            do n = ini_st,fin_st; xco = dx*(lon(line_num,10-n)-real(ini_long))*80.
+                if (line_num ==1 .and. line_opt/=2) then
+                    if(n==1.or.n==2.or.n==3)then;call gmark(xco,NLineYco,symbol_size*0.4,1);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
+                    else if(n==4.or.n==5.or.n==6)then;call gmark(xco,NLineYco,symbol_size*0.4,6);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
+                    else if(n==7.or.n==8.or.n==9)then;call gmark(xco,NLineYco,symbol_size*0.4,8);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
                     else;end if
-                else if(line_num ==2) then
-                    if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,0.1,1);call numberc(xco,SLineYco-0.2,0.15,real(10-n),0.,-1)
-                    else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,0.1,6);call numberc(xco,SLineYco-0.2,0.15,real(10-n),0.,-1)
-                    else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,0.1,8);call numberc(xco,SLineYco-0.2,0.15,real(10-n),0.,-1)
+                else if(line_num ==2 .and. line_opt /= 1) then
+                    if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,symbol_size*0.4,1);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
+                    else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,symbol_size*0.4,6);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
+                    else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,symbol_size*0.4,8);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
                     else;end if
-            else;end if;end do
+                else;end if
+            end do
         end do
-        call symbol(dx*(lon(1,1)-real(ini_long))*80.,NLineYco+0.3,0.2,'N-Line',0.,6)
-        call symbol(dx*(lon(2,1)-real(ini_long))*80.,SLineYco-0.4,0.2,'S-Line',0.,6)
+        if(line_opt ==1 ) then
+            call symbol(dx*(lon(1,1)-real(ini_long))*80.,NLineYco+symbol_size*1.5,symbol_size,'N-Line',0.,6)
+        else if(line_opt==2) then
+            call symbol(dx*(lon(2,1)-real(ini_long))*80.,SLineYco-symbol_size*2.3,symbol_size,'S-Line',0.,6)
+        else;call symbol(dx*(lon(1,1)-real(ini_long))*80.,NLineYco+symbol_size*1.5,symbol_size,'N-Line',0.,6)
+             call symbol(dx*(lon(2,1)-real(ini_long))*80.,SLineYco-symbol_size*2.3,symbol_size,'S-Line',0.,6)
+        end if
     else
         print*,'stations are just outside of your map, like a perfect flower that is just beyond your reach...(mj)'
     end if
@@ -1477,12 +1600,14 @@ subroutine betcolork(starting_x,dx,dy,oneD_array,array_size,mask,ini_value,fin_v
     integer::n
 
     do n = 1, array_size
+        ! print*,oneD_array(n)
         if(mask(n)/=0) then
             if(ini_value<=oneD_array(n) .and. oneD_array(n)<=fin_value) then
                 call betsqk(starting_x,real(n-1)*dy,starting_x+dx,real(n)*dy,r,g,b)
             else;end if
         else;end if
     end do
+    ! print*,"ongongo"
 
 end subroutine
 
@@ -1832,7 +1957,7 @@ subroutine colorscale_creator(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbo
                 else;end if
             end do
             call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,fin_num,0.,float_quantity)
+            call symbolr(1.4*symbol_size,length+memori_diff*1.5,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.5,symbol_size*0.7,fin_num,0.,float_quantity)
         end if
     else;end if 
 
