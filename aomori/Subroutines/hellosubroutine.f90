@@ -1254,6 +1254,118 @@ subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_q
 
 end subroutine
 
+subroutine num_memori2(x,y,ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lessthan,morethan)
+    implicit none
+    real,intent(in)::ini_num,fin_num,symbol_size,length,x,y
+    integer,intent(in)::iterations,symbol_freq,angle,lessthan,morethan,float_quantity
+    real::memori_diff,num_diff
+    integer::n
+
+    call plot(x,y,-3)
+    
+    if(morethan==0 .and. lessthan==0) then
+        call newpen2(3)
+        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+        if(angle == 0) then
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then
+                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+                    call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+                end if
+            end do
+        else if(angle == 90) then
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then
+                    call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+                    call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+                end if
+            end do
+        else if (angle == -90) then
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then
+                    call plot(0.,real(n)*memori_diff,3);call plot(-0.1,real(n)*memori_diff,2)
+                    call numberr(-0.1,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                else;call plot(0.,real(n)*memori_diff,3);call plot(-0.05,real(n)*memori_diff,2)
+                end if
+            end do
+        else;end if
+    else;end if
+
+    if(morethan==1 .and. lessthan==1) then
+        call newpen2(3)
+        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+        if(angle == 0) then
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+                end if
+            end do
+            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+        else !(angle == 90)
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
+                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+                end if
+            end do
+            call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
+        end if
+    else;end if 
+
+   if(morethan==1 .and. lessthan==0) then
+    call newpen2(3)
+        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+        if(angle == 0) then
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+                else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+                end if
+            end do
+            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+        else !(angle == 90)
+            do n = 0, iterations
+                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
+                else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+                end if
+            end do
+            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
+        end if
+    else;end if
+
+    if(morethan==0 .and. lessthan==1) then
+        call newpen2(3)
+            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+            if(angle == 0) then
+                do n = 0, iterations
+                    if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+                    else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+                    end if
+                end do
+                call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+            else !(angle == 90)
+                do n = 0, iterations
+                    if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                    call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
+                    else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+                    end if
+                end do
+                call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+            end if
+    else;end if   
+
+
+        call plot(-x,-y,-3)
+
+end subroutine
+
 ! create month memori
 subroutine month_memori(symbol_size,length)
     implicit none
@@ -1272,6 +1384,7 @@ subroutine month_memori(symbol_size,length)
     end do
 end subroutine
 
+! landscape only
 subroutine mod12_memori(iterations,symbol_size,length,x,y)
     implicit none
     real,intent(in)::symbol_size,length,x,y
@@ -1296,7 +1409,7 @@ subroutine mod12_memori(iterations,symbol_size,length,x,y)
     call plot(-x,-y,-3)
 end subroutine
 
-! inc_dec == 0 means 1 -> 12, inc_dec == 1 means 12 -> 1
+! inc_dec == 0 means 1 -> 12, inc_dec == 1 means 12 -> 1 gap between memori and box is dx by default sucka
 subroutine mod12_memori2(iterations,symbol_size,angle,length,inc_dec)
     implicit none
     real,intent(in)::symbol_size,length
@@ -1333,12 +1446,64 @@ subroutine mod12_memori2(iterations,symbol_size,angle,length,inc_dec)
 
 end subroutine
 
-! month names array
-subroutine month_str_array(month_names)
+! you can choose the gap between the memori and the box. gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.. it's really stupid what i go thru
+subroutine mod12_memori3(x,y,iterations,symbol_size,angle,length,inc_dec,gap)
     implicit none
-    character(len=4),dimension(12),intent(out)::month_names
+    real,intent(in)::symbol_size,length,x,y
+    integer,intent(in)::iterations,angle,inc_dec,gap
+    real::dx,gappy
+    integer::n,m,printm
 
-    month_names = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
+    call plot(x,y,-3)
+
+    if(gap == 2) then
+        dx = length/real(iterations);gappy = dx/2.
+        else if(gap == 1) then
+            dx = length/real(iterations+1);gappy = dx
+        else if(gap == 0) then
+            dx = length/real(iterations-1);gappy = 0.
+    end if
+    if(angle==0) then
+        call newpen2(3)
+        call plot(0.,0.,3);call plot(length,0.,2)
+        do n = 1,iterations
+            if (mod(n,12)/=0) then;m = mod(n,12)
+            else if(mod(n,12)==0) then;m = 12
+            else;end if
+            call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.1,2)
+            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+            call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+        end do
+    else if(angle == -90) then
+        call newpen2(3)
+        call plot(0.,0.,3);call plot(0.,length,2)
+        do n = 1,iterations
+            if (mod(n,12)/=0) then;m = mod(n,12)
+            else if(mod(n,12)==0) then;m = 12
+            else;end if
+            call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.1,gappy+real(n-1)*dx,2)
+            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+            call numberc(-1.3*symbol_size,gappy+real(n-1)*dx,symbol_size,real(printm),0.,-1)
+        end do
+    end if
+
+    call plot(-x,-y,-3)
+       
+
+end subroutine
+
+subroutine floating_numbers(x,y,ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,angle,float_quantity)
+    real,intent(in)::x,y,symbol_size,x_inc,y_inc,angle,ini_num,num_inc
+    integer,intent(in)::iterations,float_quantity
+    integer::n
+    real::printnum
+
+    call plot(x,y,-3)
+    do n = 1, iterations
+        printnum = ini_num + num_inc*real(n-1)
+        call numberc(real(n-1)*x_inc,real(n-1)*y_inc,symbol_size,printnum,angle,float_quantity)
+    end do
+    call plot(-x,-y,-3)
 end subroutine
 
 ! creating ps frame
@@ -1365,24 +1530,30 @@ subroutine psframe(ini_st,fin_st,depth,width,height,memori_size)
     end do
 end subroutine
 
-! top_bottom == 0 means bottom, top_bottom == 1 means top
-subroutine st_memori(ini_st,fin_st,length,top_bottom,symbol_size)
+! top_bottom == 0 means top, top_bottom == 1 means bottom, gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.
+subroutine st_memori(ini_st,fin_st,width,top_bottom,symbol_size,gap)
     implicit none
-    integer,intent(in)::ini_st,fin_st,top_bottom
-    real,intent(in)::length,symbol_size
-    real::dx
+    integer,intent(in)::ini_st,fin_st,top_bottom,gap
+    real,intent(in)::width,symbol_size
+    real::dx,gappy
     integer::n
 
-    dx = length/real(fin_st-ini_st+1)
-    if(top_bottom == 0) then
+    if(gap == 2) then
+    dx = width/real(fin_st-ini_st+1);gappy = dx/2.
+    else if(gap == 1) then
+        dx = width/real(fin_st-ini_st+2);gappy = dx
+    else if(gap == 0) then
+        dx = width/real(fin_st-ini_st);gappy = 0.
+    end if
+    if(top_bottom == 1) then
         do n = 1,fin_st-ini_st+1
-            call plot(dx/2.+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,-symbol_size*0.2,2)
-            call numberc(dx/2.+real(n-1)*dx,-symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+            call plot(gappy+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,-symbol_size*0.2,2)
+            call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
         end do
-    else if(top_bottom == 1) then
+    else if(top_bottom == 0) then
         do n = 1,fin_st-ini_st+1
-            call plot(dx/2.+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,symbol_size*0.2,2)
-            call numberc(dx/2.+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+            call plot(gappy+real(n-1)*dx,0.,3);call plot(dx/2.+real(n-1)*dx,symbol_size*0.2,2)
+            call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
         end do
     end if
 end subroutine
@@ -1590,6 +1761,14 @@ subroutine gmark_ratio(input_value,min,max,length,output)
 
 end subroutine
 
+! month names array
+subroutine month_str_array(month_names)
+    implicit none
+    character(len=4),dimension(12),intent(out)::month_names
+
+    month_names = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
+end subroutine
+
 ! betanuri version of ps color, only works for 1D arrays
 subroutine betcolork(starting_x,dx,dy,oneD_array,array_size,mask,ini_value,fin_value,r,g,b)
     implicit none
@@ -1608,6 +1787,26 @@ subroutine betcolork(starting_x,dx,dy,oneD_array,array_size,mask,ini_value,fin_v
         else;end if
     end do
     ! print*,"ongongo"
+
+end subroutine
+
+subroutine betcolork2(dx,dy,twoD_array,mask,ix,ex,iy,ey,x_size,y_size,ini_value,fin_value,r,g,b)
+    implicit none
+    integer,intent(in)::ix,ex,iy,ey,x_size,y_size
+    real,dimension(x_size,y_size),intent(in)::twoD_array
+    integer,dimension(x_size,y_size),intent(in)::mask
+    real,intent(in)::ini_value,fin_value,r,g,b,dx,dy
+    integer::n,m
+
+    do n = ix, ex
+        do m = iy,ey
+            if(mask(n,m)/=0) then
+                if(ini_value<=twoD_array(n,m) .and. twoD_array(n,m)<=fin_value) then
+                    call betsqk(real(n-1)*dx,real(m-1)*dy,real(n)*dx,real(m)*dy,r,g,b)
+                else;end if
+            else;end if
+        end do
+    end do
 
 end subroutine
 
@@ -1818,11 +2017,11 @@ subroutine b2gy2r_colorgrad(iterations,midpoint,r,g,b)
     r(iterations+1) = 0.8 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
 end subroutine
 
-! color gradient from red to green useful for data num. size of rgb array is (iterations)
+! color gradient from red to green useful for data num. size of rgb array is (0:iterations+1)
 subroutine r2g_colorgrad(iterations,midpoint,r,g,b)
     implicit none
     integer,intent(in)::iterations,midpoint
-    real,dimension(iterations),intent(out)::r,g,b
+    real,dimension(0:iterations+1),intent(out)::r,g,b
     integer::n 
 
     do n = 1,iterations
@@ -1843,7 +2042,7 @@ end subroutine
 subroutine bk2r2g_colorgrad(iterations,midpoint,r,g,b)
     implicit none
     integer,intent(in)::iterations,midpoint
-    real,dimension(iterations),intent(out)::r,g,b 
+    real,dimension(0:iterations+1),intent(out)::r,g,b 
     integer::n 
 
     r(1) = 0.; g(1) = 0.; b(1) = 0.
@@ -1859,6 +2058,100 @@ subroutine bk2r2g_colorgrad(iterations,midpoint,r,g,b)
         end if
     end do
 
+end subroutine
+
+! b->g,zeropoint,y->r. bluegreen==dark->light, yellowred==light->dark
+subroutine b2g2y2r_colorgrad(iterations,zeropoint,r,g,b)
+    implicit none
+    integer,intent(in)::iterations,zeropoint
+    real,dimension(0:iterations+1),intent(out)::r,g,b
+    integer::n,loop
+
+    r(0)=0.;g(0)=0.;b(0)=0.9
+    if(mod(zeropoint,2)==0) then
+        loop = zeropoint/2
+    else
+        loop = (zeropoint+1)/2
+    end if
+    ! from dark blue to light blue
+    do n = 1, loop
+        r(n) = 0.+(real(n-1)/real(loop-1))*0.8
+        g(n) = 0.+(real(n-1)/real(loop-1))*0.8
+        b(n) = 1.
+    end do
+    ! from light green to dark green
+    do n = 1, zeropoint-loop
+        r(n+loop) = (real(n-1)/real(zeropoint-loop-1))*0.8
+        g(n+loop) = 1.
+        b(n+loop) = (real(n-1)/real(zeropoint-loop-1))*0.8
+    end do
+
+    if(mod(iterations-zeropoint,2)==0) then
+        loop = (iterations-zeropoint)/2
+    else
+        loop = (iterations-zeropoint-1)/2
+    end if
+    ! from light yellow to dark yellow
+    do n = 1, loop
+        r(n+zeropoint) = 1.
+        g(n+zeropoint) = 1.
+        b(n+zeropoint) = 0.8-(real(n-1)/real(loop-1))*0.8
+    end do
+    ! from light red to dark red
+    do n = 1, iterations-zeropoint-loop
+        r(n+zeropoint+loop) = 1.
+        g(n+zeropoint+loop) = 0.9-(real(n-1)/real(iterations-zeropoint-loop-1))*0.9
+        b(n+zeropoint+loop) = 0.9-(real(n-1)/real(iterations-zeropoint-loop-1))*0.9
+    end do
+    r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
+end subroutine
+
+! b,zeropoint,g->y->r. blue==dark->light, greenyellowred==light->dark
+subroutine b2g2y2r_colorgrad2(iterations,zeropoint,r,g,b)
+    implicit none
+    integer,intent(in)::iterations,zeropoint
+    real,dimension(0:iterations+1),intent(out)::r,g,b
+    integer::n,loop,a,c
+
+    r(0)=0.;g(0)=0.;b(0)=0.8
+    ! from dark blue to light blue
+    do n = 1, zeropoint
+        r(n) = 0.+(real(n-1)/real(zeropoint-1))*0.9
+        g(n) = 0.+(real(n-1)/real(zeropoint-1))*0.9
+        b(n) = 1.
+    end do
+    if(mod(iterations-zeropoint,3)==0) then
+        loop = (iterations-zeropoint)/3
+        a = 0;c=0
+    else if(mod(iterations-zeropoint,3)==1) then
+        loop = ((iterations-zeropoint)-1)/3
+        a = 1;c=0
+    else if(mod(iterations-zeropoint,3)==2) then
+        loop = ((iterations-zeropoint)-2)/3
+        a = 1;c=1
+    end if
+
+    ! from light green to dark green
+    do n = 1, loop
+        r(n+zeropoint) = 0.9-(real(n-1)/real(loop-1))*0.9
+        g(n+zeropoint) = 1.
+        b(n+zeropoint) = 0.9-(real(n-1)/real(loop-1))*0.9
+    end do
+
+    ! from light yellow to dark yellow
+    do n = 1, loop+a
+        r(n+zeropoint+loop) = 1.
+        g(n+zeropoint+loop) = 1.
+        b(n+zeropoint+loop) = 0.9-(real(n-1)/real(loop+a-1))*0.9
+    end do
+
+    ! from light red to dark red
+    do n = 1, loop+c
+        r(n+zeropoint+2*loop+a) = 1.
+        g(n+zeropoint+2*loop+a) = 0.9-(real(n-1)/real(loop+c-1))*0.9
+        b(n+zeropoint+2*loop+a) = 0.9-(real(n-1)/real(loop+c-1))*0.9
+    end do
+    r(iterations+1) = 0.8;g(iterations+1) = 0.;b(iterations+1) = 0.
 end subroutine
 
 ! makes a colorscale legend corresponding to arrays of r,g,b. ARRAY SIZE HAS TO BE (ITERATIONS+2). otherwise you will shit yourself
@@ -1956,8 +2249,8 @@ subroutine colorscale_creator(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbo
                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                 else;end if
             end do
-            call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+memori_diff*1.5,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.5,symbol_size*0.7,fin_num,0.,float_quantity)
+            call symbolr(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,ini_num,0.,float_quantity)
+            call symbolr(1.4*symbol_size,length+symbol_size,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
         end if
     else;end if 
 
