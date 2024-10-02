@@ -24,11 +24,14 @@
 
       write(16,'(a)') "%!PS-Adobe-2.1"
       write(16,'(a)') "%%Creator: PS-LibraryV2 97.08.08" 
+      ! write(16,'(a)') "%%Creator: Yuta Nishimori" 
+
       write(16,'(a)') "%%Copyright: PS-LibraryV2  Fukuda & Saito" 
       write(16,'(2a)') "%%CreationDate: ",date
       write(16,'(2a)') "%%Title: ",head(1:lhead)
+      
       write(16,'(a)') "%%Pages: (atend)"
-      write(16,'(a)') "%%BoundingBox: 0 0 600 792 "
+      write(16,'(a)') "%%BoundingBox: 0 0 612 792 "
       write(16,'(a)') "%%EndComments"
       write(16,'(a)') "%%BeginPlolog"
       write(16,'(a)') "%%%PS-LibraryV2(Spring-Tulip) define start %%%"
