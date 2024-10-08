@@ -408,7 +408,6 @@ subroutine fukauraSSH(SSH_array)
     ! calibratedの方から逆補正，SSPの影響を足す
     ! SSH_array(2,11) = 1677.7 - (10163.-10130.)
 end subroutine
-
 subroutine calibrated_fukauraSSH(calibrated_SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
@@ -441,7 +440,6 @@ subroutine calibrated_fukauraSSH(calibrated_SSH_array)
     ! calibrated_SSH_array(2,11) = (sum(calibrated_SSH_array(1:15,11))/real(years-1))
 
 end subroutine
-
 ! SSH and SSP at Tappi
 subroutine tappiSSH(SSH_array)
     implicit none
@@ -466,7 +464,6 @@ subroutine tappiSSH(SSH_array)
     ! calibratedの方から逆補正，SSPの影響を足す
     ! SSH_array(11,2) = 983.5 - (10177.-10130.)
 end subroutine
-
 subroutine calibrated_tappiSSH(calibrated_SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
@@ -498,7 +495,6 @@ subroutine calibrated_tappiSSH(calibrated_SSH_array)
     end do
     ! calibrated_SSH_array(11,2) = sum(calibrated_SSH_array(1:15,2))/real(years-2)
 end subroutine
-
 subroutine matsumaeSSH(SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
@@ -520,7 +516,6 @@ subroutine matsumaeSSH(SSH_array)
     end do
     close(92)
 end subroutine
-
 subroutine calibrated_matsumaeSSH(calibrated_SSH_array)
     implicit none
     integer,parameter::years = 15, months = 12
@@ -559,335 +554,6 @@ end subroutine
                                             ! SUBROUTINES FOR DATA OBTAINMENT !
 
                                             ! SUBROUTINES FOR DATA MANIPULATION !
-
-! getting monthly average and sd from an array, (years,months,lines,stations,depth) to (months,lines,stations,depth) single precision
-subroutine avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth),intent(in)::input_array
-    real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array
-    integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
-    integer::y,m,l,st,d,data_quan=0
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do st = 1, stations
-                do d = 1, depth
-                    do y = 1, years
-                        if (input_array(y,m,l,st,d)/=0.) then
-                            sum = first_sum + input_array(y,m,l,st,d)
-                            first_sum = sum
-                            data_quan = data_quan +1
-                        else;end if
-                    end do
-                    dataquan_array(m,l,st,d) = data_quan
-                    if (data_quan/=0) then
-                        average = sum/real(data_quan)
-                        do y = 1, years !loop to get SD
-                            if (input_array(y,m,l,st,d)/=0.) then
-                                devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
-                                first_devsq = devsq_sum
-                            else;end if
-                        end do
-                        variance = devsq_sum/real(data_quan -1)
-                        SD = sqrt(variance)
-                        average_array(m,l,st,d) = average
-                        sd_array(m,l,st,d) = SD
-                    else;average = 0.;SD = 0.;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.
-                    end if
-                    first_sum = 0.
-                    data_quan = 0
-                    first_devsq = 0.
-                end do
-            end do
-        end do
-    end do
-
-
-end subroutine
-
-! getting monthly average and sd from (years,months,lines) to array(months,lines) single precision for geostrophic transport
-subroutine avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2
-    real,dimension(years,months,lines),intent(in)::input_array
-    real,dimension(months,lines),intent(out)::average_array,sd_array
-    integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
-    real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
-    integer::y,m,l,data_quan=0
-
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do y = 1, years
-                if (input_array(y,m,l)/=0.) then
-                    sum = first_sum + input_array(y,m,l)
-                    first_sum = sum
-                    data_quan = data_quan +1
-                else;end if
-            end do
-                dataquan_array(m,l) = data_quan
-                if (data_quan/=0) then
-                    average = sum/real(data_quan)
-                    do y = 1, years !loop to get SD
-                        if (input_array(y,m,l)/=0.) then
-                            devsq_sum = first_devsq + (input_array(y,m,l) - average)**2.
-                            first_devsq = devsq_sum
-                        else;end if
-                    end do
-                        variance = devsq_sum/real(data_quan -1)
-                        SD = sqrt(variance)
-                        average_array(m,l) = average
-                        sd_array(m,l) = SD
-                else;average = 0.;SD = 0.;average_array(m,l) = 0.;sd_array(m,l) = 0.
-                end if
-                first_sum = 0.
-                data_quan = 0
-                first_devsq = 0.
-        end do
-    end do
-
-end subroutine
-
-! getting monthly average and (an estimate of) standard error of the mean(SEM). 5D to 4D 
-subroutine avsem_dataquan(input_array,average_array,sem_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth),intent(in)::input_array
-    real,dimension(months,lines,stations,depth),intent(out)::average_array,sem_array
-    integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
-    integer::y,m,l,st,d,data_quan=0
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準誤差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do st = 1, stations
-                do d = 1, depth
-                    do y = 1, years
-                        if (input_array(y,m,l,st,d)/=0.) then
-                            sum = first_sum + input_array(y,m,l,st,d)
-                            first_sum = sum
-                            data_quan = data_quan +1
-                        else;end if
-                    end do
-                    dataquan_array(m,l,st,d) = data_quan
-                    if (data_quan/=0) then
-                        average = sum/real(data_quan)
-                        do y = 1, years !loop to get SEM
-                            if (input_array(y,m,l,st,d)/=0.) then
-                                devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
-                                first_devsq = devsq_sum
-                            else;end if
-                        end do
-                        variance = devsq_sum/real(data_quan -1)/real(data_quan) !variance of means in this case
-                        SEM = sqrt(variance)
-                        average_array(m,l,st,d) = average
-                        sem_array(m,l,st,d) = SEM
-                    else;average = 0.;SEM = 0.;average_array(m,l,st,d) = 0.;sem_array(m,l,st,d) = 0.
-                    end if
-                    first_sum = 0.
-                    data_quan = 0
-                    first_devsq = 0.
-                end do
-            end do
-        end do
-    end do
-
-end subroutine
-! array(years,months) to array(months)
-subroutine avsem_dataquan3(input_array,average_array,sem_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12
-    real,dimension(years,months),intent(in)::input_array 
-    real,dimension(months),intent(out)::average_array,sem_array
-    integer,dimension(months),intent(out)::dataquan_array !�f�[�^���͌��X
-    real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
-    integer::y,m,data_quan=0
-
-
-    !�f�[�^�̑I�ʂ͂��̃T�u���[�`����ʂ��O�ɍs���B����͕��ςƕW���΍����v�Z���Ă���邾���B��S�N�f�[�^��
-        do m = 1, months 
-            do y = 1, years
-                if (input_array(y,m)/=0.) then
-                    sum = first_sum + input_array(y,m)
-                    first_sum = sum
-                    data_quan = data_quan +1
-                else;end if
-            end do
-                dataquan_array(m) = data_quan
-                if (data_quan/=0) then
-                    average = sum/real(data_quan)
-                    do y = 1, years !loop to get SD
-                        if (input_array(y,m)/=0.) then
-                            devsq_sum = first_devsq + (input_array(y,m) - average)**2.
-                            first_devsq = devsq_sum
-                        else;end if
-                    end do
-                    variance = devsq_sum/real(data_quan -1)/real(data_quan) !variance of means in this case
-                    SEM = sqrt(variance)
-                    average_array(m) = average
-                    sem_array(m) = SEM
-                else;average = 0.;SEM = 0.;average_array(m) = 0.;sem_array(m) = 0.
-                end if
-                first_sum = 0.
-                data_quan = 0
-                first_devsq = 0.
-        end do
-end subroutine
-
-! Is a fusion of avsd_dataquan and avsem_dataquan
-subroutine avsdsem_dataquan(input_array,average_array,sd_array,sem_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth),intent(in)::input_array
-    real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array,sem_array
-    integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    real::sum,first_sum=0.,average,variance,SD,SEM,devsq_sum,first_devsq=0.
-    integer::y,m,l,st,d,data_quan=0
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差と標準誤差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do st = 1, stations
-                do d = 1, depth
-                    do y = 1, years
-                        if (input_array(y,m,l,st,d)/=0.) then
-                            sum = first_sum + input_array(y,m,l,st,d)
-                            first_sum = sum
-                            data_quan = data_quan +1
-                        else;end if
-                    end do
-                    dataquan_array(m,l,st,d) = data_quan
-                    if (data_quan/=0) then
-                        average = sum/real(data_quan)
-                        do y = 1, years !loop to get SD
-                            if (input_array(y,m,l,st,d)/=0.) then
-                                devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
-                                first_devsq = devsq_sum
-                            else;end if
-                        end do
-                        variance = devsq_sum/real(data_quan -1)  ! sample variance
-                        SD = sqrt(variance) ! sample standard deviation
-                        SEM = SD/sqrt(real(data_quan)) ! standard deviation of means or standard error of the mean
-                        average_array(m,l,st,d) = average
-                        sd_array(m,l,st,d) = SD
-                        sem_array(m,l,st,d) = SEM
-                    else;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.;sem_array(m,l,st,d) = 0.
-                    end if
-                    first_sum = 0.
-                    data_quan = 0
-                    first_devsq = 0.
-                end do
-            end do
-        end do
-    end do
-
-end subroutine
-
-! double precision version of avsd_dataquan
-subroutine dp_avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
-    double precision,intent(in)::input_array(years,months,lines,stations,depth)
-    double precision,intent(out)::average_array(months,lines,stations,depth)
-    double precision,intent(out)::sd_array(months,lines,stations,depth)
-    integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
-    ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
-    double precision:: sum; double precision::first_sum=0.0d0; double precision::average
-    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
-    ! double precision::one
-    integer::y,m,l,st,d,data_quan=0
-
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do st = 1, stations
-                do d = 1, depth
-                    do y = 1, years
-                        if (input_array(y,m,l,st,d)/=0.) then
-                            sum = first_sum + input_array(y,m,l,st,d)
-                            first_sum = sum
-                            data_quan = data_quan +1
-                        else;end if
-                    end do
-                    dataquan_array(m,l,st,d) = data_quan
-                    if (data_quan/=0) then
-                        average = sum/real(data_quan)
-                        do y = 1, years !loop to get SD
-                            if (input_array(y,m,l,st,d)/=0.) then
-                                devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
-                                first_devsq = devsq_sum
-                            else;end if
-                        end do
-                        variance = devsq_sum/real(data_quan -1)
-                        SD = sqrt(variance)
-                        average_array(m,l,st,d) = average
-                        sd_array(m,l,st,d) = SD
-                    else;average = 0.;SD = 0.;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.
-                    end if
-                    first_sum = 0.
-                    data_quan = 0
-                    first_devsq = 0.
-                end do
-            end do
-        end do
-    end do
-
-
-end subroutine
-
-! double precision version of avsd_dataquan2
-subroutine dp_avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
-    implicit none
-    integer,parameter::years=15, months=12, lines=2
-    double precision,intent(in)::input_array(years,months,lines)
-    double precision,intent(out)::average_array(months,lines)
-    double precision,intent(out)::sd_array(months,lines)
-    integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
-    ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
-    double precision:: sum; double precision::first_sum=0.0d0; double precision::average
-    double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
-    ! double precision::one
-    integer::y,m,l,data_quan=0
-
-
-    !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
-    do l = 1,lines
-        do m = 1, months 
-            do y = 1, years
-                if (input_array(y,m,l)/=0.) then
-                    sum = first_sum + input_array(y,m,l)
-                    first_sum = sum
-                    data_quan = data_quan +1
-                else;end if
-            end do
-                dataquan_array(m,l) = data_quan
-                if (data_quan/=0) then
-                    average = sum/real(data_quan)
-                    do y = 1, years !loop to get SD
-                        if (input_array(y,m,l)/=0.) then
-                            devsq_sum = first_devsq + (input_array(y,m,l) - average)**2.
-                            first_devsq = devsq_sum
-                        else;end if
-                    end do
-                        variance = devsq_sum/real(data_quan -1)
-                        SD = sqrt(variance)
-                        average_array(m,l) = average
-                        sd_array(m,l) = SD
-                else;average = 0.;SD = 0.;average_array(m,l) = 0.;sd_array(m,l) = 0.
-                end if
-                first_sum = 0.
-                data_quan = 0
-                first_devsq = 0.
-        end do
-    end do
-
-end subroutine
 
 ! creating sigma array from potemp_5 and sal_5
 subroutine create_sigma_array(temp_array,sal_array,sigma_array)
@@ -1133,406 +799,6 @@ end subroutine
 
                                             ! SUBROUTINES FOR GRAPHS AND SHIT !
 
-! creates a box
-subroutine create_box(width,height,thickness)
-    implicit none
-    real,intent(in)::width,height
-    integer,intent(in)::thickness
-
-    call newpen2(thickness)
-    call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
-end subroutine
-
-! create num memori
-subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lessthan,morethan)
-    implicit none
-    real,intent(in)::ini_num,fin_num,symbol_size,length
-    integer,intent(in)::iterations,symbol_freq,angle,lessthan,morethan,float_quantity
-    real::memori_diff,num_diff
-    integer::n
-
-    
-    if(morethan==0 .and. lessthan==0) then
-        call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                    call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                end if
-            end do
-        else if(angle == 90) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                    call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                end if
-            end do
-        else if (angle == -90) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(-0.1,real(n)*memori_diff,2)
-                    call numberr(-0.1,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(-0.05,real(n)*memori_diff,2)
-                end if
-            end do
-        else;end if
-    else;end if
-
-    if(morethan==1 .and. lessthan==1) then
-        call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                end if
-            end do
-            call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-        end if
-    else;end if 
-
-   if(morethan==1 .and. lessthan==0) then
-    call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                end if
-            end do
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
-                else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                end if
-            end do
-            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-        end if
-    else;end if
-
-    if(morethan==0 .and. lessthan==1) then
-        call newpen2(3)
-            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            if(angle == 0) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                    else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                    end if
-                end do
-                call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            else !(angle == 90)
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
-                    else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                    end if
-                end do
-                call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            end if
-    else;end if   
-
-
-
-
-end subroutine
-
-subroutine num_memori2(x,y,ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lessthan,morethan)
-    implicit none
-    real,intent(in)::ini_num,fin_num,symbol_size,length,x,y
-    integer,intent(in)::iterations,symbol_freq,angle,lessthan,morethan,float_quantity
-    real::memori_diff,num_diff
-    integer::n
-
-    call plot(x,y,-3)
-    
-    if(morethan==0 .and. lessthan==0) then
-        call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                    call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                end if
-            end do
-        else if(angle == 90) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                    call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                end if
-            end do
-        else if (angle == -90) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(-0.1,real(n)*memori_diff,2)
-                    call numberr(-0.1,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(-0.05,real(n)*memori_diff,2)
-                end if
-            end do
-        else;end if
-    else;end if
-
-    if(morethan==1 .and. lessthan==1) then
-        call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                end if
-            end do
-            call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-        end if
-    else;end if 
-
-   if(morethan==1 .and. lessthan==0) then
-    call newpen2(3)
-        memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-        if(angle == 0) then
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                end if
-            end do
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            do n = 0, iterations
-                if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
-                else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                end if
-            end do
-            call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-        end if
-    else;end if
-
-    if(morethan==0 .and. lessthan==1) then
-        call newpen2(3)
-            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            if(angle == 0) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                    else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                    end if
-                end do
-                call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            else !(angle == 90)
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
-                    else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                    end if
-                end do
-                call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            end if
-    else;end if   
-
-
-        call plot(-x,-y,-3)
-
-end subroutine
-
-! create month memori
-subroutine month_memori(symbol_size,length)
-    implicit none
-    real,intent(in)::symbol_size,length
-    real::dx
-    integer::n
-    character(len=4),dimension(12)::month_names
-    
-    call newpen2(2)
-    call month_str_array(month_names)
-    dx = length/13.
-    call plot(0.,0.,3);call plot(length,0.,2)
-    do n = 1,12
-        call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.05,2)
-        call symbolc(real(n)*dx,-1.2*symbol_size,symbol_size,month_names(n),0.,4)
-    end do
-end subroutine
-
-! landscape only
-subroutine mod12_memori(iterations,symbol_size,length,x,y)
-    implicit none
-    real,intent(in)::symbol_size,length,x,y
-    integer,intent(in)::iterations
-    real::dx
-    integer::n,m
-
-    call plot(x,y,-3)
-
-    call newpen2(3)
-    dx = length/real(iterations+1)
-    call plot(0.,0.,3);call plot(length,0.,2)
-    do n = 1,iterations
-        if (mod(n,12)/=0) then;m = mod(n,12)
-        else if(mod(n,12)==0) then;m = 12
-        else;end if
-        call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
-        call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(m),0.,-1)
-    end do
-    call symbolc(length/2.,-symbol_size*3.,symbol_size*0.8,'Months',0.,len('months'))
-
-    call plot(-x,-y,-3)
-end subroutine
-
-! inc_dec == 0 means 1 -> 12, inc_dec == 1 means 12 -> 1 gap between memori and box is dx by default sucka
-subroutine mod12_memori2(iterations,symbol_size,angle,length,inc_dec)
-    implicit none
-    real,intent(in)::symbol_size,length
-    integer,intent(in)::iterations,angle,inc_dec
-    real::dx
-    integer::n,m,printm
-
-    dx = length/real(iterations+1)
-    if(angle==0) then
-        call newpen2(3)
-        call plot(0.,0.,3);call plot(length,0.,2)
-        do n = 1,iterations
-            if (mod(n,12)/=0) then;m = mod(n,12)
-            else if(mod(n,12)==0) then;m = 12
-            else;end if
-            call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
-            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-            call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
-        end do
-    else if(angle == -90) then
-        call newpen2(3)
-        call plot(0.,0.,3);call plot(0.,length,2)
-        do n = 1,iterations
-            if (mod(n,12)/=0) then;m = mod(n,12)
-            else if(mod(n,12)==0) then;m = 12
-            else;end if
-            call plot(0.,real(n)*dx,3);call plot(-0.1,real(n)*dx,2)
-            if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-            call numberc(-1.3*symbol_size,real(n)*dx,symbol_size,real(printm),0.,-1)
-        end do
-    end if
-
-       
-
-end subroutine
-
-! ! you can choose the gap between the memori and the box. gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.. it's really stupid what i go thru
-! subroutine mod12_memori3(x,y,iterations,symbol_size,angle,length,inc_dec,gap,dxval)
-!     implicit none
-!     real,intent(in)::symbol_size,length,x,y
-!     real,intent(out),optional::dxval
-!     integer,intent(in)::iterations,angle,inc_dec,gap
-!     real::dx,gappy
-!     integer::n,m,printm
-
-!     call plot(x,y,-3)
-
-!     if(gap == 2) then
-!         dx = length/real(iterations);gappy = dx/2.
-!         else if(gap == 1) then
-!             dx = length/real(iterations+1);gappy = dx
-!         else if(gap == 0) then
-!             dx = length/real(iterations-1);gappy = 0.
-!     end if
-!     if(present(dxval)) then;dxval = dx;else;end if
-!     if(angle==0) then
-!         call newpen2(3)
-!         call plot(0.,0.,3);call plot(length,0.,2)
-!         do n = 1,iterations
-!             if (mod(n,12)/=0) then;m = mod(n,12)
-!             else if(mod(n,12)==0) then;m = 12
-!             else;end if
-!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.1,2)
-!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-!             call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
-!         end do
-!     else if(angle == -90) then
-!         call newpen2(3)
-!         call plot(0.,0.,3);call plot(0.,length,2)
-!         do n = 1,iterations
-!             if (mod(n,12)/=0) then;m = mod(n,12)
-!             else if(mod(n,12)==0) then;m = 12
-!             else;end if
-!             call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.1,gappy+real(n-1)*dx,2)
-!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-!             call numberc(-1.3*symbol_size,gappy+real(n-1)*dx,symbol_size,real(printm),0.,-1)
-!         end do
-!     end if
-
-!     call plot(-x,-y,-3)
-       
-
-! end subroutine
-
-subroutine floating_numbers(x,y,ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,angle,float_quantity)
-    real,intent(in)::x,y,symbol_size,x_inc,y_inc,angle,ini_num,num_inc
-    integer,intent(in)::iterations,float_quantity
-    integer::n
-    real::printnum
-
-    call plot(x,y,-3)
-    do n = 1, iterations
-        printnum = ini_num + num_inc*real(n-1)
-        call numberc(real(n-1)*x_inc,real(n-1)*y_inc,symbol_size,printnum,angle,float_quantity)
-    end do
-    call plot(-x,-y,-3)
-end subroutine
-
-subroutine floating_lines(x,y,length,angle,iterations,line_thickness,x_inc,y_inc)
-    use psstat
-    real,intent(in)::x,y,length,x_inc,y_inc,angle
-    integer,intent(in)::iterations,line_thickness
-    integer::n
-
-    call plot(x,y,-3)
-    call newpen2(line_thickness)
-    write(ounit,*) "% begin floating_lines"
-    do n = 1, iterations
-        write(ounit,'(f10.4,2x,a4)' ) angle , ' ro ' 
-        call plot(0.,0.,3);call plot(length,0.,2)
-        write(ounit,'(f9.4,2x,a4)' ) -angle , ' ro ' 
-        call plot(x_inc,y_inc,-3)
-    end do
-    write(ounit,*) "% end floating_lines"
-    call plot(-real(iterations)*x_inc,-real(iterations)*y_inc,-3)
-
-    call plot(-x,-y,-3)
-    return
-
-
-end subroutine
-
 subroutine rotate(angle)
     use psstat
     implicit none
@@ -1565,68 +831,6 @@ subroutine psframe(ini_st,fin_st,depth,width,height,memori_size)
         call plot(0.,-dy*real(increment)*real(y_memori),3);call plot(-memori_size,-dy*real(increment)*real(y_memori),2)
         call numberc(-memori_size*4.,-dy*real(increment)*real(y_memori),memori_size*3.,real(y_memori*increment),0.,-1)
     end do
-end subroutine
-
-! top_bottom == 0 means top, top_bottom == 1 means bottom, gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.
-subroutine st_memori(ini_st,fin_st,width,top_bottom,symbol_size,gap)
-    implicit none
-    integer,intent(in)::ini_st,fin_st,top_bottom,gap
-    real,intent(in)::width,symbol_size
-    real::dx,gappy
-    integer::n
-
-    if(symbol_size<+0.2) then;call newpen2(2)
-    else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3)
-    else;call newpen2(4);end if
-    if(gap == 2) then
-    dx = width/real(fin_st-ini_st+1);gappy = dx/2.
-    else if(gap == 1) then
-        dx = width/real(fin_st-ini_st+2);gappy = dx
-    else if(gap == 0) then
-        dx = width/real(fin_st-ini_st);gappy = 0.
-    end if
-    if(top_bottom == 1) then
-        do n = 1,fin_st-ini_st+1
-            call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.2,2)
-            call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
-        end do
-    else if(top_bottom == 0) then
-        do n = 1,fin_st-ini_st+1
-            call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.2,2)
-            call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
-        end do
-    end if
-end subroutine
-
-subroutine st_memori2(x,y,ini_st,fin_st,width,top_bottom,symbol_size,gap)
-    implicit none
-    integer,intent(in)::ini_st,fin_st,top_bottom,gap
-    real,intent(in)::width,symbol_size
-    real::dx,gappy,x,y
-    integer::n
-    call plot(x,y,-3)
-    if(symbol_size<=0.2) then;call newpen2(2)
-    else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3)
-    else;call newpen2(4);end if
-    if(gap == 2) then
-    dx = width/real(fin_st-ini_st+1);gappy = dx/2.
-    else if(gap == 1) then
-        dx = width/real(fin_st-ini_st+2);gappy = dx
-    else if(gap == 0) then
-        dx = width/real(fin_st-ini_st);gappy = 0.
-    end if
-    if(top_bottom == 1) then
-        do n = 1,fin_st-ini_st+1
-            call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.2,2)
-            call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
-        end do
-    else if(top_bottom == 0) then
-        do n = 1,fin_st-ini_st+1
-            call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.2,2)
-            call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
-        end do
-    end if
-    call plot(-x,-y,-3)
 end subroutine
 
 ! creating map   line_opt == 1 means NLine, line_opt == 2 means SLine, line_opt == 3 means both
@@ -1873,11 +1077,11 @@ subroutine betcolork2(dx,dy,twoD_array,mask,ix,ex,iy,ey,x_size,y_size,ini_value,
 
     do n = ix, ex
         do m = iy,ey
-            if(mask(n,m)/=0) then
-                if(ini_value<=twoD_array(n,m) .and. twoD_array(n,m)<=fin_value) then
+            ! if(mask(n,m)/=0) then
+                if(mask(n,m)/=0.and.ini_value<=twoD_array(n,m) .and. twoD_array(n,m)<=fin_value) then
                     call betsqk(real(n-1)*dx,real(m-1)*dy,real(n)*dx,real(m)*dy,r,g,b)
                 else;end if
-            else;end if
+            ! else;end if
         end do
     end do
 
@@ -1904,678 +1108,6 @@ end subroutine
 
 
                                             ! COLOR SCALES AND COLOR SCALE LEGENDS !
-
-! color scale maker                                                                   !!NOT VERY USEFUL WOULD USE COLORSCALE CREATOR INSTEAD!!
-subroutine colorscale(r1,g1,b1,r2,g2,b2,iterations,width,height,lessthan,morethan,reset_starting_point)
-    implicit none
-    real,intent(in)::r1,g1,b1,r2,g2,b2,width,height,reset_starting_point
-    integer,intent(in)::iterations,morethan,lessthan !1で原点を最初の位置に,0で原点は継続（カラースケール後,1で以上以下を付与0で無
-    real::r,g,b
-    integer::n
-    real,dimension(3)::lefty_x1,lefty_y1,righty_x1,righty_y1,bottomy_x1,bottomy_y1,toppy_x1,toppy_y1
-
-    lefty_x1(1) = -width;lefty_x1(2) = -width;lefty_x1(3) = -width-width/real(iterations)
-    lefty_y1(1) = 0.;lefty_y1(2) = height ;lefty_y1(3) = height/2.
-    righty_x1(1) = 0. ;righty_x1(2) = 0. ;righty_x1(3) = width/real(iterations)
-    righty_y1(1) = 0. ;righty_y1(2) = height ;righty_y1(3) = height/2.
-    bottomy_x1(1) = 0. ;bottomy_x1(2) = -width ;bottomy_x1(3) = -width/2.
-    bottomy_y1(1) = -height ;bottomy_y1(2) = -height ;bottomy_y1(3) = -height-height/real(iterations)
-    toppy_x1(1) = 0. ;toppy_x1(2) =  -width ;toppy_x1(3) = -width/2.
-    toppy_y1(1) = 0. ;toppy_y1(2) = 0. ;toppy_y1(3) = height/real(iterations)
- 
-    if (morethan==0 .and. lessthan==0) then
-        call newpen2(3)
-         do n = 1,iterations
-            r = r1+real(n-1)*real(r2-r1)/real(iterations-1); g = g1+real(n-1)*real(g2-g1)/real(iterations-1); b = b1+real(n-1)*real(b2-b1)/real(iterations-1)
-            if(width>=height) then
-                call betsqk(0.,0.,width/real(iterations),height,r,g,b)
-                if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
-                else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
-                end if
-                call plot(width/real(iterations),0.,-3)
-             else !(if width<=height) 
-                call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
-                if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
-                else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
-                end if
-                call plot(0.,height/real(iterations),-3)!from bottom to top
-            end if
-        end do    
-    else;end if
-    if(morethan==1 .and. lessthan ==1) then
-        call newpen2(3)
-        do n = 1,iterations
-            r = r1+real(n)*real(r2-r1)/real(iterations+1); g = g1+real(n)*real(g2-g1)/real(iterations+1); b = b1+real(n)*real(b2-b1)/real(iterations+1)
-            if(width>=height) then
-                call betsqk(0.,0.,width/real(iterations),height,r,g,b)
-                if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
-                else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
-                end if
-                call plot(width/real(iterations),0.,-3)
-             else !(if width<=height) 
-                call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
-                if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
-                else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
-                end if
-                call plot(0.,height/real(iterations),-3)!from bottom to top
-            end if
-        end do   
-            if (width>=height) then
-                call betmlk(lefty_x1,lefty_y1,3,3,r1,g1,b1);call betmlk(righty_x1,righty_y1,3,3,r2,g2,b2)
-                ! call plot(lefty_x1(1),lefty_y1(1),3);call plot(lefty_x1(3),lefty_x1(3),2);call plot(lefty_x1(2),lefty_y1(2),2)
-                ! call plot(righty_x1(1),righty_y1(1),3);call plot(righty_x1(3),righty_x1(3),2);call plot(righty_x1(2),righty_y1(2),2)
-                call plot(-width,0.,3);call plot(-width-width/real(iterations),height/2.,2);call plot(-width,height,2)
-                call plot(0.,0.,3);call plot(width/real(iterations),height/2.,2);call plot(0.,height,2)
-            else if (height>=width) then
-                call betmlk(bottomy_x1,bottomy_y1,3,3,r1,g1,b1);call betmlk(toppy_x1,toppy_y1,3,3,r2,g2,b2)
-                ! call plot(bottomy_x1(1),bottomy_y1(1),3);call plot(bottomy_x1(3),bottomy_x1(3),2);call plot(bottomy_x1(2),bottomy_y1(2),2)
-                ! call plot(toppy_x1(1),toppy_y1(1),3);call plot(toppy_x1(3),toppy_x1(3),2);call plot(toppy_x1(2),toppy_y1(2),2)
-                call plot(0.,-height,3);call plot(-width/2.,-height-height/real(iterations),2);call plot(-width,-height,2)
-                call plot(0.,0.,3);call plot(-width/2.,height/real(iterations),2);call plot(-width,0.,2)
-            else;end if
-    else;end if
-    
-    if (morethan==1 .and. lessthan==0) then
-        call newpen2(3)
-        do n = 1,iterations
-            r = r1+real(n-1)*real(r2-r1)/real(iterations); g = g1+real(n-1)*real(g2-g1)/real(iterations); b = b1+real(n-1)*real(b2-b1)/real(iterations)
-            if(width>=height) then
-                call betsqk(0.,0.,width/real(iterations),height,r,g,b)
-                if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
-                else; call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
-                end if
-                call plot(width/real(iterations),0.,-3)
-             else !(if width<=height) 
-                call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
-                if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
-                else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
-                end if
-                call plot(0.,height/real(iterations),-3)!from bottom to top
-            end if
-        end do 
-        if (width>=height) then
-            call betmlk(righty_x1,righty_y1,3,3,r2,g2,b2)
-            ! call plot(righty_x1(1),righty_y1(1),3);call plot(righty_x1(3),righty_x1(3),2);call plot(righty_x1(2),righty_y1(2),2)
-            call plot(0.,0.,3);call plot(width/real(iterations),height/2.,2);call plot(0.,height,2)
-        else if (height>=width) then
-            call betmlk(toppy_x1,toppy_y1,3,3,r2,g2,b2)
-            ! call plot(toppy_x1(1),toppy_y1(1),3);call plot(toppy_x1(3),toppy_x1(3),2);call plot(toppy_x1(2),toppy_y1(2),2)
-            call plot(0.,0.,3);call plot(-width/2.,height/real(iterations),2);call plot(-width,0.,2)
-        else;end if  
-    else;end if
-
-        if(morethan==0 .and. lessthan ==1) then
-            call newpen2(3)
-            do n = 1, iterations
-                r = r1+real(n)*real(r2-r1)/real(iterations); g = g1+real(n)*real(g2-g1)/real(iterations); b = b1+real(n)*real(b2-b1)/real(iterations)
-                if(width>=height) then
-                    call betsqk(0.,0.,width/real(iterations),height,r,g,b)
-                    if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
-                    else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
-                    end if
-                    call plot(width/real(iterations),0.,-3)
-                 else !(if width<=height) 
-                    call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
-                    if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
-                    else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
-                    end if
-                    call plot(0.,height/real(iterations),-3)!from bottom to top
-                end if
-            end do 
-            if (width>=height) then
-                call betmlk(lefty_x1,lefty_y1,3,3,r1,g1,b1)
-                ! call plot(lefty_x1(1),lefty_y1(1),3);call plot(lefty_x1(3),lefty_x1(3),2);call plot(lefty_x1(2),lefty_y1(2),2)
-                call plot(-width,0.,3);call plot(-width-width/real(iterations),height/2.,2);call plot(-width,height,2)
-            else if (height>=width) then
-                call betmlk(bottomy_x1,bottomy_y1,3,3,r1,g1,b1)
-                ! call plot(bottomy_x1(1),bottomy_y1(1),3);call plot(bottomy_x1(3),bottomy_x1(3),2);call plot(bottomy_x1(2),bottomy_y1(2),2)
-                call plot(0.,-height,3);call plot(-width/2.,-height-height/real(iterations),2);call plot(-width,-height,2)
-            else;end if  
-        else;end if
-
-        if (width>=height) then;call plot(reset_starting_point,0.,-3)
-        else if(width<height) then; call plot(0.,reset_starting_point,-3)
-            
-        else
-        end if
-    
-end subroutine
-
-! color gradient from blue to red no grey r,g,b are arrays with size(0:iterations+1)
-subroutine b2r_colorgrad(iterations,midpoint,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,midpoint
-    real,dimension(0:iterations+1),intent(out)::r,g,b
-    integer::n
-    
-    do n = 1, iterations
-        if (n <= midpoint) then 
-            r(n) = 0.+(real(n-1)/real(midpoint-1))*0.85
-            g(n) = 0.+(real(n-1)/real(midpoint-1))*0.85
-            b(n) = 1.
-        else
-            r(n) = 1.
-            g(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
-            b(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
-        end if
-    end do
-
-    r(0) = 0.; g(0) = 0.; b(0) = 0.8
-    r(iterations+1) = 0.8 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-
-end subroutine
-
-! color gradient from blue to grey to red putting emphasis on zero
-subroutine b2gy2r_colorgrad(iterations,midpoint,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,midpoint
-    real,dimension(0:iterations+1),intent(out)::r,g,b
-    integer::n
-    
-    do n = 1, midpoint-1
-            r(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
-            g(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
-            b(n) = 1.
-    end do
-    do n = midpoint+1,iterations
-            r(n) = 1.
-            g(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
-            b(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
-    end do
-    r(midpoint) = 0.85;g(midpoint) = 0.85;b(midpoint) = 0.85
-
-
-
-    r(0) = 0.; g(0) = 0.; b(0) = 0.8
-    r(iterations+1) = 0.8 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-end subroutine
-
-! color gradient from red to green useful for data num. size of rgb array is (iterations)
-subroutine r2g_colorgrad(iterations,midpoint,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,midpoint
-    real,dimension(iterations),intent(out)::r,g,b
-    integer::n 
-
-    do n = 1,iterations
-        if(n<=midpoint) then
-            r(n) = 1.
-            g(n) = real(n-1)/real(midpoint-1)
-            b(n) = 0.
-        else
-            r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
-            g(n) = 1.
-            b(n) = 0.
-        end if
-    end do
-    ! r(0) = 0.; g(0) = 0.; b(0) = 0.
-end subroutine
-
-! black to red, then gradient from red to green. useful for data num that starts with 0. array size is the same as above
-subroutine bk2r2g_colorgrad(iterations,midpoint,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,midpoint
-    real,dimension(0:iterations+1),intent(out)::r,g,b 
-    integer::n 
-
-    r(1) = 0.; g(1) = 0.; b(1) = 0.
-    do n = 2,iterations
-        if(n<=midpoint) then
-            r(n) = 1.
-            g(n) = real(n-2)/real(midpoint-2)
-            b(n) = 0.
-        else 
-            r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
-            g(n) = 1.
-            b(n) = 0.
-        end if
-    end do
-
-end subroutine
-
-! b<breakpoint1>g<breakpoint2>y<breakpoint3>r. bluecyan==dark->light, yellowred==light->dark
-subroutine b2cy2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
-    real,dimension(0:iterations+1),intent(out)::r,g,b
-    integer::n
-
-    r(0)=0.;g(0)=0.;b(0)=0.9
-    ! from dark blue to light blue
-    do n = 1, breakpoint1
-        r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-        g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-        b(n) = 1.
-    end do
-    ! from dark cyan to light cyan
-    do n = 1,breakpoint2-breakpoint1
-        r(n+breakpoint1) = (real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-        g(n+breakpoint1) = 1.
-        b(n+breakpoint1) = 1.
-    end do
-
-    ! from light yellow to dark yellow
-    do n = 1, breakpoint3-breakpoint2
-        r(n+breakpoint2) = 1.
-        g(n+breakpoint2) = 1.
-        b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
-    end do
-    ! from light red to dark red
-    do n = 1, iterations-breakpoint3
-        r(n+breakpoint3) = 1.
-        g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-        b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-    end do
-    r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
-end subroutine
-
-! b,zeropoint,g->y->r. blue==dark->light, greenyellowred==light->dark
-subroutine b2g2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
-    implicit none
-    integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
-    real,dimension(0:iterations+1),intent(out)::r,g,b
-    integer::n
-
-    r(0)=0.;g(0)=0.;b(0)=0.9
-    ! from dark blue to light blue
-    do n = 1, breakpoint1
-        r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-        g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-        b(n) = 1.
-    end do
-    ! from dark green to light green
-    do n = 1,breakpoint2-breakpoint1
-        r(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-        g(n+breakpoint1) = 1.
-        b(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-    end do
-
-    ! from light yellow to dark yellow
-    do n = 1, breakpoint3-breakpoint2
-        r(n+breakpoint2) = 1.
-        g(n+breakpoint2) = 1.
-        b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
-    end do
-    ! from light red to dark red
-    do n = 1, iterations-breakpoint3
-        r(n+breakpoint3) = 1.
-        g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-        b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-    end do
-    r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
-end subroutine
-
-! makes a colorscale legend corresponding to arrays of r,g,b. ARRAY SIZE HAS TO BE (ITERATIONS+2). otherwise you will shit yourself
-subroutine colorscale_creator(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,angle,lessthan,morethan)
-    implicit none
-    integer,intent(in)::iterations,symbol_freq,float_quantity,angle,lessthan,morethan
-    real,intent(in)::ini_num,fin_num,symbol_size,length,width
-    real,dimension(0:iterations+1),intent(in)::r,g,b
-    integer::n
-    real::memori_diff,num_diff
-    real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.,bottomy_x=0.,bottomy_y=0.,toppy_x=0.,toppy_y=0.
-    memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-
-    lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
-    lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
-    righty_x(1) = length ;righty_x(2) = length+memori_diff ;righty_x(3) = length
-    righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
-    bottomy_x(1) = 0. ;bottomy_x(2) = -width/2. ;bottomy_x(3) = -width
-    bottomy_y(1) = 0. ;bottomy_y(2) = -memori_diff ;bottomy_y(3) = 0.
-    toppy_x(1) = 0. ;toppy_x(2) =  -width/2. ;toppy_x(3) = -width
-    toppy_y(1) = length ;toppy_y(2) = length+memori_diff ;toppy_y(3) = length
-
-    if(morethan==0 .and. lessthan==0) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-        end if
-    else;end if
-
-    if(morethan==1 .and. lessthan==1) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
-            call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0));call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
-            call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+symbol_size,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
-        end if
-    else;end if 
-
-    if(morethan==1 .and. lessthan==0) then
-        if(angle == 0) then
-        call newpen2(3)
-        do n = 1, iterations
-            call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-        end do
-        call plot(0.,0.,3);call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-        call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-        call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
-        do n = 0, iterations
-            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-            if(mod(n,symbol_freq)/=0) then
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-            else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-            end if
-            if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            else;end if
-        end do
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,fin_num,0.,float_quantity)
-        end if
-    else;end if
-
-    if(morethan==0 .and. lessthan==1) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
-        end if
-    else;end if   
-
-end subroutine
-
-subroutine colorscale_creator2(x,y,iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,angle,lessthan,morethan)
-    implicit none
-    integer,intent(in)::iterations,symbol_freq,float_quantity,angle,lessthan,morethan
-    real,intent(in)::ini_num,fin_num,symbol_size,length,width,x,y
-    real,dimension(0:iterations+1),intent(in)::r,g,b
-    integer::n
-    real::memori_diff,num_diff
-    real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.,bottomy_x=0.,bottomy_y=0.,toppy_x=0.,toppy_y=0.
-    memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-
-    lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
-    lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
-    righty_x(1) = length ;righty_x(2) = length+memori_diff ;righty_x(3) = length
-    righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
-    bottomy_x(1) = 0. ;bottomy_x(2) = -width/2. ;bottomy_x(3) = -width
-    bottomy_y(1) = 0. ;bottomy_y(2) = -memori_diff ;bottomy_y(3) = 0.
-    toppy_x(1) = 0. ;toppy_x(2) =  -width/2. ;toppy_x(3) = -width
-    toppy_y(1) = length ;toppy_y(2) = length+memori_diff ;toppy_y(3) = length
-
-    call plot(x,y,-3)
-    if(morethan==0 .and. lessthan==0) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-        end if
-    else;end if
-
-    if(morethan==1 .and. lessthan==1) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
-            call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0));call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
-            call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,ini_num,0.,float_quantity)
-            call symbolr(1.4*symbol_size,length+symbol_size,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
-        end if
-    else;end if 
-
-    if(morethan==1 .and. lessthan==0) then
-        if(angle == 0) then
-        call newpen2(3)
-        do n = 1, iterations
-            call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-        end do
-        call plot(0.,0.,3);call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-        call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-        call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
-        do n = 0, iterations
-            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-            if(mod(n,symbol_freq)/=0) then
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-            else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-            end if
-            if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            else;end if
-        end do
-            call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,fin_num,0.,float_quantity)
-        end if
-    else;end if
-
-    if(morethan==0 .and. lessthan==1) then
-        if(angle == 0) then
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
-            call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-        else !(angle == 90)
-            call newpen2(3)
-            do n = 1, iterations
-                call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
-            end do
-            call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0))
-
-            call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
-            call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
-            do n = 0, iterations
-                call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
-                if(mod(n,symbol_freq)/=0) then
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
-                end if
-                if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                else;end if
-            end do
-            call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
-        end if
-    else;end if   
-        call plot(-x,-y,-3)
-end subroutine
 
 ! creates colorscale for data quantity min and max are integers. array size for colors is (iterations)
 subroutine colorscale_data(iterations,r,g,b,min,max,symbol_freq,symbol_size,length,width,angle)
@@ -2626,54 +1158,8 @@ subroutine colorscale_data(iterations,r,g,b,min,max,symbol_freq,symbol_size,leng
 
 end subroutine
 
-! an array of 12 bright colors
-subroutine brightcolors(r,g,b)
-    implicit none
-    real,dimension(12),intent(out)::r,g,b
-    integer::n
-
-    do n = 1,2
-        r(n)=1.;g(n)=real(n-1)/2.;b(n)=0.
-    end do
-    do n = 1,2
-        r(n+2)=1.-real(n-1)/2.;g(n+2)=1.;b(n+2)= 0.
-    end do
-    do n = 1,2
-        r(n+4)=0.;g(n+4)=1.;b(n+4)=real(n-1)/2.
-    end do
-    do n = 1,2
-        r(n+6)=0.;g(n+6)=1.-real(n-1)/2.;b(n+6)=1.
-    end do
-    do n = 1,2
-        r(n+8)=real(n-1)/2.;g(n+8)=0.;b(n+8)=1.
-    end do
-    do n = 1,2
-        r(n+10)=1.;g(n+10)=0.;b(n+10)=1.-real(n-1)/2.
-    end do
-
-end subroutine
-
                                             ! Statistics !
 
-! creates standard normal distribution curve for some fucking reason lol
-subroutine standard_normal_distribution(length)
-    implicit none
-    intrinsic sin,cos,tan,asin,acos
-    integer::n 
-    real::x,y,pi
-    real,intent(in)::length
-    pi = 2.*asin(1.)
-    call newpen2(2)
-    call plot(0.,0.,3);call plot(length,0.,2);call plot(length,length,2);call plot(0.,length,2);call plot(0.,0.,2)
-    call num_memori(-3.,3.,6,1,0.2,-1,length,0,0,0);call plot(length,0.,-3);call num_memori(0.,1.,10,1,0.2,1,length,90,0,0)
-    call plot(-length/2.,0.,-3)
-    do n = -100,100
-        x = length/2.*real(n)/100.
-        y = length*1./(1.*sqrt(2.*pi))*exp(-0.5*((x-0.)/1.)**2.)
-        call gmark(x,y,0.02,1)
-    end do
-    call plot(-length/2.,0.,-3)
-end subroutine
 
 ! t value for t distribution 95 percent confidence interval df<=30
 subroutine t95_value(t95) !this is and array of 31 values, dimension is(0:30)
@@ -2694,35 +1180,1081 @@ subroutine t95_value(t95) !this is and array of 31 values, dimension is(0:30)
     t95(0) = 0. !just for the sake of programs
 end subroutine
 
-! welch's t test for difference in 2 population means(mean1-mean2). A difference with a = 0.05 on both sides is returned as 0,otherwise 1. 119 means insufficient data or fuck you
-subroutine welchttest(mean1,s1,dataquan1,mean2,s2,dataquan2,result,larger_or_smaller)
-    implicit none
-    real,intent(in)::mean1,s1,mean2,s2
-    integer,intent(in)::dataquan1,dataquan2
-    integer,intent(out)::result
-    real,dimension(0:30)::t_95=0.
-    real::diff_mean,n1,n2,df,sem,bottomCI,topCI
-    character::larger_or_smaller*5
+! ! welch's t test for difference in 2 population means(mean1-mean2). A difference with a = 0.05 on both sides is returned as 0,otherwise 1. 119 means insufficient data or fuck you
+! subroutine welchttest(mean1,s1,dataquan1,mean2,s2,dataquan2,result,larger_or_smaller)
+!     implicit none
+!     real,intent(in)::mean1,s1,mean2,s2
+!     integer,intent(in)::dataquan1,dataquan2
+!     integer,intent(out)::result
+!     real,dimension(0:30)::t_95=0.
+!     real::diff_mean,n1,n2,df,sem,bottomCI,topCI
+!     character::larger_or_smaller*5
 
-    if(mean1 /=0. .and. mean2/=0. .and. dataquan1/=0 .and. dataquan2/=0) then
-        diff_mean = mean1 - mean2
-        n1 = real(dataquan1);n2 = real(dataquan2)
-        sem = sqrt((s1**2./n1)+(s2**2./n2)) 
-        df = (((s1**2.)/n1)+((s2**2.)/n2))**2./(((s1**2./n1)**2./(n1-1))+((s2**2./n2)**2./(n2-1)))
-        call t95_value(t_95)
-        bottomCI = diff_mean - t_95(int(df))*sem ; topCI = diff_mean + t_95(int(df))*sem
-        ! print*,diff_mean,bottomCI,topCI,int(df)
-        if(bottomCI>0.) then
-            result = 0;larger_or_smaller = 'LARGE'
-        else if(topCI<0.) then
-            result = 0;larger_or_smaller = 'small'
-        else;result = 1;larger_or_smaller = 'NODIF'
-        end if
-    else;result = 911;larger_or_smaller = '911!!'
-    end if
+!     if(mean1 /=0. .and. mean2/=0. .and. dataquan1/=0 .and. dataquan2/=0) then
+!         diff_mean = mean1 - mean2
+!         n1 = real(dataquan1);n2 = real(dataquan2)
+!         sem = sqrt((s1**2./n1)+(s2**2./n2)) 
+!         df = (((s1**2.)/n1)+((s2**2.)/n2))**2./(((s1**2./n1)**2./(n1-1))+((s2**2./n2)**2./(n2-1)))
+!         call t95_value(t_95)
+!         bottomCI = diff_mean - t_95(int(df))*sem ; topCI = diff_mean + t_95(int(df))*sem
+!         ! print*,diff_mean,bottomCI,topCI,int(df)
+!         if(bottomCI>0.) then
+!             result = 0;larger_or_smaller = 'LARGE'
+!         else if(topCI<0.) then
+!             result = 0;larger_or_smaller = 'small'
+!         else;result = 1;larger_or_smaller = 'NODIF'
+!         end if
+!     else;result = 911;larger_or_smaller = '911!!'
+!     end if
 
-end subroutine
+! end subroutine
 
                                             ! Statistics !
 
 
+! ! creates standard normal distribution curve for some fucking reason lol
+! subroutine standard_normal_distribution(length)
+!     implicit none
+!     intrinsic sin,cos,tan,asin,acos
+!     integer::n 
+!     real::x,y,pi
+!     real,intent(in)::length
+!     pi = 2.*asin(1.)
+!     call newpen2(2)
+!     call plot(0.,0.,3);call plot(length,0.,2);call plot(length,length,2);call plot(0.,length,2);call plot(0.,0.,2)
+!     call num_memori(-3.,3.,6,1,0.2,-1,length,0,0,0);call plot(length,0.,-3);call num_memori(0.,1.,10,1,0.2,1,length,90,0,0)
+!     call plot(-length/2.,0.,-3)
+!     do n = -100,100
+!         x = length/2.*real(n)/100.
+!         y = length*1./(1.*sqrt(2.*pi))*exp(-0.5*((x-0.)/1.)**2.)
+!         call gmark(x,y,0.02,1)
+!     end do
+!     call plot(-length/2.,0.,-3)
+! end subroutine
+! ! getting monthly average and sd from an array, (years,months,lines,stations,depth) to (months,lines,stations,depth) single precision
+! subroutine avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
+!     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
+!     real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array
+!     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
+!     real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
+!     integer::y,m,l,st,d,data_quan=0
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do st = 1, stations
+!                 do d = 1, depth
+!                     do y = 1, years
+!                         if (input_array(y,m,l,st,d)/=0.) then
+!                             sum = first_sum + input_array(y,m,l,st,d)
+!                             first_sum = sum
+!                             data_quan = data_quan +1
+!                         else;end if
+!                     end do
+!                     dataquan_array(m,l,st,d) = data_quan
+!                     if (data_quan/=0) then
+!                         average = sum/real(data_quan)
+!                         do y = 1, years !loop to get SD
+!                             if (input_array(y,m,l,st,d)/=0.) then
+!                                 devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
+!                                 first_devsq = devsq_sum
+!                             else;end if
+!                         end do
+!                         variance = devsq_sum/real(data_quan -1)
+!                         SD = sqrt(variance)
+!                         average_array(m,l,st,d) = average
+!                         sd_array(m,l,st,d) = SD
+!                     else;average = 0.;SD = 0.;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.
+!                     end if
+!                     first_sum = 0.
+!                     data_quan = 0
+!                     first_devsq = 0.
+!                 end do
+!             end do
+!         end do
+!     end do
+
+
+! end subroutine
+
+! ! getting monthly average and sd from (years,months,lines) to array(months,lines) single precision for geostrophic transport
+! subroutine avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2
+!     real,dimension(years,months,lines),intent(in)::input_array
+!     real,dimension(months,lines),intent(out)::average_array,sd_array
+!     integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
+!     real::sum=0.,first_sum=0.,average,variance,SD,devsq_sum=0.,first_devsq=0.
+!     integer::y,m,l,data_quan=0
+
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do y = 1, years
+!                 if (input_array(y,m,l)/=0.) then
+!                     sum = first_sum + input_array(y,m,l)
+!                     first_sum = sum
+!                     data_quan = data_quan +1
+!                 else;end if
+!             end do
+!                 dataquan_array(m,l) = data_quan
+!                 if (data_quan/=0) then
+!                     average = sum/real(data_quan)
+!                     do y = 1, years !loop to get SD
+!                         if (input_array(y,m,l)/=0.) then
+!                             devsq_sum = first_devsq + (input_array(y,m,l) - average)**2.
+!                             first_devsq = devsq_sum
+!                         else;end if
+!                     end do
+!                         variance = devsq_sum/real(data_quan -1)
+!                         SD = sqrt(variance)
+!                         average_array(m,l) = average
+!                         sd_array(m,l) = SD
+!                 else;average = 0.;SD = 0.;average_array(m,l) = 0.;sd_array(m,l) = 0.
+!                 end if
+!                 first_sum = 0.
+!                 data_quan = 0
+!                 first_devsq = 0.
+!         end do
+!     end do
+
+! end subroutine
+
+! ! getting monthly average and (an estimate of) standard error of the mean(SEM). 5D to 4D 
+! subroutine avsem_dataquan(input_array,average_array,sem_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
+!     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
+!     real,dimension(months,lines,stations,depth),intent(out)::average_array,sem_array
+!     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
+!     real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
+!     integer::y,m,l,st,d,data_quan=0
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準誤差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do st = 1, stations
+!                 do d = 1, depth
+!                     do y = 1, years
+!                         if (input_array(y,m,l,st,d)/=0.) then
+!                             sum = first_sum + input_array(y,m,l,st,d)
+!                             first_sum = sum
+!                             data_quan = data_quan +1
+!                         else;end if
+!                     end do
+!                     dataquan_array(m,l,st,d) = data_quan
+!                     if (data_quan/=0) then
+!                         average = sum/real(data_quan)
+!                         do y = 1, years !loop to get SEM
+!                             if (input_array(y,m,l,st,d)/=0.) then
+!                                 devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
+!                                 first_devsq = devsq_sum
+!                             else;end if
+!                         end do
+!                         variance = devsq_sum/real(data_quan -1)/real(data_quan) !variance of means in this case
+!                         SEM = sqrt(variance)
+!                         average_array(m,l,st,d) = average
+!                         sem_array(m,l,st,d) = SEM
+!                     else;average = 0.;SEM = 0.;average_array(m,l,st,d) = 0.;sem_array(m,l,st,d) = 0.
+!                     end if
+!                     first_sum = 0.
+!                     data_quan = 0
+!                     first_devsq = 0.
+!                 end do
+!             end do
+!         end do
+!     end do
+
+! end subroutine
+! ! array(years,months) to array(months)
+! subroutine avsem_dataquan3(input_array,average_array,sem_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12
+!     real,dimension(years,months),intent(in)::input_array 
+!     real,dimension(months),intent(out)::average_array,sem_array
+!     integer,dimension(months),intent(out)::dataquan_array !�f�[�^���͌��X
+!     real::sum,first_sum=0.,average,variance,SEM,devsq_sum,first_devsq=0.
+!     integer::y,m,data_quan=0
+
+
+!     !�f�[�^�̑I�ʂ͂��̃T�u���[�`����ʂ��O�ɍs���B����͕��ςƕW���΍����v�Z���Ă���邾���B��S�N�f�[�^��
+!         do m = 1, months 
+!             do y = 1, years
+!                 if (input_array(y,m)/=0.) then
+!                     sum = first_sum + input_array(y,m)
+!                     first_sum = sum
+!                     data_quan = data_quan +1
+!                 else;end if
+!             end do
+!                 dataquan_array(m) = data_quan
+!                 if (data_quan/=0) then
+!                     average = sum/real(data_quan)
+!                     do y = 1, years !loop to get SD
+!                         if (input_array(y,m)/=0.) then
+!                             devsq_sum = first_devsq + (input_array(y,m) - average)**2.
+!                             first_devsq = devsq_sum
+!                         else;end if
+!                     end do
+!                     variance = devsq_sum/real(data_quan -1)/real(data_quan) !variance of means in this case
+!                     SEM = sqrt(variance)
+!                     average_array(m) = average
+!                     sem_array(m) = SEM
+!                 else;average = 0.;SEM = 0.;average_array(m) = 0.;sem_array(m) = 0.
+!                 end if
+!                 first_sum = 0.
+!                 data_quan = 0
+!                 first_devsq = 0.
+!         end do
+! end subroutine
+
+! ! Is a fusion of avsd_dataquan and avsem_dataquan
+! subroutine avsdsem_dataquan(input_array,average_array,sd_array,sem_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
+!     real,dimension(years,months,lines,stations,depth),intent(in)::input_array
+!     real,dimension(months,lines,stations,depth),intent(out)::average_array,sd_array,sem_array
+!     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
+!     real::sum,first_sum=0.,average,variance,SD,SEM,devsq_sum,first_devsq=0.
+!     integer::y,m,l,st,d,data_quan=0
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差と標準誤差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do st = 1, stations
+!                 do d = 1, depth
+!                     do y = 1, years
+!                         if (input_array(y,m,l,st,d)/=0.) then
+!                             sum = first_sum + input_array(y,m,l,st,d)
+!                             first_sum = sum
+!                             data_quan = data_quan +1
+!                         else;end if
+!                     end do
+!                     dataquan_array(m,l,st,d) = data_quan
+!                     if (data_quan/=0) then
+!                         average = sum/real(data_quan)
+!                         do y = 1, years !loop to get SD
+!                             if (input_array(y,m,l,st,d)/=0.) then
+!                                 devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
+!                                 first_devsq = devsq_sum
+!                             else;end if
+!                         end do
+!                         variance = devsq_sum/real(data_quan -1)  ! sample variance
+!                         SD = sqrt(variance) ! sample standard deviation
+!                         SEM = SD/sqrt(real(data_quan)) ! standard deviation of means or standard error of the mean
+!                         average_array(m,l,st,d) = average
+!                         sd_array(m,l,st,d) = SD
+!                         sem_array(m,l,st,d) = SEM
+!                     else;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.;sem_array(m,l,st,d) = 0.
+!                     end if
+!                     first_sum = 0.
+!                     data_quan = 0
+!                     first_devsq = 0.
+!                 end do
+!             end do
+!         end do
+!     end do
+
+! end subroutine
+
+! ! double precision version of avsd_dataquan
+! subroutine dp_avsd_dataquan(input_array,average_array,sd_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2, stations = 9, depth = 400
+!     double precision,intent(in)::input_array(years,months,lines,stations,depth)
+!     double precision,intent(out)::average_array(months,lines,stations,depth)
+!     double precision,intent(out)::sd_array(months,lines,stations,depth)
+!     integer,dimension(months,lines,stations,depth),intent(out)::dataquan_array
+!     ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
+!     double precision:: sum; double precision::first_sum=0.0d0; double precision::average
+!     double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
+!     ! double precision::one
+!     integer::y,m,l,st,d,data_quan=0
+
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do st = 1, stations
+!                 do d = 1, depth
+!                     do y = 1, years
+!                         if (input_array(y,m,l,st,d)/=0.) then
+!                             sum = first_sum + input_array(y,m,l,st,d)
+!                             first_sum = sum
+!                             data_quan = data_quan +1
+!                         else;end if
+!                     end do
+!                     dataquan_array(m,l,st,d) = data_quan
+!                     if (data_quan/=0) then
+!                         average = sum/real(data_quan)
+!                         do y = 1, years !loop to get SD
+!                             if (input_array(y,m,l,st,d)/=0.) then
+!                                 devsq_sum = first_devsq + (input_array(y,m,l,st,d) - average)**2.
+!                                 first_devsq = devsq_sum
+!                             else;end if
+!                         end do
+!                         variance = devsq_sum/real(data_quan -1)
+!                         SD = sqrt(variance)
+!                         average_array(m,l,st,d) = average
+!                         sd_array(m,l,st,d) = SD
+!                     else;average = 0.;SD = 0.;average_array(m,l,st,d) = 0.;sd_array(m,l,st,d) = 0.
+!                     end if
+!                     first_sum = 0.
+!                     data_quan = 0
+!                     first_devsq = 0.
+!                 end do
+!             end do
+!         end do
+!     end do
+
+
+! end subroutine
+
+! ! double precision version of avsd_dataquan2
+! subroutine dp_avsd_dataquan2(input_array,average_array,sd_array,dataquan_array)
+!     implicit none
+!     integer,parameter::years=15, months=12, lines=2
+!     double precision,intent(in)::input_array(years,months,lines)
+!     double precision,intent(out)::average_array(months,lines)
+!     double precision,intent(out)::sd_array(months,lines)
+!     integer,dimension(months,lines),intent(out)::dataquan_array !データ数は月々
+!     ! real::sum,first_sum,data_quan,average,variance,SD,devsq_sum,first_devsq
+!     double precision:: sum; double precision::first_sum=0.0d0; double precision::average
+!     double precision:: variance; double precision:: SD; double precision::devsq_sum; double precision:: first_devsq=0.0d0
+!     ! double precision::one
+!     integer::y,m,l,data_quan=0
+
+
+!     !データの選別はこのサブルーチンを通す前に行う。これは平均と標準偏差を計算してくれるだけ。後全年データ数
+!     do l = 1,lines
+!         do m = 1, months 
+!             do y = 1, years
+!                 if (input_array(y,m,l)/=0.) then
+!                     sum = first_sum + input_array(y,m,l)
+!                     first_sum = sum
+!                     data_quan = data_quan +1
+!                 else;end if
+!             end do
+!                 dataquan_array(m,l) = data_quan
+!                 if (data_quan/=0) then
+!                     average = sum/real(data_quan)
+!                     do y = 1, years !loop to get SD
+!                         if (input_array(y,m,l)/=0.) then
+!                             devsq_sum = first_devsq + (input_array(y,m,l) - average)**2.
+!                             first_devsq = devsq_sum
+!                         else;end if
+!                     end do
+!                         variance = devsq_sum/real(data_quan -1)
+!                         SD = sqrt(variance)
+!                         average_array(m,l) = average
+!                         sd_array(m,l) = SD
+!                 else;average = 0.;SD = 0.;average_array(m,l) = 0.;sd_array(m,l) = 0.
+!                 end if
+!                 first_sum = 0.
+!                 data_quan = 0
+!                 first_devsq = 0.
+!         end do
+!     end do
+
+! end subroutine
+
+
+! ! create month memori
+! subroutine month_memori(symbol_size,length)
+!     implicit none
+!     real,intent(in)::symbol_size,length
+!     real::dx
+!     integer::n
+!     character(len=4),dimension(12)::month_names
+    
+!     call newpen2(2)
+!     call month_str_array(month_names)
+!     dx = length/13.
+!     call plot(0.,0.,3);call plot(length,0.,2)
+!     do n = 1,12
+!         call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.05,2)
+!         call symbolc(real(n)*dx,-1.2*symbol_size,symbol_size,month_names(n),0.,4)
+!     end do
+! end subroutine
+
+! ! landscape only
+! subroutine mod12_memori(iterations,symbol_size,length,x,y)
+!     implicit none
+!     real,intent(in)::symbol_size,length,x,y
+!     integer,intent(in)::iterations
+!     real::dx
+!     integer::n,m
+
+!     call plot(x,y,-3)
+
+!     call newpen2(3)
+!     dx = length/real(iterations+1)
+!     call plot(0.,0.,3);call plot(length,0.,2)
+!     do n = 1,iterations
+!         if (mod(n,12)/=0) then;m = mod(n,12)
+!         else if(mod(n,12)==0) then;m = 12
+!         else;end if
+!         call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
+!         call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(m),0.,-1)
+!     end do
+!     call symbolc(length/2.,-symbol_size*3.,symbol_size*0.8,'Months',0.,len('months'))
+
+!     call plot(-x,-y,-3)
+! end subroutine
+
+! ! inc_dec == 0 means 1 -> 12, inc_dec == 1 means 12 -> 1 gap between memori and box is dx by default sucka
+! subroutine mod12_memori2(iterations,symbol_size,angle,length,inc_dec)
+!     implicit none
+!     real,intent(in)::symbol_size,length
+!     integer,intent(in)::iterations,angle,inc_dec
+!     real::dx
+!     integer::n,m,printm
+
+!     dx = length/real(iterations+1)
+!     if(angle==0) then
+!         call newpen2(3)
+!         call plot(0.,0.,3);call plot(length,0.,2)
+!         do n = 1,iterations
+!             if (mod(n,12)/=0) then;m = mod(n,12)
+!             else if(mod(n,12)==0) then;m = 12
+!             else;end if
+!             call plot(real(n)*dx,0.,3);call plot(real(n)*dx,-0.1,2)
+!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+!             call numberc(real(n)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+!         end do
+!     else if(angle == -90) then
+!         call newpen2(3)
+!         call plot(0.,0.,3);call plot(0.,length,2)
+!         do n = 1,iterations
+!             if (mod(n,12)/=0) then;m = mod(n,12)
+!             else if(mod(n,12)==0) then;m = 12
+!             else;end if
+!             call plot(0.,real(n)*dx,3);call plot(-0.1,real(n)*dx,2)
+!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+!             call numberc(-1.3*symbol_size,real(n)*dx,symbol_size,real(printm),0.,-1)
+!         end do
+!     end if
+
+       
+
+! end subroutine
+
+! ! you can choose the gap between the memori and the box. gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.. it's really stupid what i go thru
+! subroutine mod12_memori3(x,y,iterations,symbol_size,angle,length,inc_dec,gap,dxval)
+!     implicit none
+!     real,intent(in)::symbol_size,length,x,y
+!     real,intent(out),optional::dxval
+!     integer,intent(in)::iterations,angle,inc_dec,gap
+!     real::dx,gappy
+!     integer::n,m,printm
+
+!     call plot(x,y,-3)
+
+!     if(gap == 2) then
+!         dx = length/real(iterations);gappy = dx/2.
+!         else if(gap == 1) then
+!             dx = length/real(iterations+1);gappy = dx
+!         else if(gap == 0) then
+!             dx = length/real(iterations-1);gappy = 0.
+!     end if
+!     if(present(dxval)) then;dxval = dx;else;end if
+!     if(angle==0) then
+!         call newpen2(3)
+!         call plot(0.,0.,3);call plot(length,0.,2)
+!         do n = 1,iterations
+!             if (mod(n,12)/=0) then;m = mod(n,12)
+!             else if(mod(n,12)==0) then;m = 12
+!             else;end if
+!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.1,2)
+!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+!             call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+!         end do
+!     else if(angle == -90) then
+!         call newpen2(3)
+!         call plot(0.,0.,3);call plot(0.,length,2)
+!         do n = 1,iterations
+!             if (mod(n,12)/=0) then;m = mod(n,12)
+!             else if(mod(n,12)==0) then;m = 12
+!             else;end if
+!             call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.1,gappy+real(n-1)*dx,2)
+!             if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+!             call numberc(-1.3*symbol_size,gappy+real(n-1)*dx,symbol_size,real(printm),0.,-1)
+!         end do
+!     end if
+
+!     call plot(-x,-y,-3)
+       
+
+! end subroutine
+
+! top_bottom == 0 means top, top_bottom == 1 means bottom, gap == 0 means no gap, gap == 1 means dx, gap == 2 means dx/2.
+! subroutine st_memori(ini_st,fin_st,width,top_bottom,symbol_size,gap)
+!     implicit none
+!     integer,intent(in)::ini_st,fin_st,top_bottom,gap
+!     real,intent(in)::width,symbol_size
+!     real::dx,gappy
+!     integer::n
+
+!     if(symbol_size<+0.2) then;call newpen2(2)
+!     else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3)
+!     else;call newpen2(4);end if
+!     if(gap == 2) then
+!     dx = width/real(fin_st-ini_st+1);gappy = dx/2.
+!     else if(gap == 1) then
+!         dx = width/real(fin_st-ini_st+2);gappy = dx
+!     else if(gap == 0) then
+!         dx = width/real(fin_st-ini_st);gappy = 0.
+!     end if
+!     if(top_bottom == 1) then
+!         do n = 1,fin_st-ini_st+1
+!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.2,2)
+!             call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
+!         end do
+!     else if(top_bottom == 0) then
+!         do n = 1,fin_st-ini_st+1
+!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.2,2)
+!             call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+!         end do
+!     end if
+! end subroutine
+
+! subroutine st_memori2(x,y,ini_st,fin_st,width,top_bottom,symbol_size,gap)
+!     implicit none
+!     integer,intent(in)::ini_st,fin_st,top_bottom,gap
+!     real,intent(in)::width,symbol_size
+!     real::dx,gappy,x,y
+!     integer::n
+!     call plot(x,y,-3)
+!     if(symbol_size<=0.2) then;call newpen2(2)
+!     else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3)
+!     else;call newpen2(4);end if
+!     if(gap == 2) then
+!     dx = width/real(fin_st-ini_st+1);gappy = dx/2.
+!     else if(gap == 1) then
+!         dx = width/real(fin_st-ini_st+2);gappy = dx
+!     else if(gap == 0) then
+!         dx = width/real(fin_st-ini_st);gappy = 0.
+!     end if
+!     if(top_bottom == 1) then
+!         do n = 1,fin_st-ini_st+1
+!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.2,2)
+!             call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
+!         end do
+!     else if(top_bottom == 0) then
+!         do n = 1,fin_st-ini_st+1
+!             call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.2,2)
+!             call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+!         end do
+!     end if
+!     call plot(-x,-y,-3)
+! end subroutine
+
+! ! color scale maker                                                                   !!NOT VERY USEFUL WOULD USE COLORSCALE CREATOR INSTEAD!!
+! subroutine colorscale(r1,g1,b1,r2,g2,b2,iterations,width,height,lessthan,morethan,reset_starting_point)
+!     implicit none
+!     real,intent(in)::r1,g1,b1,r2,g2,b2,width,height,reset_starting_point
+!     integer,intent(in)::iterations,morethan,lessthan !1で原点を最初の位置に,0で原点は継続（カラースケール後,1で以上以下を付与0で無
+!     real::r,g,b
+!     integer::n
+!     real,dimension(3)::lefty_x1,lefty_y1,righty_x1,righty_y1,bottomy_x1,bottomy_y1,toppy_x1,toppy_y1
+
+!     lefty_x1(1) = -width;lefty_x1(2) = -width;lefty_x1(3) = -width-width/real(iterations)
+!     lefty_y1(1) = 0.;lefty_y1(2) = height ;lefty_y1(3) = height/2.
+!     righty_x1(1) = 0. ;righty_x1(2) = 0. ;righty_x1(3) = width/real(iterations)
+!     righty_y1(1) = 0. ;righty_y1(2) = height ;righty_y1(3) = height/2.
+!     bottomy_x1(1) = 0. ;bottomy_x1(2) = -width ;bottomy_x1(3) = -width/2.
+!     bottomy_y1(1) = -height ;bottomy_y1(2) = -height ;bottomy_y1(3) = -height-height/real(iterations)
+!     toppy_x1(1) = 0. ;toppy_x1(2) =  -width ;toppy_x1(3) = -width/2.
+!     toppy_y1(1) = 0. ;toppy_y1(2) = 0. ;toppy_y1(3) = height/real(iterations)
+ 
+!     if (morethan==0 .and. lessthan==0) then
+!         call newpen2(3)
+!          do n = 1,iterations
+!             r = r1+real(n-1)*real(r2-r1)/real(iterations-1); g = g1+real(n-1)*real(g2-g1)/real(iterations-1); b = b1+real(n-1)*real(b2-b1)/real(iterations-1)
+!             if(width>=height) then
+!                 call betsqk(0.,0.,width/real(iterations),height,r,g,b)
+!                 if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
+!                 else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
+!                 end if
+!                 call plot(width/real(iterations),0.,-3)
+!              else !(if width<=height) 
+!                 call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
+!                 if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
+!                 else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
+!                 end if
+!                 call plot(0.,height/real(iterations),-3)!from bottom to top
+!             end if
+!         end do    
+!     else;end if
+!     if(morethan==1 .and. lessthan ==1) then
+!         call newpen2(3)
+!         do n = 1,iterations
+!             r = r1+real(n)*real(r2-r1)/real(iterations+1); g = g1+real(n)*real(g2-g1)/real(iterations+1); b = b1+real(n)*real(b2-b1)/real(iterations+1)
+!             if(width>=height) then
+!                 call betsqk(0.,0.,width/real(iterations),height,r,g,b)
+!                 if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
+!                 else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
+!                 end if
+!                 call plot(width/real(iterations),0.,-3)
+!              else !(if width<=height) 
+!                 call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
+!                 if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
+!                 else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
+!                 end if
+!                 call plot(0.,height/real(iterations),-3)!from bottom to top
+!             end if
+!         end do   
+!             if (width>=height) then
+!                 call betmlk(lefty_x1,lefty_y1,3,3,r1,g1,b1);call betmlk(righty_x1,righty_y1,3,3,r2,g2,b2)
+!                 ! call plot(lefty_x1(1),lefty_y1(1),3);call plot(lefty_x1(3),lefty_x1(3),2);call plot(lefty_x1(2),lefty_y1(2),2)
+!                 ! call plot(righty_x1(1),righty_y1(1),3);call plot(righty_x1(3),righty_x1(3),2);call plot(righty_x1(2),righty_y1(2),2)
+!                 call plot(-width,0.,3);call plot(-width-width/real(iterations),height/2.,2);call plot(-width,height,2)
+!                 call plot(0.,0.,3);call plot(width/real(iterations),height/2.,2);call plot(0.,height,2)
+!             else if (height>=width) then
+!                 call betmlk(bottomy_x1,bottomy_y1,3,3,r1,g1,b1);call betmlk(toppy_x1,toppy_y1,3,3,r2,g2,b2)
+!                 ! call plot(bottomy_x1(1),bottomy_y1(1),3);call plot(bottomy_x1(3),bottomy_x1(3),2);call plot(bottomy_x1(2),bottomy_y1(2),2)
+!                 ! call plot(toppy_x1(1),toppy_y1(1),3);call plot(toppy_x1(3),toppy_x1(3),2);call plot(toppy_x1(2),toppy_y1(2),2)
+!                 call plot(0.,-height,3);call plot(-width/2.,-height-height/real(iterations),2);call plot(-width,-height,2)
+!                 call plot(0.,0.,3);call plot(-width/2.,height/real(iterations),2);call plot(-width,0.,2)
+!             else;end if
+!     else;end if
+    
+!     if (morethan==1 .and. lessthan==0) then
+!         call newpen2(3)
+!         do n = 1,iterations
+!             r = r1+real(n-1)*real(r2-r1)/real(iterations); g = g1+real(n-1)*real(g2-g1)/real(iterations); b = b1+real(n-1)*real(b2-b1)/real(iterations)
+!             if(width>=height) then
+!                 call betsqk(0.,0.,width/real(iterations),height,r,g,b)
+!                 if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
+!                 else; call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
+!                 end if
+!                 call plot(width/real(iterations),0.,-3)
+!              else !(if width<=height) 
+!                 call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
+!                 if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
+!                 else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
+!                 end if
+!                 call plot(0.,height/real(iterations),-3)!from bottom to top
+!             end if
+!         end do 
+!         if (width>=height) then
+!             call betmlk(righty_x1,righty_y1,3,3,r2,g2,b2)
+!             ! call plot(righty_x1(1),righty_y1(1),3);call plot(righty_x1(3),righty_x1(3),2);call plot(righty_x1(2),righty_y1(2),2)
+!             call plot(0.,0.,3);call plot(width/real(iterations),height/2.,2);call plot(0.,height,2)
+!         else if (height>=width) then
+!             call betmlk(toppy_x1,toppy_y1,3,3,r2,g2,b2)
+!             ! call plot(toppy_x1(1),toppy_y1(1),3);call plot(toppy_x1(3),toppy_x1(3),2);call plot(toppy_x1(2),toppy_y1(2),2)
+!             call plot(0.,0.,3);call plot(-width/2.,height/real(iterations),2);call plot(-width,0.,2)
+!         else;end if  
+!     else;end if
+
+!         if(morethan==0 .and. lessthan ==1) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 r = r1+real(n)*real(r2-r1)/real(iterations); g = g1+real(n)*real(g2-g1)/real(iterations); b = b1+real(n)*real(b2-b1)/real(iterations)
+!                 if(width>=height) then
+!                     call betsqk(0.,0.,width/real(iterations),height,r,g,b)
+!                     if(n==1)then;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2);call plot(0.,0.,2)
+!                     else;call plot(0.,0.,3);call plot(width/real(iterations),0.,2);call plot(width/real(iterations),height,2);call plot(0.,height,2)
+!                     end if
+!                     call plot(width/real(iterations),0.,-3)
+!                  else !(if width<=height) 
+!                     call betsqk(0.,0.,-width,height/real(iterations),r,g,b)
+!                     if (n ==1) then;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2);call plot(0.,0.,2)
+!                     else;call plot(0.,0.,3);call plot(0.,height/real(iterations),2);call plot(-width,height/real(iterations),2);call plot(-width,0.,2)
+!                     end if
+!                     call plot(0.,height/real(iterations),-3)!from bottom to top
+!                 end if
+!             end do 
+!             if (width>=height) then
+!                 call betmlk(lefty_x1,lefty_y1,3,3,r1,g1,b1)
+!                 ! call plot(lefty_x1(1),lefty_y1(1),3);call plot(lefty_x1(3),lefty_x1(3),2);call plot(lefty_x1(2),lefty_y1(2),2)
+!                 call plot(-width,0.,3);call plot(-width-width/real(iterations),height/2.,2);call plot(-width,height,2)
+!             else if (height>=width) then
+!                 call betmlk(bottomy_x1,bottomy_y1,3,3,r1,g1,b1)
+!                 ! call plot(bottomy_x1(1),bottomy_y1(1),3);call plot(bottomy_x1(3),bottomy_x1(3),2);call plot(bottomy_x1(2),bottomy_y1(2),2)
+!                 call plot(0.,-height,3);call plot(-width/2.,-height-height/real(iterations),2);call plot(-width,-height,2)
+!             else;end if  
+!         else;end if
+
+!         if (width>=height) then;call plot(reset_starting_point,0.,-3)
+!         else if(width<height) then; call plot(0.,reset_starting_point,-3)
+            
+!         else
+!         end if
+    
+! end subroutine
+
+! ! makes a colorscale legend corresponding to arrays of r,g,b. ARRAY SIZE HAS TO BE (ITERATIONS+2). otherwise you will shit yourself
+! subroutine colorscale_creator(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,angle,lessthan,morethan)
+!     implicit none
+!     integer,intent(in)::iterations,symbol_freq,float_quantity,angle,lessthan,morethan
+!     real,intent(in)::ini_num,fin_num,symbol_size,length,width
+!     real,dimension(0:iterations+1),intent(in)::r,g,b
+!     integer::n
+!     real::memori_diff,num_diff
+!     real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.,bottomy_x=0.,bottomy_y=0.,toppy_x=0.,toppy_y=0.
+!     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+
+!     lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
+!     lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
+!     righty_x(1) = length ;righty_x(2) = length+memori_diff ;righty_x(3) = length
+!     righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
+!     bottomy_x(1) = 0. ;bottomy_x(2) = -width/2. ;bottomy_x(3) = -width
+!     bottomy_y(1) = 0. ;bottomy_y(2) = -memori_diff ;bottomy_y(3) = 0.
+!     toppy_x(1) = 0. ;toppy_x(2) =  -width/2. ;toppy_x(3) = -width
+!     toppy_y(1) = length ;toppy_y(2) = length+memori_diff ;toppy_y(3) = length
+
+!     if(morethan==0 .and. lessthan==0) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!         end if
+!     else;end if
+
+!     if(morethan==1 .and. lessthan==1) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
+!             call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,ini_num,0.,float_quantity)
+!             call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0));call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
+!             call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,ini_num,0.,float_quantity)
+!             call symbolr(1.4*symbol_size,length+symbol_size,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
+!         end if
+!     else;end if 
+
+!     if(morethan==1 .and. lessthan==0) then
+!         if(angle == 0) then
+!         call newpen2(3)
+!         do n = 1, iterations
+!             call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!         end do
+!         call plot(0.,0.,3);call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!         call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!         call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
+!         do n = 0, iterations
+!             call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!             if(mod(n,symbol_freq)/=0) then
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!             else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!             end if
+!             if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!             else;end if
+!         end do
+!             call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,fin_num,0.,float_quantity)
+!         end if
+!     else;end if
+
+!     if(morethan==0 .and. lessthan==1) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
+!         end if
+!     else;end if   
+
+! end subroutine
+
+! subroutine colorscale_creator2(x,y,iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,angle,lessthan,morethan)
+!     implicit none
+!     integer,intent(in)::iterations,symbol_freq,float_quantity,angle,lessthan,morethan
+!     real,intent(in)::ini_num,fin_num,symbol_size,length,width,x,y
+!     real,dimension(0:iterations+1),intent(in)::r,g,b
+!     integer::n
+!     real::memori_diff,num_diff
+!     real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.,bottomy_x=0.,bottomy_y=0.,toppy_x=0.,toppy_y=0.
+!     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+
+!     lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
+!     lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
+!     righty_x(1) = length ;righty_x(2) = length+memori_diff ;righty_x(3) = length
+!     righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
+!     bottomy_x(1) = 0. ;bottomy_x(2) = -width/2. ;bottomy_x(3) = -width
+!     bottomy_y(1) = 0. ;bottomy_y(2) = -memori_diff ;bottomy_y(3) = 0.
+!     toppy_x(1) = 0. ;toppy_x(2) =  -width/2. ;toppy_x(3) = -width
+!     toppy_y(1) = length ;toppy_y(2) = length+memori_diff ;toppy_y(3) = length
+
+!     call plot(x,y,-3)
+!     if(morethan==0 .and. lessthan==0) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!         end if
+!     else;end if
+
+!     if(morethan==1 .and. lessthan==1) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
+!             call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,ini_num,0.,float_quantity)
+!             call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0));call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
+!             call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-symbol_size*1.1,symbol_size*0.7,ini_num,0.,float_quantity)
+!             call symbolr(1.4*symbol_size,length+symbol_size,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+symbol_size,symbol_size*0.7,fin_num,0.,float_quantity)
+!         end if
+!     else;end if 
+
+!     if(morethan==1 .and. lessthan==0) then
+!         if(angle == 0) then
+!         call newpen2(3)
+!         do n = 1, iterations
+!             call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!         end do
+!         call plot(0.,0.,3);call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!         call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!         call plot(length,0.,3);call plot(length+memori_diff,width/2.,2);call plot(length,width,2)
+!         do n = 0, iterations
+!             call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!             if(mod(n,symbol_freq)/=0) then
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!             else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!             end if
+!             if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!             else;end if
+!         end do
+!             call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(toppy_x,toppy_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,length,3);call plot(-width/2.,length+memori_diff,2);call plot(-width,length,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.4,symbol_size*0.7,fin_num,0.,float_quantity)
+!         end if
+!     else;end if
+
+!     if(morethan==0 .and. lessthan==1) then
+!         if(angle == 0) then
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(length,0.,2);call plot(0.,width,3);call plot(length,width,2)
+!             call plot(0.,0.,3);call plot(-memori_diff,width/2.,2);call plot(0.,width,2)
+!             do n = 0, iterations
+!                 call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+!                 else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.4*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+!         else !(angle == 90)
+!             call newpen2(3)
+!             do n = 1, iterations
+!                 call betsqk(0.,real(n-1)*memori_diff,-width,real(n)*memori_diff,r(n),g(n),b(n))
+!             end do
+!             call plot(0.,0.,3);call betmlk(bottomy_x,bottomy_y,3,3,r(0),g(0),b(0))
+
+!             call newpen2(3);call plot(0.,0.,3);call plot(0.,length,2);call plot(-width,0.,3);call plot(-width,length,2)
+!             call plot(0.,0.,3);call plot(-width/2.,-memori_diff,2);call plot(-width,0.,2)
+!             do n = 0, iterations
+!                 call plot(0.,real(n)*memori_diff,3);call plot(-width,real(n)*memori_diff,2)
+!                 if(mod(n,symbol_freq)/=0) then
+!                     call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+!                 else;call plot(0.,real(n)*memori_diff,3);call plot(0.1,real(n)*memori_diff,2)
+!                 end if
+!                 if(mod(n,symbol_freq)==0) then;call number(symbol_size*0.5,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+!                 else;end if
+!             end do
+!             call symbolr(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.4,symbol_size*0.7,ini_num,0.,float_quantity)
+!         end if
+!     else;end if   
+!         call plot(-x,-y,-3)
+! end subroutine
