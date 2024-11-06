@@ -47,11 +47,12 @@ module origin
         date = trim(date_str) // 'T' // trim(time_str) // 'Z'
         head = 'Yuta Nishimori'
 
-        write(ounit,'(a)') "%!PS-Adobe-2.1"
+        ! write(ounit,'(a)') "%!PS-Adobe-2.1"
+        write(ounit,'(a)') "%!PS-Adobe-3.0"
         write(ounit,'(a)') "%%Creator: PS-LibraryV2 97.08.08" 
         ! write(ounit,'(a)') "%%Creator: Yuta Nishimori" 
 
-        write(ounit,'(a)') "%%Copyright: PS-LibraryV2  Fukuda & Saito" 
+        write(ounit,'(a)') "%%Copyright: PS-LibraryV2  Fukuda & Saito & little bit of Yuta" 
         write(ounit,'(2a)') "%%CreationDate: ",date
         write(ounit,'(2a)') "%%Title: ",trim(head)
         
@@ -69,8 +70,16 @@ module origin
         write(ounit,'(a)') "/sh  { show } def"
         write(ounit,'(a)') "/sl  { setlinewidth } def"
         write(ounit,'(a)') "/sn  { stroke newpath } def" 
+
         write(ounit,'(a)') "/fo  { /Helvetica-Bold  findfont } def"
         write(ounit,'(a)') "/kfo { /GothicBBB-Medium-H  findfont } def"
+        ! write(ounit,'(a)') "/jfo { /Ryumin-Light findfont } def"
+        ! write(ounit,'(a)') "/shs { /SourceHanSansJP-Regular findfont } def"
+        ! write(ounit,'(a)') "/Helvetica-Bold /CIDFont findresource"
+        ! write(ounit,'(a)') "/Identity-H /CMap findresource"
+        ! write(ounit,'(a)') "composefont /Helvetica-Bold-Japanese def"
+        ! write(ounit,'(a)') "/fo  { /Helvetica-Bold-Japanese findfont } def"
+
         write(ounit,'(a)') "/sf  { scalefont } def"
         write(ounit,'(a)') "/se  { setfont } def"
         write(ounit,'(a)') "/ro  { rotate } def"
@@ -429,20 +438,6 @@ module origin
         if(land)then
             if(present(x))then
                 if(present(y))then
-                    call plotmove2(21.*0.5+x,29.7*0.5+y)
-                else
-                    call plotmove2(21.*0.5+x,29.7*0.5)
-                end if
-            else
-                if(present(y))then
-                    call plotmove2(21.*0.5,29.7*0.5+y)
-                else
-                    call plotmove2(21.*0.5,29.7*0.5)
-                end if
-            end if
-        else
-            if(present(x))then
-                if(present(y))then
                     call plotmove2(29.7*0.5+x,21.*0.5+y)
                 else
                     call plotmove2(29.7*0.5+x,21.*0.5)
@@ -452,6 +447,20 @@ module origin
                     call plotmove2(29.7*0.5,21.*0.5+y)
                 else
                     call plotmove2(29.7*0.5,21.*0.5)
+                end if
+            end if
+        else
+            if(present(x))then
+                if(present(y))then
+                    call plotmove2(21.*0.5+x,29.7*0.5+y)
+                else
+                    call plotmove2(21.*0.5+x,29.7*0.5)
+                end if
+            else
+                if(present(y))then
+                    call plotmove2(21.*0.5,29.7*0.5+y)
+                else
+                    call plotmove2(21.*0.5,29.7*0.5)
                 end if
             end if
         end if
@@ -3808,7 +3817,14 @@ module origin
         if (present(n)) lol = 420 ! no need to specify length anymore
         if (len_trim(isymb) > 256) print*, 'ARE YOU WRITING A BOOK??'
         write(ounit,*) "% begin symbol"
-        write(ounit,*) "fo"
+        ! do i = 1, len_trim(adjustl((isymb)))
+        !     if(iachar(isymb(i:i))<=127 )then
+                write(ounit,*) "fo"
+            ! else
+                ! write(ounit,*) "jfo"
+        !     end if
+        ! end do
+            ! print*,len_trim(isymb),isymb
         write(ounit, 10) h
         10  format(f8.4, " sf")
         write(ounit,*) "se"
@@ -5037,705 +5053,807 @@ module subroutines
     use oldsubs
     implicit none
     contains
+
+    ! DATA
+        ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data
+        subroutine SSH_data(SSH2D,ilabel,slabel,convert)
+            implicit none
+            type :: labeled_array
+                integer, dimension(:,:),allocatable:: num_labels
+                character(len=30), dimension(:,:),allocatable:: str_labels
+                real, dimension(:,:,:),allocatable:: values
+            end type labeled_array
+
+            type(labeled_array) :: localssh
+            integer,parameter::num_rows=150,num_years=15,num_months=12
+            integer,intent(in),optional::ilabel
+            character(len=*),intent(in),optional::slabel
+            integer,intent(in),optional::convert
+            real,dimension(num_years,num_months),intent(out)::SSH2D
+            integer::n,i,ios,convint=0
+            character::yyyy*4,row1*999,convstr*30
+
+            allocate(localssh%num_labels(num_years,num_rows))
+            allocate(localssh%str_labels(num_years,num_rows))
+            allocate(localssh%values(num_years,num_rows,num_months)) ! allocating arrays just to use heap memory
+            localssh%num_labels = 0;localssh%str_labels = ' ';localssh%values = 0.
+            convstr = ''
+            do n = 1, num_years
+                write(yyyy,'(i4)') n+2008
+                open(unit=20, file='../Data/SSH/data/SSH'//trim(yyyy)//'.csv', status='old', action='read',iostat=ios)
+                if(ios/=0) then
+                    print*,'Error opening file';stop
+                end if
+                do i = 1, num_rows
+                    read(20,'(A)',iostat = ios)row1
+                    if(ios == 0)then
+                        call parse_csv_row(row1, localssh%num_labels(n,i), localssh%str_labels(n,i), localssh%values(n,i,:))
+                    else if(i<100.and.ios/=0)then
+                        print*,'Error reading file';stop
+                    else;exit
+                    end if
+                end do
+            end do
+            
+            if(.not.present(ilabel).and..not.present(slabel))print*,'Provide The Station Label or Index'
+            ! print*,localssh%num_labels(1,1:20)
+            ! print*,localssh%str_labels(1,1:10)
+
+            if(present(ilabel).and..not.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(localssh%num_labels(n,i)==ilabel)then
+                            SSH2D(n,:) = localssh%values(n,i,:)
+                            if(present(convert))then
+                                if(n==1)convstr = localssh%str_labels(n,i)
+                                if(n/=1.and.convstr/=localssh%str_labels(n,i))then
+                                    print*,'inconsistant station labels at',convstr,'and',localssh%str_labels(n,i)
+                                end if
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Index',ilabel,'not found for Year',n+2008
+                    end do
+                end do
+                if(present(convert))print*,ilabel,'-->',convstr
+            else if(.not.present(ilabel).and.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(trim(localssh%str_labels(n,i))==slabel)then
+                            SSH2D(n,:) = localssh%values(n,i,:)
+                            if(present(convert))then
+                                if(n==1)convint = localssh%num_labels(n,i)
+                                if(n/=1.and.convint/=localssh%num_labels(n,i))then
+                                    print*,'inconsistant station labels at',convint,'and',localssh%num_labels(n,i)
+                                end if
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Label',slabel,'not found for Year',n+2008
+                    end do
+                end do
+                if(present(convert))print*,slabel,'-->',convint
+            else;print*,'Provide Either Station Label or Index but not both'
+            end if
+
+            contains
+            subroutine parse_csv_row(row, num_label, str_label, values)
+                implicit none
+                character(len=*), intent(in) :: row
+                integer, intent(out) :: num_label
+                character(len=30), intent(out) :: str_label
+                real, dimension(:), intent(out) :: values
+                integer :: pos, start_pos, end_pos,k
+            
+                ! Initialize positions
+                start_pos = 1
+                pos = 0
+            
+                ! Extract num_label
+                end_pos = index(row(start_pos:), ',')
+                read(row(start_pos:start_pos+end_pos-2), '(I4)', iostat=ios) num_label
+                if (ios /= 0) then
+                    print *, 'Error parsing num_label'
+                    stop
+                end if
+                start_pos = start_pos + end_pos
+            
+                ! Extract str_label
+                end_pos = index(row(start_pos:), ',')
+                str_label = adjustl(row(start_pos:start_pos+end_pos-2))
+                start_pos = start_pos + end_pos
+            
+                ! Extract values
+                do k = 1, size(values) ! is 12
+                    end_pos = index(row(start_pos:), ',')
+                    if (end_pos == 0) end_pos = start_pos ! the last iteration
+                    read(row(start_pos:start_pos+end_pos-2), '(F7.1)', iostat=ios) values(k)
+                    if (ios /= 0) then
+                        print *, 'Error parsing values'
+                        stop
+                    end if
+                    start_pos = start_pos + end_pos
+                end do
+            end subroutine parse_csv_row
+
+        end subroutine
     ! COLORGRAD
-    ! r,g,b individual color gradient
-    subroutine colorgrad(rgb,iterations,r,g,b)
-        implicit none
-        integer,intent(in)::iterations
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-        character(len=*),intent(in)::rgb
-        real::tops
+        ! r,g,b individual color gradient
+        subroutine colorgrad(rgb,iterations,r,g,b)
+            implicit none
+            integer,intent(in)::iterations
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+            character(len=*),intent(in)::rgb
+            real::tops
 
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        if(rgb=='red'.or.rgb=='wred')then
-            r(0) = 1.; g(0) = 1.; b(0) = 1.
-            r(1) = 1.; g(1) = 0.9; b(1) = 0.9
-            tops=0.9
-            if(rgb=='wred')then
-                r(1) = 1.; g(1) = 1.; b(1) = 1.
-                tops = 1.
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            if(rgb=='red'.or.rgb=='wred')then
+                r(0) = 1.; g(0) = 1.; b(0) = 1.
+                r(1) = 1.; g(1) = 0.9; b(1) = 0.9
+                tops=0.9
+                if(rgb=='wred')then
+                    r(1) = 1.; g(1) = 1.; b(1) = 1.
+                    tops = 1.
+                end if
+                do n = 2, iterations
+                    r(n) = 1.
+                    g(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    b(n) = tops-(real(n-1)/real(iterations-1))*tops
+                end do
+                r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
+            else if(rgb=='green'.or.rgb=='wgreen')then
+                r(0) = 1.; g(0) = 1.; b(0) = 1.
+                r(1) = 0.9; g(1) = 1.; b(1) = 0.9
+                tops = 0.9
+                if(rgb=='wgreen')then
+                    r(1) = 1.; g(1) = 1.; b(1) = 1.
+                    tops = 1.
+                end if
+                do n = 2, iterations
+                    r(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    g(n) = 1.
+                    b(n) = tops-(real(n-1)/real(iterations-1))*tops
+                end do
+                r(iterations+1) = 0. ; g(iterations+1) = 0.6 ; b(iterations+1) = 0.
+            else if(rgb=='blue'.or.rgb=='wblue')then
+                r(0) = 1.; g(0) = 1.; b(0) = 1.
+                r(1) = 0.9; g(1) = 0.9; b(1) = 1.
+                tops = 0.9
+                if(rgb=='wblue')then
+                    r(1) = 1.; g(1) = 1.; b(1) = 1.
+                    tops=1.
+                end if
+                do n = 2, iterations
+                    r(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    g(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    b(n) = 1.
+                end do
+                r(iterations+1) = 0. ; g(iterations+1) = 0. ; b(iterations+1) = 0.6
+            else;print*,'Choose From red, green, blue'
             end if
-            do n = 2, iterations
-                r(n) = 1.
-                g(n) = tops-(real(n-1)/real(iterations-1))*tops
-                b(n) = tops-(real(n-1)/real(iterations-1))*tops
-            end do
-            r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-        else if(rgb=='green'.or.rgb=='wgreen')then
-            r(0) = 1.; g(0) = 1.; b(0) = 1.
-            r(1) = 0.9; g(1) = 1.; b(1) = 0.9
-            tops = 0.9
-            if(rgb=='wgreen')then
-                r(1) = 1.; g(1) = 1.; b(1) = 1.
-                tops = 1.
-            end if
-            do n = 2, iterations
-                r(n) = tops-(real(n-1)/real(iterations-1))*tops
-                g(n) = 1.
-                b(n) = tops-(real(n-1)/real(iterations-1))*tops
-            end do
-            r(iterations+1) = 0. ; g(iterations+1) = 0.6 ; b(iterations+1) = 0.
-        else if(rgb=='blue'.or.rgb=='wblue')then
-            r(0) = 1.; g(0) = 1.; b(0) = 1.
-            r(1) = 0.9; g(1) = 0.9; b(1) = 1.
-            tops = 0.9
-            if(rgb=='wblue')then
-                r(1) = 1.; g(1) = 1.; b(1) = 1.
-                tops=1.
-            end if
-            do n = 2, iterations
-                r(n) = tops-(real(n-1)/real(iterations-1))*tops
-                g(n) = tops-(real(n-1)/real(iterations-1))*tops
-                b(n) = 1.
-            end do
-            r(iterations+1) = 0. ; g(iterations+1) = 0. ; b(iterations+1) = 0.6
-        else;print*,'Choose From red, green, blue'
-        end if
-    end subroutine
-    ! blue to red
-    subroutine b2r_colorgrad(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-        
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        do n = 1, iterations
-            if(midpoint==1.and.n==1)then;r(1)=0.;g(1)=0.;b(1)=1.;cycle;endif
-            if (n <= midpoint) then 
-                r(n) = 0.+(real(n-1)/real(midpoint-1))*0.90
-                g(n) = 0.+(real(n-1)/real(midpoint-1))*0.90
-                b(n) = 1.
-            else
-                r(n) = 1.
-                g(n) = 0.90-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.90
-                b(n) = 0.90-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.90
-            end if
-        end do
-
-        r(0) = 0.; g(0) = 0.; b(0) = 0.6
-        r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-
-    end subroutine
-    subroutine b2w2r_colorgrad(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-        
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        do n = 1, iterations
-            if(midpoint==1)then;print*,'midpoint of 0 is invalid for b2w2r colorgrad';stop;endif
-            if (n < midpoint) then 
-                r(n) = 0.+(real(n-1)/real(midpoint-2))*0.85
-                g(n) = 0.+(real(n-1)/real(midpoint-2))*0.85
-                b(n) = 1.
-            else if(n==midpoint)then
-                r(n)=1.;g(n)=1.;b(n)=1.
-            else
-                r(n) = 1.
-                g(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
-                b(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
-            end if
-        end do
-
-        r(0) = 0.; g(0) = 0.; b(0) = 0.6
-        r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-
-    end subroutine
-    ! blue to grey to red
-    subroutine b2gy2r_colorgrad(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-        
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        do n = 1, midpoint-1
-                r(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
-                g(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
-                b(n) = 1.
-        end do
-        do n = midpoint+1,iterations
-                r(n) = 1.
-                g(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
-                b(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
-        end do
-        r(midpoint) = 0.85;g(midpoint) = 0.85;b(midpoint) = 0.85
-
-
-
-        r(0) = 0.; g(0) = 0.; b(0) = 0.6
-        r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
-    end subroutine
-    ! red to green
-    subroutine r2g_colorgrad(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n 
-
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        do n = 1,iterations
-            if(n<=midpoint) then
-                r(n) = 1.
-                g(n) = real(n-1)/real(midpoint-1)
-                b(n) = 0.
-            else
-                r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
-                g(n) = 1.
-                b(n) = 0.
-            end if
-        end do
-        ! r(0) = 0.; g(0) = 0.; b(0) = 0.
-    end subroutine
-    ! black to red, then gradient from red to green. 
-    subroutine bk2r2g_colorgrad(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(:),allocatable,intent(out)::r,g,b 
-        integer::n 
-
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        r(1) = 0.; g(1) = 0.; b(1) = 0.
-        do n = 2,iterations
-            if(n<=midpoint) then
-                r(n) = 1.
-                g(n) = real(n-2)/real(midpoint-2)
-                b(n) = 0.
-            else 
-                r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
-                g(n) = 1.
-                b(n) = 0.
-            end if
-        end do
-
-    end subroutine
-    ! b<breakpoint1>g<breakpoint2>y<breakpoint3>r. bluecyan==dark->light, yellowred==light->dark
-    subroutine b2cy2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        r(0)=0.;g(0)=0.;b(0)=0.9
-        ! from dark blue to light blue
-        do n = 1, breakpoint1
-            r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-            g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-            b(n) = 1.
-        end do
-        ! from dark cyan to light cyan
-        do n = 1,breakpoint2-breakpoint1
-            r(n+breakpoint1) = (real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-            g(n+breakpoint1) = 1.
-            b(n+breakpoint1) = 1.
-        end do
-
-        ! from light yellow to dark yellow
-        do n = 1, breakpoint3-breakpoint2
-            r(n+breakpoint2) = 1.
-            g(n+breakpoint2) = 1.
-            b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
-        end do
-        ! from light red to dark red
-        do n = 1, iterations-breakpoint3
-            r(n+breakpoint3) = 1.
-            g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-            b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-        end do
-        r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
-    end subroutine
-    ! b,zeropoint,g->y->r. blue==dark->light, greenyellowred==light->dark
-    subroutine b2g2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
-        real,dimension(:),allocatable,intent(out)::r,g,b
-        integer::n
-
-        allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
-        r(0)=0.;g(0)=0.;b(0)=0.9
-        ! from dark blue to light blue
-        do n = 1, breakpoint1
-            r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-            g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
-            b(n) = 1.
-        end do
-        ! from dark green to light green
-        do n = 1,breakpoint2-breakpoint1
-            r(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-            g(n+breakpoint1) = 1.
-            b(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
-        end do
-
-        ! from light yellow to dark yellow
-        do n = 1, breakpoint3-breakpoint2
-            r(n+breakpoint2) = 1.
-            g(n+breakpoint2) = 1.
-            b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
-        end do
-        ! from light red to dark red
-        do n = 1, iterations-breakpoint3
-            r(n+breakpoint3) = 1.
-            g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-            b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
-        end do
-        r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
-    end subroutine
-    subroutine dozencolors(r,g,b)
-        real, dimension(:),allocatable,intent(out) :: r, g, b
-        allocate (r(12), g(12), b(12))
-        r = (/ 1.0, 0.0, 0.0, .8, 0.0, 1.0, 1.0, 0.75, 1.0, 0.5, 0.0, 0.65 /)
-        g = (/ 0.0, 1.0, 0.0, .8, 1.0, 0.0, 0.65, 1.0, 0.41, 0.0, 0.5, 0.16 /)
-        b = (/ 0.0, 0.0, 1.0, 0.0, 1.0, .8, 0.0, 0.0, 0.71, 0.5, 0.5, 0.16 /)
-    end subroutine
-    ! END COLORGRAD
-    subroutine rgb_to_cmyk(r, g, b, c, m, y, k)
-        implicit none
-        real, intent(in) :: r, g, b
-        real, intent(out) :: c, m, y, k
-        real :: r_norm, g_norm, b_norm
-    
-        r_norm = r / 255.0
-        g_norm = g / 255.0
-        b_norm = b / 255.0
-    
-        k = 1.0 - max(r_norm, g_norm, b_norm)
-        if (k < 1.0) then
-            c = (1.0 - r_norm - k) / (1.0 - k)
-            m = (1.0 - g_norm - k) / (1.0 - k)
-            y = (1.0 - b_norm - k) / (1.0 - k)
-        else
-            c = 0.0
-            m = 0.0
-            y = 0.0
-        end if
-    end subroutine rgb_to_cmyk
-    subroutine cmyk_to_rgb(c, m, y, k, r, g, b)
-        implicit none
-        real, intent(in) :: c, m, y, k
-        real, intent(out) :: r, g, b
-    
-        r = 255.0 * (1.0 - c) * (1.0 - k)
-        g = 255.0 * (1.0 - m) * (1.0 - k)
-        b = 255.0 * (1.0 - y) * (1.0 - k)
-    end subroutine cmyk_to_rgb
-    subroutine centeralize_colors(iterations,midpoint,r,g,b)
-        implicit none
-        integer,intent(in)::iterations,midpoint
-        real,dimension(0:),intent(inout)::r,g,b
-        integer::n
-
-        if(lbound(r,1).ne.0 .or. ubound(r,1).ne.(iterations+1))then
-            print*,'Iterations and the array size do not match in SUBROUTINE (centeralize_colors)'
-        end if
-        if(midpoint>3)then
-            do n = 2, iterations-1
-                if(n<midpoint-1)then
-                    r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(midpoint-n))
-                    g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(midpoint-n))
-                    b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(midpoint-n))
-                else if(n>midpoint+1)then
-                    r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
-                    g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
-                    b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
+        end subroutine
+        ! blue to red
+        subroutine b2r_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+            
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            do n = 1, iterations
+                if(midpoint==1.and.n==1)then;r(1)=0.;g(1)=0.;b(1)=1.;cycle;endif
+                if (n <= midpoint) then 
+                    r(n) = 0.+(real(n-1)/real(midpoint-1))*0.90
+                    g(n) = 0.+(real(n-1)/real(midpoint-1))*0.90
+                    b(n) = 1.
+                else
+                    r(n) = 1.
+                    g(n) = 0.90-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.90
+                    b(n) = 0.90-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.90
                 end if
             end do
-        else if(midpoint<3)then ! colors in midpoint dont change
-            if(midpoint+1>iterations-1)then
-                print*,'no change in subroutine centralize_colors',midpoint+1,'>',iterations
-                return
-            end if 
-            if(iterations<3)then
-                do n = midpoint+1,iterations
-                    r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
-                    g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
-                    b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
-                end do
-                print*, 'colors shifted to the left relative of ',midpoint,'(subroutine centeralize_colors)'
-            else 
-                do n = midpoint+1,iterations-1
-                    r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
-                    g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
-                    b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
-                end do
-                print*, 'colors shifted to the left relative of ',midpoint,'(subroutine centeralize_colors)'
-            end if
-        end if
-    end subroutine
+
+            r(0) = 0.; g(0) = 0.; b(0) = 0.6
+            r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
+
+        end subroutine
+        subroutine b2w2r_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+            
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            do n = 1, iterations
+                if(midpoint==1)then;print*,'midpoint of 0 is invalid for b2w2r colorgrad';stop;endif
+                if (n < midpoint) then 
+                    r(n) = 0.+(real(n-1)/real(midpoint-2))*0.85
+                    g(n) = 0.+(real(n-1)/real(midpoint-2))*0.85
+                    b(n) = 1.
+                else if(n==midpoint)then
+                    r(n)=1.;g(n)=1.;b(n)=1.
+                else
+                    r(n) = 1.
+                    g(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
+                    b(n) = 0.85-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.85
+                end if
+            end do
+
+            r(0) = 0.; g(0) = 0.; b(0) = 0.6
+            r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
+
+        end subroutine
+        ! blue to grey to red
+        subroutine b2gy2r_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+            
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            do n = 1, midpoint-1
+                    r(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
+                    g(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
+                    b(n) = 1.
+            end do
+            do n = midpoint+1,iterations
+                    r(n) = 1.
+                    g(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
+                    b(n) = 0.8-(real(n-midpoint-1)/real(iterations-midpoint-1))*0.8
+            end do
+            r(midpoint) = 0.85;g(midpoint) = 0.85;b(midpoint) = 0.85
+
+
+
+            r(0) = 0.; g(0) = 0.; b(0) = 0.6
+            r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
+        end subroutine
+        ! red to green
+        subroutine r2g_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n 
+
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            do n = 1,iterations
+                if(n<=midpoint) then
+                    r(n) = 1.
+                    g(n) = real(n-1)/real(midpoint-1)
+                    b(n) = 0.
+                else
+                    r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
+                    g(n) = 1.
+                    b(n) = 0.
+                end if
+            end do
+            ! r(0) = 0.; g(0) = 0.; b(0) = 0.
+        end subroutine
+        ! black to red, then gradient from red to green. 
+        subroutine bk2r2g_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b 
+            integer::n 
+
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            r(1) = 0.; g(1) = 0.; b(1) = 0.
+            do n = 2,iterations
+                if(n<=midpoint) then
+                    r(n) = 1.
+                    g(n) = real(n-2)/real(midpoint-2)
+                    b(n) = 0.
+                else 
+                    r(n) = 1.-real(n-midpoint)/real(iterations-midpoint)
+                    g(n) = 1.
+                    b(n) = 0.
+                end if
+            end do
+
+        end subroutine
+        ! b<breakpoint1>g<breakpoint2>y<breakpoint3>r. bluecyan==dark->light, yellowred==light->dark
+        subroutine b2cy2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            r(0)=0.;g(0)=0.;b(0)=0.9
+            ! from dark blue to light blue
+            do n = 1, breakpoint1
+                r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
+                g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
+                b(n) = 1.
+            end do
+            ! from dark cyan to light cyan
+            do n = 1,breakpoint2-breakpoint1
+                r(n+breakpoint1) = (real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
+                g(n+breakpoint1) = 1.
+                b(n+breakpoint1) = 1.
+            end do
+
+            ! from light yellow to dark yellow
+            do n = 1, breakpoint3-breakpoint2
+                r(n+breakpoint2) = 1.
+                g(n+breakpoint2) = 1.
+                b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
+            end do
+            ! from light red to dark red
+            do n = 1, iterations-breakpoint3
+                r(n+breakpoint3) = 1.
+                g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
+                b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
+            end do
+            r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
+        end subroutine
+        ! b,zeropoint,g->y->r. blue==dark->light, greenyellowred==light->dark
+        subroutine b2g2y2r_colorgrad(iterations,breakpoint1,breakpoint2,breakpoint3,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,breakpoint1,breakpoint2,breakpoint3
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            r(0)=0.;g(0)=0.;b(0)=0.9
+            ! from dark blue to light blue
+            do n = 1, breakpoint1
+                r(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
+                g(n) = 0.+(real(n-1)/real(breakpoint1-1))*0.8
+                b(n) = 1.
+            end do
+            ! from dark green to light green
+            do n = 1,breakpoint2-breakpoint1
+                r(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
+                g(n+breakpoint1) = 1.
+                b(n+breakpoint1) = 0.9-(real(n-1)/real(breakpoint2-breakpoint1-1))*0.9
+            end do
+
+            ! from light yellow to dark yellow
+            do n = 1, breakpoint3-breakpoint2
+                r(n+breakpoint2) = 1.
+                g(n+breakpoint2) = 1.
+                b(n+breakpoint2) = 0.9-(real(n-1)/real(breakpoint3-breakpoint2-1))*0.9
+            end do
+            ! from light red to dark red
+            do n = 1, iterations-breakpoint3
+                r(n+breakpoint3) = 1.
+                g(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
+                b(n+breakpoint3) = 0.9-(real(n-1)/real(iterations-breakpoint3-1))*0.9
+            end do
+            r(iterations+1) = 0.9;g(iterations+1) = 0.;b(iterations+1) = 0.
+        end subroutine
+        subroutine dozencolors(r,g,b)
+            real, dimension(:),allocatable,intent(out) :: r, g, b
+            allocate (r(12), g(12), b(12))
+            r = (/ 1.0, 0.0, 0.0, .8, 0.0, 1.0, 1.0, 0.75, 1.0, 0.5, 0.0, 0.65 /)
+            g = (/ 0.0, 1.0, 0.0, .8, 1.0, 0.0, 0.65, 1.0, 0.41, 0.0, 0.5, 0.16 /)
+            b = (/ 0.0, 0.0, 1.0, 0.0, 1.0, .8, 0.0, 0.0, 0.71, 0.5, 0.5, 0.16 /)
+        end subroutine
+        ! END COLORGRAD
+        subroutine rgb_to_cmyk(r, g, b, c, m, y, k)
+            implicit none
+            real, intent(in) :: r, g, b
+            real, intent(out) :: c, m, y, k
+            real :: r_norm, g_norm, b_norm
         
+            r_norm = r / 255.0
+            g_norm = g / 255.0
+            b_norm = b / 255.0
+        
+            k = 1.0 - max(r_norm, g_norm, b_norm)
+            if (k < 1.0) then
+                c = (1.0 - r_norm - k) / (1.0 - k)
+                m = (1.0 - g_norm - k) / (1.0 - k)
+                y = (1.0 - b_norm - k) / (1.0 - k)
+            else
+                c = 0.0
+                m = 0.0
+                y = 0.0
+            end if
+        end subroutine rgb_to_cmyk
+        subroutine cmyk_to_rgb(c, m, y, k, r, g, b)
+            implicit none
+            real, intent(in) :: c, m, y, k
+            real, intent(out) :: r, g, b
+        
+            r = 255.0 * (1.0 - c) * (1.0 - k)
+            g = 255.0 * (1.0 - m) * (1.0 - k)
+            b = 255.0 * (1.0 - y) * (1.0 - k)
+        end subroutine cmyk_to_rgb
+        subroutine centeralize_colors(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(0:),intent(inout)::r,g,b
+            integer::n
+
+            if(lbound(r,1).ne.0 .or. ubound(r,1).ne.(iterations+1))then
+                print*,'Iterations and the array size do not match in SUBROUTINE (centeralize_colors)'
+            end if
+            if(midpoint>3)then
+                do n = 2, iterations-1
+                    if(n<midpoint-1)then
+                        r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(midpoint-n))
+                        g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(midpoint-n))
+                        b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(midpoint-n))
+                    else if(n>midpoint+1)then
+                        r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
+                        g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
+                        b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
+                    end if
+                end do
+            else if(midpoint<3)then ! colors in midpoint dont change
+                if(midpoint+1>iterations-1)then
+                    print*,'no change in subroutine centralize_colors',midpoint+1,'>',iterations
+                    return
+                end if 
+                if(iterations<3)then
+                    do n = midpoint+1,iterations
+                        r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
+                        g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
+                        b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
+                    end do
+                    print*, 'colors shifted to the left relative of ',midpoint,'(subroutine centeralize_colors)'
+                else 
+                    do n = midpoint+1,iterations-1
+                        r(n) = r(n) + (r(midpoint)-r(n))/1.7**(real(n-midpoint))
+                        g(n) = g(n) + (g(midpoint)-g(n))/1.7**(real(n-midpoint))
+                        b(n) = b(n) + (b(midpoint)-b(n))/1.7**(real(n-midpoint))
+                    end do
+                    print*, 'colors shifted to the left relative of ',midpoint,'(subroutine centeralize_colors)'
+                end if
+            end if
+        end subroutine
+    ! END COLORGRAD 
 
     ! PLOTS
-    subroutine box(width,height,thickness,x,y)
-        implicit none
-        real,intent(in)::width,height
-        real,intent(in),optional::x,y
-        integer,intent(in)::thickness
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        call newpen2(thickness)
-        call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-    end subroutine    
-    subroutine floating_numbers(ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,rangle,float_quantity,x,y)
-        real,intent(in)::symbol_size,x_inc,y_inc,rangle,ini_num,num_inc
-        real,intent(in),optional::x,y
-        integer,intent(in)::iterations,float_quantity
-        integer::n
-        real::printnum
+        subroutine box(width,height,thickness,x,y)
+            implicit none
+            real,intent(in)::width,height
+            real,intent(in),optional::x,y
+            integer,intent(in)::thickness
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            call newpen2(thickness)
+            call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        end subroutine    
+        subroutine floating_numbers(ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,rangle,float_quantity,x,y)
+            real,intent(in)::symbol_size,x_inc,y_inc,rangle,ini_num,num_inc
+            real,intent(in),optional::x,y
+            integer,intent(in)::iterations,float_quantity
+            integer::n
+            real::printnum
 
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        do n = 1, iterations
-            printnum = ini_num + num_inc*real(n-1)
-            call numberc(real(n-1)*x_inc,real(n-1)*y_inc,symbol_size,printnum,rangle,float_quantity)
-        end do
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-    end subroutine
-    subroutine floating_lines(length,rangle,iterations,line_thickness,x_inc,y_inc,x,y,dashy)
-        real,intent(in)::length,x_inc,y_inc,rangle
-        real,intent(in),optional::x,y
-        integer,intent(in),optional::dashy
-        integer,intent(in)::iterations,line_thickness
-        integer::n
-
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-
-        call newpen2(line_thickness)
-        if(present(dashy))call newpen2(dashy)
-        write(ounit,*) "% begin floating_lines"
-        do n = 1, iterations
-            write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
-            call plot(0.,0.,3);call plot(length,0.,2)
-            write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
-            call plot(x_inc,y_inc,-3)
-        end do
-        write(ounit,*) "% end floating_lines"
-        call plot(-real(iterations)*x_inc,-real(iterations)*y_inc,-3)
-
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-        return
-    end subroutine
-    ! defaults for optional arguments are, rangle=0.,symbol_start=0,TorB='B',lt=0,gt=0,symbol_start=0,x=0.,y=0.
-    subroutine colorscale(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,lt,gt,rangle,TorB,symbol_start,x,y)
-        implicit none
-        intrinsic::sin,cos
-        integer,intent(in)::iterations,symbol_freq,float_quantity
-        real,intent(in)::ini_num,fin_num,symbol_size,length,width
-        integer,intent(in),optional::lt,gt,symbol_start
-        character(len=*),intent(in),optional::TorB
-        real,intent(in),optional::rangle,x,y
-        real,dimension(0:),intent(in)::r,g,b
-        integer::n,intquan
-        real::memori_diff,num_diff
-        real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.
-        character(len=20)::min,max,format1,format2
-
-        if(lbound(r,1).ne.0 .or. ubound(r,1).ne.(iterations+1))then
-            print*,'Something wrong with the color array'
-        end if
-        do n = 1,10
-            if(ini_num/(10.**real(n))>=1.)then;cycle
-            else;intquan=n;exit;end if
-        end do
-        if(float_quantity>=0)then
-            write(format1,'(A,I0,A,I0,A)') "(f",intquan+float_quantity+3,'.',float_quantity,")"
-            write(min,format1)ini_num
-        else;write(format1,'(A,I0,A)') "(i",intquan+2,")"
-            write(min,format1)int(ini_num)
-        end if
-        ! write(min,format1)ini_num
-        do n = 1,10
-            if(fin_num/(10.**real(n))>=1.)then;cycle
-            else;intquan=n;exit;endif
-        end do
-        if(float_quantity>=0)then
-            write(format2,'(A,I0,A,I0,A)') "(f",intquan+float_quantity+3,'.',float_quantity,")"
-            write(max,format2)fin_num
-        else;write(format2,'(A,I0,A)') "(i",intquan+2,")"
-            write(max,format2)int(fin_num)
-        end if
-        ! write(max,format2)fin_num
-        ! print*,format1,format2,max,min
-        memori_diff = length/real(iterations+2); num_diff = (fin_num-ini_num)/real(iterations)
-
-        lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
-        lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
-        righty_x(1) = length-memori_diff*2. ;righty_x(2) = length-memori_diff;righty_x(3) = length-memori_diff*2.
-        righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        write(ounit,*) "% begin colorscale"
-
-            if(present(rangle)) then
-                write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro '
-            end if
-            call plot(-length/2.+memori_diff,-width/2.,-3)
-            if(symbol_size<0.3)then;call newpen2(3)
-            else if(symbol_size>=0.3.and.symbol_size<0.6)then;call newpen2(4)
-            else;call newpen2(5)
-            end if
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
             do n = 1, iterations
-                call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+                printnum = ini_num + num_inc*real(n-1)
+                call numberc(real(n-1)*x_inc,real(n-1)*y_inc,symbol_size,printnum,rangle,float_quantity)
             end do
-            call plot(0.,0.,3);call plot(length-2.*memori_diff,0.,2);call plot(0.,width,3);call plot(length-2.*(memori_diff),width,2);call plot(0.,0.,3)
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        end subroutine
+        subroutine floating_lines(length,rangle,iterations,line_thickness,x_inc,y_inc,x,y,dashy)
+            real,intent(in)::length,x_inc,y_inc,rangle
+            real,intent(in),optional::x,y
+            integer,intent(in),optional::dashy
+            integer,intent(in)::iterations,line_thickness
+            integer::n
+
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+
+            call newpen2(line_thickness)
+            if(present(dashy))call newpen2(dashy)
+            write(ounit,*) "% begin floating_lines"
+            do n = 1, iterations
+                write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
+                call plot(0.,0.,3);call plot(length,0.,2)
+                write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
+                call plot(x_inc,y_inc,-3)
+            end do
+            write(ounit,*) "% end floating_lines"
+            call plot(-real(iterations)*x_inc,-real(iterations)*y_inc,-3)
+
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+            return
+        end subroutine
+        ! defaults for optional arguments are, rangle=0.,symbol_start=0,TorB='B',lt=0,gt=0,symbol_start=0,x=0.,y=0.
+        subroutine colorscale(iterations,r,g,b,ini_num,fin_num,symbol_freq,symbol_size,float_quantity,length,width,lt,gt,rangle,TorB,symbol_start,x,y)
+            implicit none
+            intrinsic::sin,cos
+            integer,intent(in)::iterations,symbol_freq,float_quantity
+            real,intent(in)::ini_num,fin_num,symbol_size,length,width
+            integer,intent(in),optional::lt,gt,symbol_start
+            character(len=*),intent(in),optional::TorB
+            real,intent(in),optional::rangle,x,y
+            real,dimension(0:),intent(in)::r,g,b
+            integer::n,intquan
+            real::memori_diff,num_diff
+            real,dimension(3)::lefty_x=0.,lefty_y=0.,righty_x=0.,righty_y=0.
+            character(len=20)::min,max,format1,format2
+
+            if(lbound(r,1).ne.0 .or. ubound(r,1).ne.(iterations+1))then
+                print*,'Something wrong with the color array'
+            end if
+            do n = 1,10
+                if(ini_num/(10.**real(n))>=1.)then;cycle
+                else;intquan=n;exit;end if
+            end do
+            if(float_quantity>=0)then
+                write(format1,'(A,I0,A,I0,A)') "(f",intquan+float_quantity+3,'.',float_quantity,")"
+                write(min,format1)ini_num
+            else;write(format1,'(A,I0,A)') "(i",intquan+2,")"
+                write(min,format1)int(ini_num)
+            end if
+            ! write(min,format1)ini_num
+            do n = 1,10
+                if(fin_num/(10.**real(n))>=1.)then;cycle
+                else;intquan=n;exit;endif
+            end do
+            if(float_quantity>=0)then
+                write(format2,'(A,I0,A,I0,A)') "(f",intquan+float_quantity+3,'.',float_quantity,")"
+                write(max,format2)fin_num
+            else;write(format2,'(A,I0,A)') "(i",intquan+2,")"
+                write(max,format2)int(fin_num)
+            end if
+            ! write(max,format2)fin_num
+            ! print*,format1,format2,max,min
+            memori_diff = length/real(iterations+2); num_diff = (fin_num-ini_num)/real(iterations)
+
+            lefty_x(1) = 0.;lefty_x(2) = -memori_diff; lefty_x(3) = 0.
+            lefty_y(1) = 0.;lefty_y(2) = width/2. ;lefty_y(3) = width
+            righty_x(1) = length-memori_diff*2. ;righty_x(2) = length-memori_diff;righty_x(3) = length-memori_diff*2.
+            righty_y(1) = 0. ;righty_y(2) = width/2. ;righty_y(3) = width
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            write(ounit,*) "% begin colorscale"
+
+                if(present(rangle)) then
+                    write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro '
+                end if
+                call plot(-length/2.+memori_diff,-width/2.,-3)
+                if(symbol_size<0.3)then;call newpen2(3)
+                else if(symbol_size>=0.3.and.symbol_size<0.6)then;call newpen2(4)
+                else;call newpen2(5)
+                end if
+                do n = 1, iterations
+                    call betsqk(real(n-1)*memori_diff,0.,real(n)*memori_diff,width,r(n),g(n),b(n))
+                end do
+                call plot(0.,0.,3);call plot(length-2.*memori_diff,0.,2);call plot(0.,width,3);call plot(length-2.*(memori_diff),width,2);call plot(0.,0.,3)
+                if(present(lt))then
+                    call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call plot(0.,0.,3)
+                    call plot(lefty_x(1),lefty_y(1),3)
+                    call plot(lefty_x(2),lefty_y(2),2);call plot(lefty_x(3),lefty_y(3),2)
+                end if
+                if(present(gt))then
+                    call plot(0.,0.,3)
+                    call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1));call plot(0.,0.,3)
+                    call plot(righty_x(1),righty_y(1),3);call plot(righty_x(2),righty_y(2),2);call plot(righty_x(3),righty_y(3),2)
+                end if
+                do n = 0, iterations
+                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
+                    if(present(TorB).and.TorB=='T')then
+                        call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/8.,2)
+                    else
+                        call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/8.,2)
+                    end if
+                    if(present(symbol_start))then
+                        if(n>=symbol_start-1.and.mod(n-symbol_start-1,symbol_freq)==0 ) then
+                            if(present(TorB).and.TorB=='T')then
+                                call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/4.,2)
+                                if(present(rangle)) then
+                                    if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,width+1.5*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
+                                    else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                    end if
+                                else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                end if
+                            else ! TorB=='B' or nada
+                                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/4.,2)
+                                if(present(rangle)) then
+                                    if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,-1.6*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
+                                    else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                    end if
+                                elseif(.not.present(rangle))then;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                end if
+                            end if
+                        end if
+                    else if(.not.present(symbol_start))then
+                        if(mod(n,symbol_freq)==0 ) then
+                            if(present(TorB).and.TorB=='T')then
+                                call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/4.,2)
+                                if(present(rangle)) then
+                                    if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,width+1.5*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
+                                    else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                    end if
+                                else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                end if
+                            else ! TorB=='B' or nada
+                                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/4.,2)
+                                if(present(rangle)) then
+                                    if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,-1.6*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
+                                    else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                    end if
+                                else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                                end if
+                            end if
+                        end if
+                    end if
+                end do
+                ! print*,'bpt3'
             if(present(lt))then
-                call betmlk(lefty_x,lefty_y,3,3,r(0),g(0),b(0));call plot(0.,0.,3)
-                call plot(lefty_x(1),lefty_y(1),3)
-                call plot(lefty_x(2),lefty_y(2),2);call plot(lefty_x(3),lefty_y(3),2)
-            end if
-            if(present(gt))then
-                call plot(0.,0.,3)
-                call betmlk(righty_x,righty_y,3,3,r(iterations+1),g(iterations+1),b(iterations+1));call plot(0.,0.,3)
-                call plot(righty_x(1),righty_y(1),3);call plot(righty_x(2),righty_y(2),2);call plot(righty_x(3),righty_y(3),2)
-            end if
-            do n = 0, iterations
-                call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,width,2)
                 if(present(TorB).and.TorB=='T')then
-                    call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/8.,2)
-                else
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/8.,2)
-                end if
-                if(present(symbol_start))then
-                    if(n>=symbol_start-1.and.mod(n-symbol_start-1,symbol_freq)==0 ) then
-                        if(present(TorB).and.TorB=='T')then
-                            call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/4.,2)
-                            if(present(rangle)) then
-                                if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,width+1.5*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
-                                else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                                end if
-                            else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            end if
-                        else ! TorB=='B' or nada
-                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/4.,2)
-                            if(present(rangle)) then
-                                if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,-1.6*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
-                                else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                                end if
-                            elseif(.not.present(rangle))then;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            end if
+                    if(present(rangle))then
+                        if(rangle/=0.)then;call symbolc(-1.4*symbol_size,+1.8*symbol_size,symbol_size*0.7,'<'//trim(min),-rangle,len('<'//trim(min)))
+                        else;call symbolc(-2.*symbol_size,+1.*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
                         end if
-                    end if
-                else if(.not.present(symbol_start))then
-                    if(mod(n,symbol_freq)==0 ) then
-                        if(present(TorB).and.TorB=='T')then
-                            call plot(real(n)*memori_diff,width,3);call plot(real(n)*memori_diff,width+symbol_size/4.,2)
-                            if(present(rangle)) then
-                                if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,width+1.5*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
-                                else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                                end if
-                            else;call numberc(real(n)*memori_diff,width+.5*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            end if
-                        else ! TorB=='B' or nada
-                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-symbol_size/4.,2)
-                            if(present(rangle)) then
-                                if(rangle/=0.)then;call numberc(real(n)*memori_diff-symbol_size*0.3,-1.6*symbol_size,symbol_size,ini_num+num_diff*real(n),-rangle,float_quantity)
-                                else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                                end if
-                            else;call numberc(real(n)*memori_diff,-1.3*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            end if
-                        end if
-                    end if
-                end if
-            end do
-            ! print*,'bpt3'
-        if(present(lt))then
-            if(present(TorB).and.TorB=='T')then
-                if(present(rangle))then
-                    if(rangle/=0.)then;call symbolc(-1.4*symbol_size,+1.8*symbol_size,symbol_size*0.7,'<'//trim(min),-rangle,len('<'//trim(min)))
                     else;call symbolc(-2.*symbol_size,+1.*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
                     end if
-                else;call symbolc(-2.*symbol_size,+1.*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
-                end if
-            else ! TorB=='B' or nada
-                if(present(rangle))then
-                    if(rangle/=0.)then;call symbolc(-1.2*symbol_size,-1.2*symbol_size,symbol_size*0.7,'<'//trim(min),-rangle,len('<'//trim(min)))
+                else ! TorB=='B' or nada
+                    if(present(rangle))then
+                        if(rangle/=0.)then;call symbolc(-1.2*symbol_size,-1.2*symbol_size,symbol_size*0.7,'<'//trim(min),-rangle,len('<'//trim(min)))
+                        else;call symbolc(-2.*symbol_size,-0.5*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
+                        end if
                     else;call symbolc(-2.*symbol_size,-0.5*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
                     end if
-                else;call symbolc(-2.*symbol_size,-0.5*symbol_size,symbol_size*0.7,'<'//trim(min),0.,len('<'//trim(min)))
                 end if
             end if
-        end if
-        if (present(gt))then
-            if(present(TorB).and.TorB=='T')then
-                if(present(rangle))then
-                    if(rangle/=0.)then;call symbolc(length-2.*memori_diff+1.*symbol_size,+1.8*symbol_size,symbol_size*0.7,trim(max)//'<',-rangle,len('>'//trim(max)))
+            if (present(gt))then
+                if(present(TorB).and.TorB=='T')then
+                    if(present(rangle))then
+                        if(rangle/=0.)then;call symbolc(length-2.*memori_diff+1.*symbol_size,+1.8*symbol_size,symbol_size*0.7,trim(max)//'<',-rangle,len('>'//trim(max)))
+                        else;call symbolc(length-2.*memori_diff+1.5*symbol_size,+1.*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
+                        end if
                     else;call symbolc(length-2.*memori_diff+1.5*symbol_size,+1.*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
                     end if
-                else;call symbolc(length-2.*memori_diff+1.5*symbol_size,+1.*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
-                end if
-            else ! TorB=='B' or nada
-                if(present(rangle))then
-                    if(rangle/=0.)then;call symbolc(length-2.*memori_diff+1.*symbol_size,-1.2*symbol_size,symbol_size*0.7,trim(max)//' <',-rangle,len('>'//trim(max)))
+                else ! TorB=='B' or nada
+                    if(present(rangle))then
+                        if(rangle/=0.)then;call symbolc(length-2.*memori_diff+1.*symbol_size,-1.2*symbol_size,symbol_size*0.7,trim(max)//' <',-rangle,len('>'//trim(max)))
+                        else;call symbolc(length-2.*memori_diff+1.5*symbol_size,-0.5*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
+                        end if
                     else;call symbolc(length-2.*memori_diff+1.5*symbol_size,-0.5*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
                     end if
-                else;call symbolc(length-2.*memori_diff+1.5*symbol_size,-0.5*symbol_size,symbol_size*0.7,trim(max)//'<',0.,len('>'//trim(max)))
                 end if
             end if
-        end if
-        call plot(length/2.-memori_diff,width/2.,-3)
-        if(present(rangle)) then
-            write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro '
-        end if
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-
-        
-    end subroutine
-    ! MEMORI
-    subroutine memori(iterations,memori_size,bimemori_freq,length,rangle,x,y,gap)
-        implicit none
-        real,intent(in)::memori_size,length,rangle
-        integer,intent(in)::iterations,bimemori_freq
-        integer,intent(in),optional::gap
-        real,intent(in),optional::x,y
-        real::dx,gappy
-        integer::n
-    
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
-        call plot(-length/2.,0.,-3)
-        if(memori_size<=0.05)then;call newpen2(2)
-        else if(memori_size>0.05.and.memori_size<=0.12)then;call newpen2(3)
-        else if(memori_size>0.12.and.memori_size<=0.2)then;call newpen2(4)
-        else;call newpen2(5);end if
-        
-        if(present(gap))then
-            if(gap == 2) then
-                dx = length/real(iterations);gappy = dx/2.
-            else if(gap == 1) then
-                dx = length/real(iterations+1);gappy = dx
+            call plot(length/2.-memori_diff,width/2.,-3)
+            if(present(rangle)) then
+                write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro '
             end if
-        else;dx = length/real(iterations-1);gappy = 0.
-        end if
-        do n = 1, iterations
-            ! if(gappy/=0.and.n==iterations)cycle
-            if(bimemori_freq==0)then;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
-            elseif(bimemori_freq/=0) then
-                if(mod(n,bimemori_freq)==0 .or.n==1)then
-                call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size*2.,2)
-                else;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+
+            
+        end subroutine
+        ! MEMORI
+        subroutine memori(iterations,memori_size,bimemori_freq,length,rangle,x,y,gap)
+            implicit none
+            real,intent(in)::memori_size,length,rangle
+            integer,intent(in)::iterations,bimemori_freq
+            integer,intent(in),optional::gap
+            real,intent(in),optional::x,y
+            real::dx,gappy
+            integer::n
+        
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
+            call plot(-length/2.,0.,-3)
+            if(memori_size<=0.05)then;call newpen2(2)
+            else if(memori_size>0.05.and.memori_size<=0.12)then;call newpen2(3)
+            else if(memori_size>0.12.and.memori_size<=0.2)then;call newpen2(4)
+            else;call newpen2(5);end if
+            
+            if(present(gap))then
+                if(gap == 2) then
+                    dx = length/real(iterations);gappy = dx/2.
+                else if(gap == 1) then
+                    dx = length/real(iterations+1);gappy = dx
                 end if
+            else;dx = length/real(iterations-1);gappy = 0.
             end if
-        end do
-        call plot(length/2.,0.,-3)
-        write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
-
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-
-    end subroutine
-    subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lt,gt,x,y)
-        implicit none
-        real,intent(in)::ini_num,fin_num,symbol_size,length
-        integer,intent(in)::iterations,symbol_freq,angle,float_quantity
-        integer,intent(in),optional::lt,gt
-        real,intent(in),optional::x,y
-        real::memori_diff,num_diff
-        integer::n
-    
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        if(symbol_size<=0.2)then;call newpen2(2)
-        else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
-        else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
-        else;call newpen2(5);end if
-
-        if(.not.present(lt).and..not.present(gt)) then
-            ! call newpen2(3)
-            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            if(angle == 0) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then
-                        call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.4*symbol_size,2)
-                        call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.2*symbol_size,2)
+            do n = 1, iterations
+                ! if(gappy/=0.and.n==iterations)cycle
+                if(bimemori_freq==0)then;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
+                elseif(bimemori_freq/=0) then
+                    if(mod(n,bimemori_freq)==0 .or.n==1)then
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size*2.,2)
+                    else;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
                     end if
-                end do
-            else if(angle == 90) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then
-                        call plot(0.,real(n)*memori_diff,3);call plot(0.4*symbol_size,real(n)*memori_diff,2)
-                        call number(0.5*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    else;call plot(0.,real(n)*memori_diff,3);call plot(0.2*symbol_size,real(n)*memori_diff,2)
-                    end if
-                end do
-            else if (angle == -90) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then
-                        call plot(0.,real(n)*memori_diff,3);call plot(-0.4*symbol_size,real(n)*memori_diff,2)
-                        call numberr(-0.4*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    else;call plot(0.,real(n)*memori_diff,3);call plot(-0.2*symbol_size,real(n)*memori_diff,2)
-                    end if
-                end do
+                end if
+            end do
+            call plot(length/2.,0.,-3)
+            write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
+
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+
+        end subroutine
+        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lt,gt,x,y)
+            implicit none
+            real,intent(in)::ini_num,fin_num,symbol_size,length
+            integer,intent(in)::iterations,symbol_freq,angle,float_quantity
+            integer,intent(in),optional::lt,gt
+            real,intent(in),optional::x,y
+            real::memori_diff,num_diff
+            integer::n
+        
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            if(symbol_size<=0.2)then;call newpen2(2)
+            else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
+            else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
+            else;call newpen2(5);end if
+
+            if(.not.present(lt).and..not.present(gt)) then
+                ! call newpen2(3)
+                memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+                if(angle == 0) then
+                    do n = 0, iterations
+                        if(mod(n,symbol_freq)==0) then
+                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.4*symbol_size,2)
+                            call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                        else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.2*symbol_size,2)
+                        end if
+                    end do
+                else if(angle == 90) then
+                    do n = 0, iterations
+                        if(mod(n,symbol_freq)==0) then
+                            call plot(0.,real(n)*memori_diff,3);call plot(0.4*symbol_size,real(n)*memori_diff,2)
+                            call number(0.5*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                        else;call plot(0.,real(n)*memori_diff,3);call plot(0.2*symbol_size,real(n)*memori_diff,2)
+                        end if
+                    end do
+                else if (angle == -90) then
+                    do n = 0, iterations
+                        if(mod(n,symbol_freq)==0) then
+                            call plot(0.,real(n)*memori_diff,3);call plot(-0.4*symbol_size,real(n)*memori_diff,2)
+                            call numberr(-0.4*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                        else;call plot(0.,real(n)*memori_diff,3);call plot(-0.2*symbol_size,real(n)*memori_diff,2)
+                        end if
+                    end do
+                else;end if
             else;end if
-        else;end if
-    
-        if(present(lt).and.present(gt)) then
-            ! call newpen2(3)
-            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            if(angle == 0) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                    else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                    end if
-                end do
-                call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-                call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-            else !(angle == 90)
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
-                    else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                    end if
-                end do
-                call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-                call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-            end if
-        else;end if 
-    
-       if(present(gt) .and. .not.present(lt)) then
-        ! call newpen2(3)
-            memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            if(angle == 0) then
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                    else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                    end if
-                end do
-                call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-            else !(angle == 90)
-                do n = 0, iterations
-                    if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                    call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
-                    else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                    end if
-                end do
-                call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-            end if
-        else;end if
-    
-        if(.not.present(gt) .and. present(lt)) then
+        
+            if(present(lt).and.present(gt)) then
+                ! call newpen2(3)
+                memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+                if(angle == 0) then
+                    do n = 0, iterations
+                        if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                        call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+                        else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+                        end if
+                    end do
+                    call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+                    call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+                else !(angle == 90)
+                    do n = 0, iterations
+                        if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                        call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
+                        else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+                        end if
+                    end do
+                    call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+                    call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
+                end if
+            else;end if 
+        
+            if(present(gt) .and. .not.present(lt)) then
             ! call newpen2(3)
                 memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
                 if(angle == 0) then
@@ -5745,809 +5863,953 @@ module subroutines
                         else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
                         end if
                     end do
-                    call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+                    call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
                 else !(angle == 90)
                     do n = 0, iterations
                         if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
+                        call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
                         else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
                         end if
                     end do
-                    call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+                    call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
                 end if
-        else;end if   
+            else;end if
+        
+            if(.not.present(gt) .and. present(lt)) then
+                ! call newpen2(3)
+                    memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+                    if(angle == 0) then
+                        do n = 0, iterations
+                            if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                            call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+                            else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+                            end if
+                        end do
+                        call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+                    else !(angle == 90)
+                        do n = 0, iterations
+                            if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                            call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
+                            else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+                            end if
+                        end do
+                        call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+                    end if
+            else;end if   
 
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-    
-    end subroutine
-    subroutine st_memori(ini_st,fin_st,width,top_bottom,symbol_size,gap,x,y)
-        implicit none
-        integer,intent(in)::ini_st,fin_st,top_bottom
-        real,intent(in)::width,symbol_size
-        real,intent(in),optional::x,y
-        integer,intent(in),optional::gap
-        real::dx,gappy
-        integer::n
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        if(symbol_size<=0.2)then;call newpen2(2)
-        else if(symbol_size>0.2.and.symbol_size<=0.4)then;call newpen2(3)
-        else if(symbol_size>0.2.and.symbol_size<=0.4)then;call newpen2(4)
-        else;call newpen2(5);end if
-        if(present(gap))then
-            if(gap == 2) then
-            dx = width/real(fin_st-ini_st+1);gappy = dx/2.
-            else if(gap == 1) then
-                dx = width/real(fin_st-ini_st+2);gappy = dx
-            else if(gap == 0) then
-                dx = width/real(fin_st-ini_st);gappy = 0.
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        
+        end subroutine
+        subroutine st_memori(ini_st,fin_st,width,top_bottom,symbol_size,gap,x,y)
+            implicit none
+            integer,intent(in)::ini_st,fin_st,top_bottom
+            real,intent(in)::width,symbol_size
+            real,intent(in),optional::x,y
+            integer,intent(in),optional::gap
+            real::dx,gappy
+            integer::n
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            if(symbol_size<=0.2)then;call newpen2(2)
+            else if(symbol_size>0.2.and.symbol_size<=0.4)then;call newpen2(3)
+            else if(symbol_size>0.2.and.symbol_size<=0.4)then;call newpen2(4)
+            else;call newpen2(5);end if
+            if(present(gap))then
+                if(gap == 2) then
+                dx = width/real(fin_st-ini_st+1);gappy = dx/2.
+                else if(gap == 1) then
+                    dx = width/real(fin_st-ini_st+2);gappy = dx
+                else if(gap == 0) then
+                    dx = width/real(fin_st-ini_st);gappy = 0.
+                end if
+            else;dx = width/real(fin_st-ini_st);gappy = 0.
             end if
-        else;dx = width/real(fin_st-ini_st);gappy = 0.
-        end if
-        if(top_bottom == 1) then
-            do n = 1,fin_st-ini_st+1
-                call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.3,2)
-                call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
-            end do
-        else if(top_bottom == 0) then
-            do n = 1,fin_st-ini_st+1
-                call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.3,2)
-                call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
-            end do
-        end if 
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)
-    end subroutine
-    ! gap bw memori and box. gap=0:no gap, gap=1:dx, gap=2:dx/2. get dxval if needed
-    subroutine mod12_memori(iterations,symbol_size,angle,length,gap,num_freq,num_st,x,y,dxval)
-        implicit none
-        real,intent(in)::symbol_size,length
-        real,intent(in),optional::x,y
-        integer,intent(in),optional::num_freq,num_st
-        real,intent(out),optional::dxval
-        integer,intent(in)::iterations,angle,gap
-        real::dx,gappy
-        integer::n,m,printm
+            if(top_bottom == 1) then
+                do n = 1,fin_st-ini_st+1
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-symbol_size*0.3,2)
+                    call numberc(gappy+real(n-1)*dx,-symbol_size*1.3,symbol_size,real(fin_st-n+1),0.,-1)
+                end do
+            else if(top_bottom == 0) then
+                do n = 1,fin_st-ini_st+1
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,symbol_size*0.3,2)
+                    call numberc(gappy+real(n-1)*dx,symbol_size*0.8,symbol_size,real(fin_st-n+1),0.,-1)
+                end do
+            end if 
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        end subroutine
+        ! gap bw memori and box. gap=0:no gap, gap=1:dx, gap=2:dx/2. get dxval if needed
+        subroutine mod12_memori(iterations,symbol_size,angle,length,gap,num_freq,num_st,x,y,dxval)
+            implicit none
+            real,intent(in)::symbol_size,length
+            real,intent(in),optional::x,y
+            integer,intent(in),optional::num_freq,num_st
+            real,intent(out),optional::dxval
+            integer,intent(in)::iterations,angle,gap
+            real::dx,gappy
+            integer::n,m,printm
 
-        if(present(x).and.present(y))call plot(x,y,-3)
-        if(present(x).and. .not.present(y))call plot(x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,y,-3)
-        if(symbol_size<=0.2)then;call newpen2(2)
-        else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
-        else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
-        else;call newpen2(5);end if
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            if(symbol_size<=0.2)then;call newpen2(2)
+            else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
+            else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
+            else;call newpen2(5);end if
 
-        if(gap == 2) then
-                dx = length/real(iterations);gappy = dx/2.
-            else if(gap == 1) then
-                dx = length/real(iterations+1);gappy = dx
-            else if(gap == 0) then
-                dx = length/real(iterations-1);gappy = 0.
-        end if
-        if(present(dxval)) then;dxval = dx;else;end if
-        if(angle==0) then
-            call plot(0.,0.,3);call plot(length,0.,2)
-            do n = 1,iterations
-                if (mod(n,12)/=0) then;m = mod(n,12)
-                else if(mod(n,12)==0) then;m = 12
-                else;end if
-                call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.4*symbol_size,2)
-                ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-                printm = m
-                if(present(num_freq))then
-                    if(present(num_st))then
-                        if(n>=num_st.and.mod(n,num_freq)==0)then
-                            call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+            if(gap == 2) then
+                    dx = length/real(iterations);gappy = dx/2.
+                else if(gap == 1) then
+                    dx = length/real(iterations+1);gappy = dx
+                else if(gap == 0) then
+                    dx = length/real(iterations-1);gappy = 0.
+            end if
+            if(present(dxval)) then;dxval = dx;else;end if
+            if(angle==0) then
+                call plot(0.,0.,3);call plot(length,0.,2)
+                do n = 1,iterations
+                    if (mod(n,12)/=0) then;m = mod(n,12)
+                    else if(mod(n,12)==0) then;m = 12
+                    else;end if
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.4*symbol_size,2)
+                    ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+                    printm = m
+                    if(present(num_freq))then
+                        if(present(num_st))then
+                            if(n>=num_st.and.mod(n,num_freq)==0)then
+                                call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+                            end if
+                        else;if(mod(n,num_freq)==0)call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
                         end if
-                    else;if(mod(n,num_freq)==0)call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+                    else;call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
                     end if
-                else;call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
-                end if
-            end do
-        else if(angle == -90) then
-            call plot(0.,0.,3);call plot(0.,length,2)
-            do n = 1,iterations
-                if (mod(n,12)/=0) then;m = mod(n,12)
-                else if(mod(n,12)==0) then;m = 12
-                else;end if
-                call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.4*symbol_size,gappy+real(n-1)*dx,2)
-                ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
-                printm = m
-                if(present(num_freq))then
-                    if(present(num_st))then
-                        if(n>=num_st.and.mod(n,num_freq)==0)then
-                            call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                end do
+            else if(angle == -90) then
+                call plot(0.,0.,3);call plot(0.,length,2)
+                do n = 1,iterations
+                    if (mod(n,12)/=0) then;m = mod(n,12)
+                    else if(mod(n,12)==0) then;m = 12
+                    else;end if
+                    call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.4*symbol_size,gappy+real(n-1)*dx,2)
+                    ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
+                    printm = m
+                    if(present(num_freq))then
+                        if(present(num_st))then
+                            if(n>=num_st.and.mod(n,num_freq)==0)then
+                                call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                            end if
+                        else;if(mod(n,num_freq)==0)call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
                         end if
-                    else;if(mod(n,num_freq)==0)call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                    else;call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
                     end if
-                else;call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
-                end if
-            end do
-        end if
+                end do
+            end if
 
-        if(present(x).and.present(y))call plot(-x,-y,-3)
-        if(present(x).and. .not.present(y))call plot(-x,0.,-3)
-        if(present(y).and. .not.present(x))call plot(0.,-y,-3)        
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)        
 
-    end subroutine
-
+        end subroutine
+    ! END PLOTS
     ! BASIC STATISTICS
-    ! calculates mean, s, and sem per LOOP of a 1D array make sure LOOP*ITERATIONS < ARRAYSIZE, size of arrays is ITERATIONS
-    subroutine avsemloop_1D(array_1D,dim1,loop,iterations,mean_1D,s_1D,sem_1D,dataquan_1D)
-        implicit none
-        integer,intent(in)::dim1,loop,iterations
-        real,intent(in)::array_1D(:)
-        real,dimension(iterations),intent(out),optional::mean_1D,s_1D,sem_1D
-        integer,dimension(iterations),intent(out),optional::dataquan_1D
-        integer::l,i,count=0
-        real::smean, s,sem,sum0=0.,sum1=0.
+        ! calculates mean, s, and sem per LOOP of a 1D array make sure LOOP*ITERATIONS < ARRAYSIZE, size of arrays is ITERATIONS
+        subroutine avsemloop_1D(array_1D,dim1,loop,iterations,mean_1D,s_1D,sem_1D,dataquan_1D)
+            implicit none
+            integer,intent(in)::dim1,loop,iterations
+            real,intent(in)::array_1D(:)
+            real,dimension(iterations),intent(out),optional::mean_1D,s_1D,sem_1D
+            integer,dimension(iterations),intent(out),optional::dataquan_1D
+            integer::l,i,count=0
+            real::smean, s,sem,sum0=0.,sum1=0.
 
-        if(dim1 < loop*iterations) then;print*,'Array size < loop*iterations';stop;end if
-        if(size(array_1D)/=dim1) then;print*,'Array size /= dim1';stop;end if
-        do i = 1, iterations
-            count = 0;sum0=0.;sum1 = 0.
-            do l = 1+loop*(i-1),loop*i
-                if(array_1D(l)/=0.) then
-                    count = count +1;sum0 = sum0 + array_1D(l)
-                end if
-            end do
-            if(count <=1) then
-                smean = 0.;s = 0.;sem = 0.
-            else
-                smean = sum0 / real(count)
+            if(dim1 < loop*iterations) then;print*,'Array size < loop*iterations';stop;end if
+            if(size(array_1D)/=dim1) then;print*,'Array size /= dim1';stop;end if
+            do i = 1, iterations
+                count = 0;sum0=0.;sum1 = 0.
                 do l = 1+loop*(i-1),loop*i
                     if(array_1D(l)/=0.) then
-                        sum1 = sum1 + (array_1D(l) - smean)**2.
+                        count = count +1;sum0 = sum0 + array_1D(l)
                     end if
                 end do
-                s = sqrt(sum1 / real(count-1))
-                sem = s / sqrt(real(count))
-            end if
-            if(present(dataquan_1D)) dataquan_1D(i) = count
-            if(present(mean_1D)) mean_1D(i) = smean
-            if(present(s_1D)) s_1D(i) = s
-            if(present(sem_1D)) sem_1D(i) = sem
-        end do
-    end subroutine
-    ! calulates mean, s, and sem of numbers intermittently in a 1D array. JUMP is the number of elements to skip. array(jump)
-    subroutine avsemjump_1D(array_1D,dim1,jump,loops,mean_1D,s_1D,sem_1D,dataquan_1D)
-        implicit none
-        integer,intent(in)::dim1,jump,loops
-        real,intent(in)::array_1D(:)
-        real,dimension(jump),intent(out),optional::mean_1D,s_1D,sem_1D
-        integer,dimension(jump),intent(out),optional::dataquan_1D
-        integer::l,i,count=0
-        real::smean, s,sem,sum0=0.,sum1=0.
-
-        if(dim1 < jump*loops) then;print*,'Array size < jump*iterations';stop;end if
-        if(size(array_1D)/=dim1) then;print*,'Array size /= dim1';stop;end if
-        do i = 1, jump
-            count = 0;sum0=0.;sum1 = 0.
-            do l = i,i+jump*(loops-1),jump
-                if(array_1D(l)/=0.) then
-                    count = count +1;sum0 = sum0 + array_1D(l)
-                end if
-            end do
-            if(count <=1) then
-                smean = 0.;s = 0.;sem = 0.
-            else
-                smean = sum0 / real(count)
-                do l = i,jump*(loops-1),jump
-                    if(array_1D(l)/=0.) then
-                        sum1 = sum1 + (array_1D(l) - smean)**2.
-                    end if
-                end do
-                s = sqrt(sum1 / real(count-1))
-                sem = s / sqrt(real(count))
-            end if
-            if(present(dataquan_1D)) dataquan_1D(i) = count
-            if(present(mean_1D)) mean_1D(i) = smean
-            if(present(s_1D)) s_1D(i) = s
-            if(present(sem_1D)) sem_1D(i) = sem
-        end do
-    end subroutine
-    ! welch's t for diff in (mean1-mean2).a = 0.05 on both sides. 0==nodif,1==larger,-1==smaller,911==error
-    subroutine welchttest(mean1,s1,dataquan1,mean2,s2,dataquan2,result)
-        implicit none
-        real,intent(in)::mean1,s1,mean2,s2
-        integer,intent(in)::dataquan1,dataquan2
-        integer,intent(out)::result
-        real,dimension(0:30)::t_95=0.
-        real::diff_mean,n1,n2,df,sem,bottomCI,topCI
-
-        if(mean1 /=0. .and. mean2/=0. .and. dataquan1/=0 .and. dataquan2/=0) then
-            diff_mean = mean1 - mean2
-            n1 = real(dataquan1);n2 = real(dataquan2)
-            sem = sqrt((s1**2./n1)+(s2**2./n2)) 
-            df = (((s1**2.)/n1)+((s2**2.)/n2))**2./(((s1**2./n1)**2./(n1-1))+((s2**2./n2)**2./(n2-1)))
-            call t95_value(t_95)
-            bottomCI = diff_mean - t_95(int(df))*sem ; topCI = diff_mean + t_95(int(df))*sem
-            ! print*,diff_mean,bottomCI,topCI,int(df)
-            if(bottomCI>0.) then
-                result = 1 !larger
-            else if(topCI<0.) then
-                result = -1 !smaller
-            else;result = 0 !no difference
-            end if
-        else;result = 911 !error
-        end if
-
-    end subroutine
-    ! arrays have to be the same size
-    subroutine correcoeff(array_1D,array_1D2,dim,r)
-        implicit none
-        integer,intent(in)::dim
-        real,intent(in)::array_1D(:),array_1D2(:)
-        real,intent(out)::r
-        real::mean1,mean2,s1,s2,sum0=0.,sum1=0.,sum2=0.,covariance
-        integer::n,count=0
-
-        if(size(array_1D)/=dim)then; print*,'dim=',dim;print*,'array1 size=',size(array_1D);stop;end if
-        if(size(array_1D2)/=dim)then; print*,'dim=',dim;print*,'array2 size=',size(array_1D2);stop;end if
-        do n = 1, dim
-            if(array_1D(n)/=0. .and. array_1D2(n)/=0.) then
-                count = count + 1
-                sum1 = sum1 + array_1D(n)
-                sum2 = sum2 + array_1D2(n)
-            end if
-        end do
-
-        if(count <=1) then
-            mean1 = 0.;mean2 = 0.;r = 0.
-        else
-            mean1 = sum1 / real(count);mean2 = sum2 / real(count)
-            sum0 = 0.;sum1 = 0.;sum2 = 0.
-            do n = 1, dim
-                if(array_1D(n)/=0. .and. array_1D2(n)/=0.) then
-                    sum0 = sum0 + (array_1D(n) - mean1)*(array_1D2(n) - mean2) ! product of diffs from each means 
-                    sum1 = sum1 + (array_1D(n) - mean1)**2. ! sum of squares of diffs from mean1
-                    sum2 = sum2 + (array_1D2(n) - mean2)**2. ! sum of squares of diffs from mean2
-                end if
-            end do
-            s1 = sqrt(sum1 / real(count-1))
-            s2 = sqrt(sum2 / real(count-1))
-            covariance = sum0 / real(count-1)
-            if(s1 == 0. .or. s2 == 0.) then
-                r = 0.
-            else
-            r = covariance / (s1*s2)
-            end if
-        end if
-
-
-    end subroutine
-    
-    ! avsdsemdataquan better series
-    ! gives an array of mean arrays    DO NOT USE INSIDE A LOOP ALLOCATION IS TRICKY
-    subroutine avsemdata_2D(array_2D,dim1,dim2,dec_dim,mean_1D,s_1D,sem_1D,dataquan_1D)
-        implicit none
-        integer,intent(in)::dim1,dim2
-        character(len=*),intent(in)::dec_dim
-        real,intent(in)::array_2D(:,:)
-        real,dimension(:),allocatable,intent(out),optional::mean_1D,s_1D,sem_1D
-        integer,dimension(:),allocatable,intent(out),optional::dataquan_1D
-        integer::n,i,count=0
-        real::smean, s, sem, sum0=0.,sum1=0.
-
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        if (dec_dim == 'dim1') then
-            if (present(mean_1D)) allocate(mean_1D(dim2))
-            if (present(s_1D)) allocate(s_1D(dim2))
-            if (present(sem_1D)) allocate(sem_1D(dim2))
-            if (present(dataquan_1D)) allocate(dataquan_1D(dim2))
-            do n = 1, dim2
-                count = 0;sum0=0.;sum1 = 0.
-                do i = 1, dim1
-                    if (array_2D(i, n) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(i,n);end if
-                end do
-                if (count <=1 ) then
+                if(count <=1) then
                     smean = 0.;s = 0.;sem = 0.
                 else
                     smean = sum0 / real(count)
-                    do i = 1, dim1
-                        if(array_2D(i,n)/=0.) then
-                            sum1 = sum1 + (array_2D(i,n) - smean)**2.
+                    do l = 1+loop*(i-1),loop*i
+                        if(array_1D(l)/=0.) then
+                            sum1 = sum1 + (array_1D(l) - smean)**2.
                         end if
                     end do
                     s = sqrt(sum1 / real(count-1))
                     sem = s / sqrt(real(count))
                 end if
-                    if (present(dataquan_1D)) dataquan_1D(n) = count
-                    if (present(mean_1D)) mean_1D(n) = smean
-                    if (present(s_1D)) s_1D(n) = s
-                    if (present(sem_1D)) sem_1D(n) = sem
+                if(present(dataquan_1D)) dataquan_1D(i) = count
+                if(present(mean_1D)) mean_1D(i) = smean
+                if(present(s_1D)) s_1D(i) = s
+                if(present(sem_1D)) sem_1D(i) = sem
             end do
-        else if (dec_dim == 'dim2') then
-            if (present(mean_1D)) allocate(mean_1D(dim1))
-            if (present(s_1D)) allocate(s_1D(dim1))
-            if (present(sem_1D)) allocate(sem_1D(dim1))
-            if (present(dataquan_1D)) allocate(dataquan_1D(dim1))
-            do n = 1, dim1
+        end subroutine
+        ! calulates mean, s, and sem of numbers intermittently in a 1D array. JUMP is the number of elements to skip. array(jump)
+        subroutine avsemjump_1D(array_1D,dim1,jump,loops,mean_1D,s_1D,sem_1D,dataquan_1D)
+            implicit none
+            integer,intent(in)::dim1,jump,loops
+            real,intent(in)::array_1D(:)
+            real,dimension(jump),intent(out),optional::mean_1D,s_1D,sem_1D
+            integer,dimension(jump),intent(out),optional::dataquan_1D
+            integer::l,i,count=0
+            real::smean, s,sem,sum0=0.,sum1=0.
+
+            if(dim1 < jump*loops) then;print*,'Array size < jump*iterations';stop;end if
+            if(size(array_1D)/=dim1) then;print*,'Array size /= dim1';stop;end if
+            do i = 1, jump
                 count = 0;sum0=0.;sum1 = 0.
-                do i = 1, dim2
-                    if (array_2D(n, i) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(n,i);end if
-                    ! print*,n,i,count,sum0
+                do l = i,i+jump*(loops-1),jump
+                    if(array_1D(l)/=0.) then
+                        count = count +1;sum0 = sum0 + array_1D(l)
+                    end if
                 end do
-                if (count <=1 ) then
+                if(count <=1) then
                     smean = 0.;s = 0.;sem = 0.
                 else
                     smean = sum0 / real(count)
-                    do i = 1, dim2
-                        if(array_2D(n,i)/=0.) then
-                            sum1 = sum1 + (array_2D(n,i) - smean)**2.
+                    do l = i,jump*(loops-1),jump
+                        if(array_1D(l)/=0.) then
+                            sum1 = sum1 + (array_1D(l) - smean)**2.
                         end if
                     end do
-                    s = sqrt(sum1/ real(count-1))
+                    s = sqrt(sum1 / real(count-1))
                     sem = s / sqrt(real(count))
                 end if
-                    if (present(dataquan_1D)) dataquan_1D(n) = count
-                    if (present(mean_1D)) mean_1D(n) = smean
-                    if (present(s_1D)) s_1D(n) = s
-                    if (present(sem_1D)) sem_1D(n) = sem
+                if(present(dataquan_1D)) dataquan_1D(i) = count
+                if(present(mean_1D)) mean_1D(i) = smean
+                if(present(s_1D)) s_1D(i) = s
+                if(present(sem_1D)) sem_1D(i) = sem
             end do
-        else
-            print *, 'Choose a dimension to take mean of (descard)'
-            stop
-        end if
+        end subroutine
+        ! welch's t for diff in (mean1-mean2).a = 0.05 on both sides. 0==nodif,1==larger,-1==smaller,911==error
+        subroutine welchttest(mean1,s1,dataquan1,mean2,s2,dataquan2,result)
+            implicit none
+            real,intent(in)::mean1,s1,mean2,s2
+            integer,intent(in)::dataquan1,dataquan2
+            integer,intent(out)::result
+            real,dimension(0:30)::t_95=0.
+            real::diff_mean,n1,n2,df,sem,bottomCI,topCI
 
-
-        ! if(present(mean_1D)) deallocate(mean_1D)
-        ! if(present(s_1D)) deallocate(s_1D)
-        ! if(present(sem_1D)) deallocate(sem_1D)
-        ! if(present(dataquan_1D)) deallocate(dataquan_1D)
-
-    end subroutine
-
-    subroutine avsemdata_3D(array_3D,dim1,dim2,dim3,dec_dim,mean_2D,s_2D,sem_2D,dataquan_2D)
-        implicit none
-        integer,intent(in)::dim1,dim2,dim3
-        character(len=*),intent(in)::dec_dim
-        real,intent(in)::array_3D(:,:,:)
-        real,dimension(:,:),allocatable,intent(out),optional::mean_2D,s_2D,sem_2D
-        integer,dimension(:,:),allocatable,intent(out),optional::dataquan_2D
-        integer::l1,l2,l3,count=0,loop1,loop2,loop3
-        real::smean, s, sem, sum0=0.,sum1=0.
-
-        if(size(array_3D,1)<dim1 .or. size(array_3D,2)<dim2 .or. size(array_3D,3)<dim3) then 
-            print*,'Array size < dim1 or dim2 or dim3';stop
-        end if
-        ! loop determination
-            if (dec_dim == 'dim1') then
-                loop1 = dim2
-                loop2 = dim3
-                loop3 = dim1
-                if(present(mean_2D)) allocate(mean_2D(dim2,dim3))
-                if(present(s_2D)) allocate(s_2D(dim2,dim3))
-                if(present(sem_2D)) allocate(sem_2D(dim2,dim3))
-                if(present(dataquan_2D)) allocate(dataquan_2D(dim2,dim3))
-            elseif (dec_dim == 'dim2') then
-                loop1 = dim1
-                loop2 = dim3
-                loop3 = dim2
-                if(present(mean_2D)) allocate(mean_2D(dim1,dim3))
-                if(present(s_2D)) allocate(s_2D(dim1,dim3))
-                if(present(sem_2D)) allocate(sem_2D(dim1,dim3))
-                if(present(dataquan_2D)) allocate(dataquan_2D(dim1,dim3))
-            elseif (dec_dim == 'dim3') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim3
-                if(present(mean_2D)) allocate(mean_2D(dim1,dim2))
-                if(present(s_2D)) allocate(s_2D(dim1,dim2))
-                if(present(sem_2D)) allocate(sem_2D(dim1,dim2))
-                if(present(dataquan_2D)) allocate(dataquan_2D(dim1,dim2))
-            else
-                print*, 'Invalid dec_dim value'
-                stop
+            if(mean1 /=0. .and. mean2/=0. .and. dataquan1/=0 .and. dataquan2/=0) then
+                diff_mean = mean1 - mean2
+                n1 = real(dataquan1);n2 = real(dataquan2)
+                sem = sqrt((s1**2./n1)+(s2**2./n2)) 
+                df = (((s1**2.)/n1)+((s2**2.)/n2))**2./(((s1**2./n1)**2./(n1-1))+((s2**2./n2)**2./(n2-1)))
+                call t95_value(t_95)
+                bottomCI = diff_mean - t_95(int(df))*sem ; topCI = diff_mean + t_95(int(df))*sem
+                ! print*,diff_mean,bottomCI,topCI,int(df)
+                if(bottomCI>0.) then
+                    result = 1 !larger
+                else if(topCI<0.) then
+                    result = -1 !smaller
+                else;result = 0 !no difference
+                end if
+            else;result = 911 !error
             end if
-        ! loop determination end
-        do l1 = 1, loop1
-            do l2 = 1, loop2
-                count = 0; sum0 = 0.;sum1 = 0.
-                do l3 = 1, loop3 !dec_dim loop
-                    if(dec_dim=='dim1') then
-                        if(array_3D(l3,l1,l2)/=0.) then
-                            count = count + 1
-                            sum0 = sum0 + array_3D(l3,l1,l2)
-                        end if
-                    else if(dec_dim=='dim2') then
-                        if(array_3D(l1,l3,l2)/=0.) then
-                            count = count + 1
-                            sum0 = sum0 + array_3D(l1,l3,l2)
-                        end if
-                    else if(dec_dim=='dim3') then
-                        if(array_3D(l1,l2,l3)/=0.) then
-                            count = count + 1
-                            sum0 = sum0 + array_3D(l1,l2,l3)
-                        end if
+
+        end subroutine
+        ! arrays have to be the same size
+        subroutine correcoeff(array_1D,array_1D2,dim,r)
+            implicit none
+            integer,intent(in)::dim
+            real,intent(in)::array_1D(:),array_1D2(:)
+            real,intent(out)::r
+            real::mean1,mean2,s1,s2,sum0=0.,sum1=0.,sum2=0.,covariance
+            integer::n,count=0
+
+            if(size(array_1D)/=dim)then; print*,'dim=',dim;print*,'array1 size=',size(array_1D);stop;end if
+            if(size(array_1D2)/=dim)then; print*,'dim=',dim;print*,'array2 size=',size(array_1D2);stop;end if
+            do n = 1, dim
+                if(array_1D(n)/=0. .and. array_1D2(n)/=0.) then
+                    count = count + 1
+                    sum1 = sum1 + array_1D(n)
+                    sum2 = sum2 + array_1D2(n)
+                end if
+            end do
+
+            if(count <=1) then
+                mean1 = 0.;mean2 = 0.;r = 0.
+            else
+                mean1 = sum1 / real(count);mean2 = sum2 / real(count)
+                sum0 = 0.;sum1 = 0.;sum2 = 0.
+                do n = 1, dim
+                    if(array_1D(n)/=0. .and. array_1D2(n)/=0.) then
+                        sum0 = sum0 + (array_1D(n) - mean1)*(array_1D2(n) - mean2) ! product of diffs from each means 
+                        sum1 = sum1 + (array_1D(n) - mean1)**2. ! sum of squares of diffs from mean1
+                        sum2 = sum2 + (array_1D2(n) - mean2)**2. ! sum of squares of diffs from mean2
                     end if
                 end do
-                    if(count<=1) then;smean= 0.;s=0.;sem=0.
-                    else;smean = sum0/real(count)
-                        do l3 = 1, loop3
-                            if(dec_dim=='dim1') then
-                                if(array_3D(l3,l1,l2)/=0.) then
-                                    sum1 = sum1 + (array_3D(l3,l1,l2) - smean)**2.
-                                end if
-                            else if(dec_dim=='dim2') then
-                                if(array_3D(l1,l3,l2)/=0.) then
-                                    sum1 = sum1 + (array_3D(l1,l3,l2) - smean)**2.
-                                end if
-                            else if(dec_dim=='dim3') then
-                                if(array_3D(l1,l2,l3)/=0.) then
-                                    sum1 = sum1 + (array_3D(l1,l2,l3) - smean)**2.
-                                end if
+                s1 = sqrt(sum1 / real(count-1))
+                s2 = sqrt(sum2 / real(count-1))
+                covariance = sum0 / real(count-1)
+                if(s1 == 0. .or. s2 == 0.) then
+                    r = 0.
+                else
+                r = covariance / (s1*s2)
+                end if
+            end if
+
+
+        end subroutine
+    
+        ! avsdsemdataquan better series
+        ! gives an array of mean arrays    DO NOT USE INSIDE A LOOP ALLOCATION IS TRICKY
+        subroutine avsemdata_2D(array_2D,dim1,dim2,dec_dim,mean_1D,s_1D,sem_1D,dataquan_1D)
+            implicit none
+            integer,intent(in)::dim1,dim2
+            character(len=*),intent(in)::dec_dim
+            real,intent(in)::array_2D(:,:)
+            real,dimension(:),allocatable,intent(out),optional::mean_1D,s_1D,sem_1D
+            integer,dimension(:),allocatable,intent(out),optional::dataquan_1D
+            integer::n,i,count=0
+            real::smean, s, sem, sum0=0.,sum1=0.
+
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
+            end if
+            if (dec_dim == 'dim1') then
+                if (present(mean_1D)) allocate(mean_1D(dim2))
+                if (present(s_1D)) allocate(s_1D(dim2))
+                if (present(sem_1D)) allocate(sem_1D(dim2))
+                if (present(dataquan_1D)) allocate(dataquan_1D(dim2))
+                do n = 1, dim2
+                    count = 0;sum0=0.;sum1 = 0.
+                    do i = 1, dim1
+                        if (array_2D(i, n) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(i,n);end if
+                    end do
+                    if (count <=1 ) then
+                        smean = 0.;s = 0.;sem = 0.
+                    else
+                        smean = sum0 / real(count)
+                        do i = 1, dim1
+                            if(array_2D(i,n)/=0.) then
+                                sum1 = sum1 + (array_2D(i,n) - smean)**2.
                             end if
                         end do
-                        s = sqrt(sum1/real(count-1))
+                        s = sqrt(sum1 / real(count-1))
                         sem = s / sqrt(real(count))
                     end if
-                    if(present(mean_2D)) mean_2D(l1,l2) = smean
-                    if(present(s_2D)) s_2D(l1,l2) = s
-                    if(present(sem_2D)) sem_2D(l1,l2) = sem
-                    if(present(dataquan_2D)) dataquan_2D(l1,l2) = count
-            end do
-        end do
-        ! end do
-
-
-
-    end subroutine
-
-    subroutine avsemdata_4D(array_4D,dim1,dim2,dim3,dim4,dec_dim,mean_3D,s_3D,sem_3D,dataquan_3D)
-        implicit none
-        integer,intent(in)::dim1,dim2,dim3,dim4
-        character(len=*),intent(in)::dec_dim
-        real,intent(in)::array_4D(:,:,:,:)
-        real,dimension(:,:,:),allocatable,intent(out),optional::mean_3D,s_3D,sem_3D
-        integer,dimension(:,:,:),allocatable,intent(out),optional::dataquan_3D
-        integer::l1,l2,l3,l4,count=0,loop1,loop2,loop3,loop4
-        real::smean, s, sem, sum0=0.,sum1=0.
-
-        if(size(array_4D,1)<dim1 .or. size(array_4D,2)<dim2 .or. size(array_4D,3)<dim3 .or. size(array_4D,4)<dim4) then 
-            print*,'Array size < dim1 or dim2 or dim3 or dim4';stop
-        end if
-        ! loop determination
-            if (dec_dim == 'dim1') then
-                loop1 = dim2
-                loop2 = dim3
-                loop3 = dim4
-                loop4 = dim1
-                if(present(mean_3D)) allocate(mean_3D(dim2,dim3,dim4))
-                if(present(s_3D)) allocate(s_3D(dim2,dim3,dim4))
-                if(present(sem_3D)) allocate(sem_3D(dim2,dim3,dim4))
-                if(present(dataquan_3D)) allocate(dataquan_3D(dim2,dim3,dim4))
-            elseif (dec_dim == 'dim2') then
-                loop1 = dim1
-                loop2 = dim3
-                loop3 = dim4
-                loop4 = dim2
-                if(present(mean_3D)) allocate(mean_3D(dim1,dim3,dim4))
-                if(present(s_3D)) allocate(s_3D(dim1,dim3,dim4))
-                if(present(sem_3D)) allocate(sem_3D(dim1,dim3,dim4))
-                if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim3,dim4))
-            elseif (dec_dim == 'dim3') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim4
-                loop4 = dim3
-                if(present(mean_3D)) allocate(mean_3D(dim1,dim2,dim4))
-                if(present(s_3D)) allocate(s_3D(dim1,dim2,dim4))
-                if(present(sem_3D)) allocate(sem_3D(dim1,dim2,dim4))
-                if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim2,dim4))
-            elseif (dec_dim == 'dim4') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim3
-                loop4 = dim4
-                if(present(mean_3D)) allocate(mean_3D(dim1,dim2,dim3))
-                if(present(s_3D)) allocate(s_3D(dim1,dim2,dim3))
-                if(present(sem_3D)) allocate(sem_3D(dim1,dim2,dim3))
-                if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim2,dim3))
-            else;print*, 'Invalid dec_dim value';stop
+                        if (present(dataquan_1D)) dataquan_1D(n) = count
+                        if (present(mean_1D)) mean_1D(n) = smean
+                        if (present(s_1D)) s_1D(n) = s
+                        if (present(sem_1D)) sem_1D(n) = sem
+                end do
+            else if (dec_dim == 'dim2') then
+                if (present(mean_1D)) allocate(mean_1D(dim1))
+                if (present(s_1D)) allocate(s_1D(dim1))
+                if (present(sem_1D)) allocate(sem_1D(dim1))
+                if (present(dataquan_1D)) allocate(dataquan_1D(dim1))
+                do n = 1, dim1
+                    count = 0;sum0=0.;sum1 = 0.
+                    do i = 1, dim2
+                        if (array_2D(n, i) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(n,i);end if
+                        ! print*,n,i,count,sum0
+                    end do
+                    if (count <=1 ) then
+                        smean = 0.;s = 0.;sem = 0.
+                    else
+                        smean = sum0 / real(count)
+                        do i = 1, dim2
+                            if(array_2D(n,i)/=0.) then
+                                sum1 = sum1 + (array_2D(n,i) - smean)**2.
+                            end if
+                        end do
+                        s = sqrt(sum1/ real(count-1))
+                        sem = s / sqrt(real(count))
+                    end if
+                        if (present(dataquan_1D)) dataquan_1D(n) = count
+                        if (present(mean_1D)) mean_1D(n) = smean
+                        if (present(s_1D)) s_1D(n) = s
+                        if (present(sem_1D)) sem_1D(n) = sem
+                end do
+            else
+                print *, 'Choose a dimension to take mean of (descard)'
+                stop
             end if
-        ! loop determination end
-        do l1 = 1, loop1
-            do l2 = 1, loop2
-                do l3 = 1, loop3
+
+
+            ! if(present(mean_1D)) deallocate(mean_1D)
+            ! if(present(s_1D)) deallocate(s_1D)
+            ! if(present(sem_1D)) deallocate(sem_1D)
+            ! if(present(dataquan_1D)) deallocate(dataquan_1D)
+
+        end subroutine
+
+        subroutine avsemdata_3D(array_3D,dim1,dim2,dim3,dec_dim,mean_2D,s_2D,sem_2D,dataquan_2D)
+            implicit none
+            integer,intent(in)::dim1,dim2,dim3
+            character(len=*),intent(in)::dec_dim
+            real,intent(in)::array_3D(:,:,:)
+            real,dimension(:,:),allocatable,intent(out),optional::mean_2D,s_2D,sem_2D
+            integer,dimension(:,:),allocatable,intent(out),optional::dataquan_2D
+            integer::l1,l2,l3,count=0,loop1,loop2,loop3
+            real::smean, s, sem, sum0=0.,sum1=0.
+
+            if(size(array_3D,1)<dim1 .or. size(array_3D,2)<dim2 .or. size(array_3D,3)<dim3) then 
+                print*,'Array size < dim1 or dim2 or dim3';stop
+            end if
+            ! loop determination
+                if (dec_dim == 'dim1') then
+                    loop1 = dim2
+                    loop2 = dim3
+                    loop3 = dim1
+                    if(present(mean_2D)) allocate(mean_2D(dim2,dim3))
+                    if(present(s_2D)) allocate(s_2D(dim2,dim3))
+                    if(present(sem_2D)) allocate(sem_2D(dim2,dim3))
+                    if(present(dataquan_2D)) allocate(dataquan_2D(dim2,dim3))
+                elseif (dec_dim == 'dim2') then
+                    loop1 = dim1
+                    loop2 = dim3
+                    loop3 = dim2
+                    if(present(mean_2D)) allocate(mean_2D(dim1,dim3))
+                    if(present(s_2D)) allocate(s_2D(dim1,dim3))
+                    if(present(sem_2D)) allocate(sem_2D(dim1,dim3))
+                    if(present(dataquan_2D)) allocate(dataquan_2D(dim1,dim3))
+                elseif (dec_dim == 'dim3') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    if(present(mean_2D)) allocate(mean_2D(dim1,dim2))
+                    if(present(s_2D)) allocate(s_2D(dim1,dim2))
+                    if(present(sem_2D)) allocate(sem_2D(dim1,dim2))
+                    if(present(dataquan_2D)) allocate(dataquan_2D(dim1,dim2))
+                else
+                    print*, 'Invalid dec_dim value'
+                    stop
+                end if
+            ! loop determination end
+            do l1 = 1, loop1
+                do l2 = 1, loop2
                     count = 0; sum0 = 0.;sum1 = 0.
-                    do l4 = 1, loop4 !dec_dim loop
+                    do l3 = 1, loop3 !dec_dim loop
                         if(dec_dim=='dim1') then
-                            if(array_4D(l4,l1,l2,l3)/=0.) then
+                            if(array_3D(l3,l1,l2)/=0.) then
                                 count = count + 1
-                                sum0 = sum0 + array_4D(l4,l1,l2,l3)
+                                sum0 = sum0 + array_3D(l3,l1,l2)
                             end if
                         else if(dec_dim=='dim2') then
-                            if(array_4D(l1,l4,l2,l3)/=0.) then
+                            if(array_3D(l1,l3,l2)/=0.) then
                                 count = count + 1
-                                sum0 = sum0 + array_4D(l1,l4,l2,l3)
+                                sum0 = sum0 + array_3D(l1,l3,l2)
                             end if
                         else if(dec_dim=='dim3') then
-                            if(array_4D(l1,l2,l4,l3)/=0.) then
+                            if(array_3D(l1,l2,l3)/=0.) then
                                 count = count + 1
-                                sum0 = sum0 + array_4D(l1,l2,l4,l3)
-                            end if
-                        else if(dec_dim=='dim4') then
-                            if(array_4D(l1,l2,l3,l4)/=0.) then
-                                count = count + 1
-                                sum0 = sum0 + array_4D(l1,l2,l3,l4)
+                                sum0 = sum0 + array_3D(l1,l2,l3)
                             end if
                         end if
                     end do
                         if(count<=1) then;smean= 0.;s=0.;sem=0.
                         else;smean = sum0/real(count)
-                            do l4 = 1, loop4
+                            do l3 = 1, loop3
                                 if(dec_dim=='dim1') then
-                                    if(array_4D(l4,l1,l2,l3)/=0.) then
-                                        sum1 = sum1 + (array_4D(l4,l1,l2,l3) - smean)**2.
+                                    if(array_3D(l3,l1,l2)/=0.) then
+                                        sum1 = sum1 + (array_3D(l3,l1,l2) - smean)**2.
                                     end if
                                 else if(dec_dim=='dim2') then
-                                    if(array_4D(l1,l4,l2,l3)/=0.) then
-                                        sum1 = sum1 + (array_4D(l1,l4,l2,l3) - smean)**2.
+                                    if(array_3D(l1,l3,l2)/=0.) then
+                                        sum1 = sum1 + (array_3D(l1,l3,l2) - smean)**2.
                                     end if
                                 else if(dec_dim=='dim3') then
-                                    if(array_4D(l1,l2,l4,l3)/=0.) then
-                                        sum1 = sum1 + (array_4D(l1,l2,l4,l3) - smean)**2.
-                                    end if
-                                else if(dec_dim=='dim4') then
-                                    if(array_4D(l1,l2,l3,l4)/=0.) then
-                                        sum1 = sum1 + (array_4D(l1,l2,l3,l4) - smean)**2.
+                                    if(array_3D(l1,l2,l3)/=0.) then
+                                        sum1 = sum1 + (array_3D(l1,l2,l3) - smean)**2.
                                     end if
                                 end if
                             end do
                             s = sqrt(sum1/real(count-1))
                             sem = s / sqrt(real(count))
-                        end if  
-                        if(present(mean_3D)) mean_3D(l1,l2,l3) = smean
-                        if(present(s_3D)) s_3D(l1,l2,l3) = s
-                        if(present(sem_3D)) sem_3D(l1,l2,l3) = sem
-                        if(present(dataquan_3D)) dataquan_3D(l1,l2,l3) = count                   
+                        end if
+                        if(present(mean_2D)) mean_2D(l1,l2) = smean
+                        if(present(s_2D)) s_2D(l1,l2) = s
+                        if(present(sem_2D)) sem_2D(l1,l2) = sem
+                        if(present(dataquan_2D)) dataquan_2D(l1,l2) = count
                 end do
             end do
-        end do
+            ! end do
 
-    end subroutine
 
-    subroutine avsemdata_5D(array_5D,dim1,dim2,dim3,dim4,dim5,dec_dim,mean_4D,s_4D,sem_4D,dataquan_4D)
-        implicit none
-        integer,intent(in)::dim1,dim2,dim3,dim4,dim5
-        character(len=*),intent(in)::dec_dim
-        real,intent(in)::array_5D(:,:,:,:,:)
-        real,dimension(:,:,:,:),allocatable,intent(out),optional::mean_4D,s_4D,sem_4D
-        integer,dimension(:,:,:,:),allocatable,intent(out),optional::dataquan_4D
-        integer::l1,l2,l3,l4,l5,count=0,loop1,loop2,loop3,loop4,loop5
-        real::smean, s, sem, sum0=0.,sum1=0.
 
-        if(size(array_5D,1)<dim1 .or. size(array_5D,2)<dim2 .or. size(array_5D,3)<dim3 .or. size(array_5D,4)<dim4 .or. size(array_5D,5)<dim5) then 
-            print*,'Array size < dim1 or dim2 or dim3 or dim4 or dim5';stop
-        end if
-        ! loop determination
-            if (dec_dim == 'dim1') then
-                loop1 = dim2
-                loop2 = dim3
-                loop3 = dim4
-                loop4 = dim5
-                loop5 = dim1
-                if(present(mean_4D)) allocate(mean_4D(dim2,dim3,dim4,dim5))
-                if(present(s_4D)) allocate(s_4D(dim2,dim3,dim4,dim5))
-                if(present(sem_4D)) allocate(sem_4D(dim2,dim3,dim4,dim5))
-                if(present(dataquan_4D)) allocate(dataquan_4D(dim2,dim3,dim4,dim5))
-            elseif (dec_dim == 'dim2') then
-                loop1 = dim1
-                loop2 = dim3
-                loop3 = dim4
-                loop4 = dim5
-                loop5 = dim2
-                if(present(mean_4D)) allocate(mean_4D(dim1,dim3,dim4,dim5))
-                if(present(s_4D)) allocate(s_4D(dim1,dim3,dim4,dim5))
-                if(present(sem_4D)) allocate(sem_4D(dim1,dim3,dim4,dim5))
-                if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim3,dim4,dim5))
-            elseif (dec_dim == 'dim3') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim4
-                loop4 = dim5
-                loop5 = dim3
-                if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim4,dim5))
-                if(present(s_4D)) allocate(s_4D(dim1,dim2,dim4,dim5))
-                if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim4,dim5))
-                if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim4,dim5))
-            elseif (dec_dim == 'dim4') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim3
-                loop4 = dim5
-                loop5 = dim4
-                if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim3,dim5))
-                if(present(s_4D)) allocate(s_4D(dim1,dim2,dim3,dim5))
-                if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim3,dim5))
-                if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim3,dim5))
-            elseif (dec_dim == 'dim5') then
-                loop1 = dim1
-                loop2 = dim2
-                loop3 = dim3
-                loop4 = dim4
-                loop5 = dim5
-                if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim3,dim4))
-                if(present(s_4D)) allocate(s_4D(dim1,dim2,dim3,dim4))
-                if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim3,dim4))
-                if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim3,dim4))
-            else;print*, 'Invalid dec_dim value';stop
+        end subroutine
+
+        subroutine avsemdata_4D(array_4D,dim1,dim2,dim3,dim4,dec_dim,mean_3D,s_3D,sem_3D,dataquan_3D)
+            implicit none
+            integer,intent(in)::dim1,dim2,dim3,dim4
+            character(len=*),intent(in)::dec_dim
+            real,intent(in)::array_4D(:,:,:,:)
+            real,dimension(:,:,:),allocatable,intent(out),optional::mean_3D,s_3D,sem_3D
+            integer,dimension(:,:,:),allocatable,intent(out),optional::dataquan_3D
+            integer::l1,l2,l3,l4,count=0,loop1,loop2,loop3,loop4
+            real::smean, s, sem, sum0=0.,sum1=0.
+
+            if(size(array_4D,1)<dim1 .or. size(array_4D,2)<dim2 .or. size(array_4D,3)<dim3 .or. size(array_4D,4)<dim4) then 
+                print*,'Array size < dim1 or dim2 or dim3 or dim4';stop
             end if
-
-        ! loop determination end
-        do l1 = 1, loop1
-            do l2 = 1, loop2
-                do l3 = 1, loop3
-                    do l4 = 1, loop4
+            ! loop determination
+                if (dec_dim == 'dim1') then
+                    loop1 = dim2
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim1
+                    if(present(mean_3D)) allocate(mean_3D(dim2,dim3,dim4))
+                    if(present(s_3D)) allocate(s_3D(dim2,dim3,dim4))
+                    if(present(sem_3D)) allocate(sem_3D(dim2,dim3,dim4))
+                    if(present(dataquan_3D)) allocate(dataquan_3D(dim2,dim3,dim4))
+                elseif (dec_dim == 'dim2') then
+                    loop1 = dim1
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim2
+                    if(present(mean_3D)) allocate(mean_3D(dim1,dim3,dim4))
+                    if(present(s_3D)) allocate(s_3D(dim1,dim3,dim4))
+                    if(present(sem_3D)) allocate(sem_3D(dim1,dim3,dim4))
+                    if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim3,dim4))
+                elseif (dec_dim == 'dim3') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim4
+                    loop4 = dim3
+                    if(present(mean_3D)) allocate(mean_3D(dim1,dim2,dim4))
+                    if(present(s_3D)) allocate(s_3D(dim1,dim2,dim4))
+                    if(present(sem_3D)) allocate(sem_3D(dim1,dim2,dim4))
+                    if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim2,dim4))
+                elseif (dec_dim == 'dim4') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim4
+                    if(present(mean_3D)) allocate(mean_3D(dim1,dim2,dim3))
+                    if(present(s_3D)) allocate(s_3D(dim1,dim2,dim3))
+                    if(present(sem_3D)) allocate(sem_3D(dim1,dim2,dim3))
+                    if(present(dataquan_3D)) allocate(dataquan_3D(dim1,dim2,dim3))
+                else;print*, 'Invalid dec_dim value';stop
+                end if
+            ! loop determination end
+            do l1 = 1, loop1
+                do l2 = 1, loop2
+                    do l3 = 1, loop3
                         count = 0; sum0 = 0.;sum1 = 0.
-                        do l5 = 1, loop5 !dec_dim loop
+                        do l4 = 1, loop4 !dec_dim loop
                             if(dec_dim=='dim1') then
-                                if(array_5D(l5,l1,l2,l3,l4)/=0.) then
+                                if(array_4D(l4,l1,l2,l3)/=0.) then
                                     count = count + 1
-                                    sum0 = sum0 + array_5D(l5,l1,l2,l3,l4)
+                                    sum0 = sum0 + array_4D(l4,l1,l2,l3)
                                 end if
                             else if(dec_dim=='dim2') then
-                                if(array_5D(l1,l5,l2,l3,l4)/=0.) then
+                                if(array_4D(l1,l4,l2,l3)/=0.) then
                                     count = count + 1
-                                    sum0 = sum0 + array_5D(l1,l5,l2,l3,l4)
+                                    sum0 = sum0 + array_4D(l1,l4,l2,l3)
                                 end if
                             else if(dec_dim=='dim3') then
-                                if(array_5D(l1,l2,l5,l3,l4)/=0.) then
+                                if(array_4D(l1,l2,l4,l3)/=0.) then
                                     count = count + 1
-                                    sum0 = sum0 + array_5D(l1,l2,l5,l3,l4)
+                                    sum0 = sum0 + array_4D(l1,l2,l4,l3)
                                 end if
                             else if(dec_dim=='dim4') then
-                                if(array_5D(l1,l2,l3,l5,l4)/=0.) then
+                                if(array_4D(l1,l2,l3,l4)/=0.) then
                                     count = count + 1
-                                    sum0 = sum0 + array_5D(l1,l2,l3,l5,l4)
-                                end if
-                            else if(dec_dim=='dim5') then
-                                if(array_5D(l1,l2,l3,l4,l5)/=0.) then
-                                    count = count + 1
-                                    sum0 = sum0 + array_5D(l1,l2,l3,l4,l5)
+                                    sum0 = sum0 + array_4D(l1,l2,l3,l4)
                                 end if
                             end if
                         end do
                             if(count<=1) then;smean= 0.;s=0.;sem=0.
                             else;smean = sum0/real(count)
-                                do l5 = 1, loop5
+                                do l4 = 1, loop4
                                     if(dec_dim=='dim1') then
-                                        if(array_5D(l5,l1,l2,l3,l4)/=0.) then
-                                            sum1 = sum1 + (array_5D(l5,l1,l2,l3,l4) - smean)**2.
+                                        if(array_4D(l4,l1,l2,l3)/=0.) then
+                                            sum1 = sum1 + (array_4D(l4,l1,l2,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim2') then
-                                        if(array_5D(l1,l5,l2,l3,l4)/=0.) then
-                                            sum1 = sum1 + (array_5D(l1,l5,l2,l3,l4) - smean)**2.
+                                        if(array_4D(l1,l4,l2,l3)/=0.) then
+                                            sum1 = sum1 + (array_4D(l1,l4,l2,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim3') then
-                                        if(array_5D(l1,l2,l5,l3,l4)/=0.) then
-                                            sum1 = sum1 + (array_5D(l1,l2,l5,l3,l4) - smean)**2.
+                                        if(array_4D(l1,l2,l4,l3)/=0.) then
+                                            sum1 = sum1 + (array_4D(l1,l2,l4,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim4') then
-                                        if(array_5D(l1,l2,l3,l5,l4)/=0.) then
-                                            sum1 = sum1 + (array_5D(l1,l2,l3,l5,l4) - smean)**2.
-                                        end if
-                                    else if(dec_dim=='dim5') then
-                                        if(array_5D(l1,l2,l3,l4,l5)/=0.) then
-                                            sum1 = sum1 + (array_5D(l1,l2,l3,l4,l5) - smean)**2.
+                                        if(array_4D(l1,l2,l3,l4)/=0.) then
+                                            sum1 = sum1 + (array_4D(l1,l2,l3,l4) - smean)**2.
                                         end if
                                     end if
                                 end do
                                 s = sqrt(sum1/real(count-1))
                                 sem = s / sqrt(real(count))
-                            end if
-                            if(present(mean_4D)) mean_4D(l1,l2,l3,l4) = smean
-                            if(present(s_4D)) s_4D(l1,l2,l3,l4) = s
-                            if(present(sem_4D)) sem_4D(l1,l2,l3,l4) = sem
-                            if(present(dataquan_4D)) dataquan_4D(l1,l2,l3,l4) = count
-                    end do 
-                end do            
+                            end if  
+                            if(present(mean_3D)) mean_3D(l1,l2,l3) = smean
+                            if(present(s_3D)) s_3D(l1,l2,l3) = s
+                            if(present(sem_3D)) sem_3D(l1,l2,l3) = sem
+                            if(present(dataquan_3D)) dataquan_3D(l1,l2,l3) = count                   
+                    end do
+                end do
             end do
-        end do
-    end subroutine
+
+        end subroutine
+
+        subroutine avsemdata_5D(array_5D,dim1,dim2,dim3,dim4,dim5,dec_dim,mean_4D,s_4D,sem_4D,dataquan_4D)
+            implicit none
+            integer,intent(in)::dim1,dim2,dim3,dim4,dim5
+            character(len=*),intent(in)::dec_dim
+            real,intent(in)::array_5D(:,:,:,:,:)
+            real,dimension(:,:,:,:),allocatable,intent(out),optional::mean_4D,s_4D,sem_4D
+            integer,dimension(:,:,:,:),allocatable,intent(out),optional::dataquan_4D
+            integer::l1,l2,l3,l4,l5,count=0,loop1,loop2,loop3,loop4,loop5
+            real::smean, s, sem, sum0=0.,sum1=0.
+
+            if(size(array_5D,1)<dim1 .or. size(array_5D,2)<dim2 .or. size(array_5D,3)<dim3 .or. size(array_5D,4)<dim4 .or. size(array_5D,5)<dim5) then 
+                print*,'Array size < dim1 or dim2 or dim3 or dim4 or dim5';stop
+            end if
+            ! loop determination
+                if (dec_dim == 'dim1') then
+                    loop1 = dim2
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim1
+                    if(present(mean_4D)) allocate(mean_4D(dim2,dim3,dim4,dim5))
+                    if(present(s_4D)) allocate(s_4D(dim2,dim3,dim4,dim5))
+                    if(present(sem_4D)) allocate(sem_4D(dim2,dim3,dim4,dim5))
+                    if(present(dataquan_4D)) allocate(dataquan_4D(dim2,dim3,dim4,dim5))
+                elseif (dec_dim == 'dim2') then
+                    loop1 = dim1
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim2
+                    if(present(mean_4D)) allocate(mean_4D(dim1,dim3,dim4,dim5))
+                    if(present(s_4D)) allocate(s_4D(dim1,dim3,dim4,dim5))
+                    if(present(sem_4D)) allocate(sem_4D(dim1,dim3,dim4,dim5))
+                    if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim3,dim4,dim5))
+                elseif (dec_dim == 'dim3') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim3
+                    if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim4,dim5))
+                    if(present(s_4D)) allocate(s_4D(dim1,dim2,dim4,dim5))
+                    if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim4,dim5))
+                    if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim4,dim5))
+                elseif (dec_dim == 'dim4') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim5
+                    loop5 = dim4
+                    if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim3,dim5))
+                    if(present(s_4D)) allocate(s_4D(dim1,dim2,dim3,dim5))
+                    if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim3,dim5))
+                    if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim3,dim5))
+                elseif (dec_dim == 'dim5') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim4
+                    loop5 = dim5
+                    if(present(mean_4D)) allocate(mean_4D(dim1,dim2,dim3,dim4))
+                    if(present(s_4D)) allocate(s_4D(dim1,dim2,dim3,dim4))
+                    if(present(sem_4D)) allocate(sem_4D(dim1,dim2,dim3,dim4))
+                    if(present(dataquan_4D)) allocate(dataquan_4D(dim1,dim2,dim3,dim4))
+                else;print*, 'Invalid dec_dim value';stop
+                end if
+
+            ! loop determination end
+            do l1 = 1, loop1
+                do l2 = 1, loop2
+                    do l3 = 1, loop3
+                        do l4 = 1, loop4
+                            count = 0; sum0 = 0.;sum1 = 0.
+                            do l5 = 1, loop5 !dec_dim loop
+                                if(dec_dim=='dim1') then
+                                    if(array_5D(l5,l1,l2,l3,l4)/=0.) then
+                                        count = count + 1
+                                        sum0 = sum0 + array_5D(l5,l1,l2,l3,l4)
+                                    end if
+                                else if(dec_dim=='dim2') then
+                                    if(array_5D(l1,l5,l2,l3,l4)/=0.) then
+                                        count = count + 1
+                                        sum0 = sum0 + array_5D(l1,l5,l2,l3,l4)
+                                    end if
+                                else if(dec_dim=='dim3') then
+                                    if(array_5D(l1,l2,l5,l3,l4)/=0.) then
+                                        count = count + 1
+                                        sum0 = sum0 + array_5D(l1,l2,l5,l3,l4)
+                                    end if
+                                else if(dec_dim=='dim4') then
+                                    if(array_5D(l1,l2,l3,l5,l4)/=0.) then
+                                        count = count + 1
+                                        sum0 = sum0 + array_5D(l1,l2,l3,l5,l4)
+                                    end if
+                                else if(dec_dim=='dim5') then
+                                    if(array_5D(l1,l2,l3,l4,l5)/=0.) then
+                                        count = count + 1
+                                        sum0 = sum0 + array_5D(l1,l2,l3,l4,l5)
+                                    end if
+                                end if
+                            end do
+                                if(count<=1) then;smean= 0.;s=0.;sem=0.
+                                else;smean = sum0/real(count)
+                                    do l5 = 1, loop5
+                                        if(dec_dim=='dim1') then
+                                            if(array_5D(l5,l1,l2,l3,l4)/=0.) then
+                                                sum1 = sum1 + (array_5D(l5,l1,l2,l3,l4) - smean)**2.
+                                            end if
+                                        else if(dec_dim=='dim2') then
+                                            if(array_5D(l1,l5,l2,l3,l4)/=0.) then
+                                                sum1 = sum1 + (array_5D(l1,l5,l2,l3,l4) - smean)**2.
+                                            end if
+                                        else if(dec_dim=='dim3') then
+                                            if(array_5D(l1,l2,l5,l3,l4)/=0.) then
+                                                sum1 = sum1 + (array_5D(l1,l2,l5,l3,l4) - smean)**2.
+                                            end if
+                                        else if(dec_dim=='dim4') then
+                                            if(array_5D(l1,l2,l3,l5,l4)/=0.) then
+                                                sum1 = sum1 + (array_5D(l1,l2,l3,l5,l4) - smean)**2.
+                                            end if
+                                        else if(dec_dim=='dim5') then
+                                            if(array_5D(l1,l2,l3,l4,l5)/=0.) then
+                                                sum1 = sum1 + (array_5D(l1,l2,l3,l4,l5) - smean)**2.
+                                            end if
+                                        end if
+                                    end do
+                                    s = sqrt(sum1/real(count-1))
+                                    sem = s / sqrt(real(count))
+                                end if
+                                if(present(mean_4D)) mean_4D(l1,l2,l3,l4) = smean
+                                if(present(s_4D)) s_4D(l1,l2,l3,l4) = s
+                                if(present(sem_4D)) sem_4D(l1,l2,l3,l4) = sem
+                                if(present(dataquan_4D)) dataquan_4D(l1,l2,l3,l4) = count
+                        end do 
+                    end do            
+                end do
+            end do
+        end subroutine
+    !END BASIC STATISTICS 
 
     ! ps boys are good bois 
-    ! if present, gap is dx/2. ;centralization of colors is done relative to integer centralize
-    subroutine butler_psk(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
-        implicit none
-        integer,intent(in)::dim1,dim2,iterations
-        real,intent(in)::maskval,ival,fval,inc,width,height
-        integer,intent(in),optional::bpt1,bpt2,bpt3,gap,thicc,centralize
-        real,intent(in),optional::conti,continc
-        real,intent(in)::array_2D(:,:)
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        character(len=*),intent(in)::colorscheme
-        real,dimension(:),allocatable::r1,g1,b1
-        real,dimension(:,:),allocatable::another
-        integer,dimension(:,:),allocatable::anothermask
-        real,dimension(:),allocatable,intent(out),optional::r,g,b
-        real::dx,dy
-        integer::i,j,n,contquan,zerocolumns,nonzerocol
-        write(ounit,*)'%begin butler_psk'
-        if(size(array_2D,1)<dim1)then;print*,'Array size < dim1 ';stop;endif
-        if(size(array_2D,2)<dim2)then;print*,'Array size < dim2 ';stop;endif
+        ! if present, gap is dx/2. ;centralization of colors is done relative to integer centralize
+        subroutine butler_psk(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
+            implicit none
+            integer,intent(in)::dim1,dim2,iterations
+            real,intent(in)::maskval,ival,fval,inc,width,height
+            integer,intent(in),optional::bpt1,bpt2,bpt3,gap,thicc,centralize
+            real,intent(in),optional::conti,continc
+            real,intent(in)::array_2D(:,:)
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            character(len=*),intent(in)::colorscheme
+            real,dimension(:),allocatable::r1,g1,b1
+            real,dimension(:,:),allocatable::another
+            integer,dimension(:,:),allocatable::anothermask
+            real,dimension(:),allocatable,intent(out),optional::r,g,b
+            real::dx,dy
+            integer::i,j,n,contquan,zerocolumns,nonzerocol
+            write(ounit,*)'%begin butler_psk'
+            if(size(array_2D,1)<dim1)then;print*,'Array size < dim1 ';stop;endif
+            if(size(array_2D,2)<dim2)then;print*,'Array size < dim2 ';stop;endif
 
-        if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psk)';end if
-        call box(width,height,3)
+            if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psk)';end if
+            call box(width,height,3)
 
-        select case(colorscheme)
-        case('red');call colorgrad('red',iterations,r1,g1,b1)
-        case('wred');call colorgrad('wred',iterations,r1,g1,b1)
-        case('green');call colorgrad('green',iterations,r1,g1,b1)
-        case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
-        case('blue');call colorgrad('blue',iterations,r1,g1,b1)
-        case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-        case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-        case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-        case default;print*,'Invalid colorscheme';stop
-        end select
+            select case(colorscheme)
+            case('red');call colorgrad('red',iterations,r1,g1,b1)
+            case('wred');call colorgrad('wred',iterations,r1,g1,b1)
+            case('green');call colorgrad('green',iterations,r1,g1,b1)
+            case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
+            case('blue');call colorgrad('blue',iterations,r1,g1,b1)
+            case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
+            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
+            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
+            case default;print*,'Invalid colorscheme';stop
+            end select
 
-        if(present(centralize))then
-            call centeralize_colors(iterations,centralize,r1,g1,b1)
-        endif
+            if(present(centralize))then
+                call centeralize_colors(iterations,centralize,r1,g1,b1)
+            endif
 
-        if(present(r).and.present(g).and.present(b)) then
-            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1));r = r1;g = g1;b = b1
-        ! else;print*,'color arrays are not allocated'
-        end if
+            if(present(r).and.present(g).and.present(b)) then
+                allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1));r = r1;g = g1;b = b1
+            ! else;print*,'color arrays are not allocated'
+            end if
 
-        do i = 1, dim1
-            do j = 1, dim2
-                if(array_2D(i,j)==maskval) then;mask(i,j)=0
-                else;mask(i,j)=1
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)==maskval) then;mask(i,j)=0
+                    else;mask(i,j)=1
+                    end if
+                end do
+            end do
+            zerocolumns = 0
+            do i = 1, dim1
+                if(all(mask(i,1:dim2)==0).eqv..true.)then
+                    zerocolumns = zerocolumns + 1
+                else;nonzerocol = i
                 end if
             end do
-        end do
-        zerocolumns = 0
-        do i = 1, dim1
-            if(all(mask(i,1:dim2)==0).eqv..true.)then
-                zerocolumns = zerocolumns + 1
-            else;nonzerocol = i
-            end if
-        end do
-        if(nonzerocol==0)then;print*,'zero matrix';return;endif
+            if(nonzerocol==0)then;print*,'zero matrix';return;endif
 
-        if(dim1-zerocolumns>1)then
-            if(.not.present(gap))then
-                dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-            else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+            if(dim1-zerocolumns>1)then
+                if(.not.present(gap))then
+                    dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                end if
+            else
+                if(.not.present(gap))then
+                    dx = width/real(dim1);dy = height/real(dim2)
+                else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
+                end if
             end if
-        else
-            if(.not.present(gap))then
-                dx = width/real(dim1);dy = height/real(dim2)
-            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
-            end if
-        end if
 
 
-        if(dim1-zerocolumns>1)then
-            call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
-            call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
-            do n = 1, iterations
-                call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
+            if(dim1-zerocolumns>1)then
+                call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
+                call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
+                do n = 1, iterations
+                    call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
+                end do
+            else
+                call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
+                call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
+                do n = 1, iterations
+                    call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
+                end do
+            end if
+
+            if(present(conti).and.present(continc))then
+                contquan = int((maxval(array_2D)-conti)/continc+1)
+                    if(dim1-zerocolumns>1)then
+                        do n = 0, contquan
+                            if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
+                            if(present(thicc))then
+                                if(mod(n,thicc)==0)then
+                                    if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
+                                end if
+                            end if
+                            call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
+                        end do
+                    else
+                        if(dim1-zerocolumns==1)then
+                            ! if(present(gap))print*,'Having GAP for an array with one column'
+                            print*,'has only one nonzero column=',nonzerocol
+                            allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
+                            another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
+                            anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
+                            call plot(-dx/2.,0.,-3)
+                            do n = 0,contquan
+                                if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
+                                if(present(thicc))then
+                                    if(mod(n,thicc)==0)then
+                                        if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
+                                    end if
+                                end if
+                                call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
+                            end do
+                            deallocate(another);deallocate(anothermask)
+                            call plot(dx/2.,0.,-3)
+                        end if
+                    end if
+            end if
+            
+
+            deallocate(r1,g1,b1)
+            if(dim1-zerocolumns>1)then
+                if(.not.present(gap))then
+                    call plot(dx/2.,dy/2.,-3)
+                else;call plot(0.,dy/2.,-3)
+                end if
+            else
+                if(.not.present(gap))then
+                    ! call plot(-dx/2.,0.,-3)
+                else;call plot(-width/real(dim1)/2.,0.,-3)
+                end if
+            end if
+            write(ounit,*)'%end butler_psk'
+
+        end subroutine
+        ! can draw contours on 1 column arrays
+        subroutine butler_psbet(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,centralize)
+            implicit none
+            integer,intent(in)::dim1,dim2,iterations
+            real,intent(in)::maskval,ival,fval,inc,width,height
+            integer,intent(in),optional::bpt1,bpt2,bpt3,thicc,centralize
+            real,intent(in),optional::conti,continc
+            real,intent(in)::array_2D(:,:)
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real,dimension(:,:),allocatable::another
+            character(len=*),intent(in)::colorscheme
+            real,dimension(:),allocatable::r1,g1,b1
+            real,dimension(:),allocatable,intent(out),optional::r,g,b
+            real::dx,dy
+            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
+
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
+            end if
+            if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psbet)';end if
+            dx = width/real(dim1);dy = height/real(dim2)
+            call box(width,height,3)
+            select case(colorscheme)
+            case('red');call colorgrad('red',iterations,r1,g1,b1)
+            case('wred');call colorgrad('wred',iterations,r1,g1,b1)
+            case('green');call colorgrad('green',iterations,r1,g1,b1)
+            case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
+            case('blue');call colorgrad('blue',iterations,r1,g1,b1)
+            case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
+            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
+            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
+            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
+            case default;print*,'Invalid colorscheme';stop
+            end select
+
+            if(present(centralize))then
+                call centeralize_colors(iterations,centralize,r1,g1,b1)
+            endif
+            
+            if(present(r).and.present(g).and.present(b)) then
+                allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1));r = r1;g = g1;b = b1
+            ! else;print*,'color arrays are not allocated'
+            end if
+
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)==maskval) then;mask(i,j)=0
+                    else;mask(i,j)=1
+                    end if
+                end do
             end do
-        else
+            zerocolumns = 0
+            do i = 1, dim1
+                if(all(mask(i,1:dim2)==0).eqv..true.)then
+                    zerocolumns = zerocolumns + 1
+                else;nonzerocol = i
+                end if
+            end do
+            if(nonzerocol==0)then;print*,'zero matrix';endif
+            ! print*,'psbet',zerocolumns,nonzerocol
             call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
             call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
             do n = 1, iterations
                 call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
             end do
-        end if
 
-        if(present(conti).and.present(continc))then
             contquan = int((maxval(array_2D)-conti)/continc+1)
+            if(present(conti).and.present(continc)) then
                 if(dim1-zerocolumns>1)then
                     do n = 0, contquan
                         if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
@@ -6558,404 +6820,283 @@ module subroutines
                         end if
                         call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
                     end do
-                else
-                    if(dim1-zerocolumns==1)then
-                        ! if(present(gap))print*,'Having GAP for an array with one column'
-                        print*,'has only one nonzero column=',nonzerocol
-                        allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
-                        another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
-                        anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
-                        call plot(-dx/2.,0.,-3)
-                        do n = 0,contquan
-                            if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
-                            if(present(thicc))then
-                                if(mod(n,thicc)==0)then
-                                    if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
-                                end if
+                else if(dim1-zerocolumns==1)then
+                    print*,'psbet nonzero column=',nonzerocol
+                    allocate(another(dim1,dim2));another = array_2D;another(nonzerocol-1,1:dim2) = another(nonzerocol,1:dim2)
+                    mask(nonzerocol-1,1:dim2) = mask(nonzerocol,1:dim2)
+                    call plot(dx/2.,0.,-3)
+                    do n = 0,contquan
+                        if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
+                        if(present(thicc))then
+                            if(mod(n,thicc)==0)then
+                                if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
                             end if
-                            call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
-                        end do
-                        deallocate(another);deallocate(anothermask)
-                        call plot(dx/2.,0.,-3)
-                    end if
+                        end if
+                        call pscont3(dx,dy,another,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
+                    end do
+                    call plot(-dx/2.,0.,-3)
+                    deallocate(another)
                 end if
-        end if
-        
-
-        deallocate(r1,g1,b1)
-        if(dim1-zerocolumns>1)then
-            if(.not.present(gap))then
-                call plot(dx/2.,dy/2.,-3)
-            else;call plot(0.,dy/2.,-3)
             end if
-        else
-            if(.not.present(gap))then
-                ! call plot(-dx/2.,0.,-3)
-            else;call plot(-width/real(dim1)/2.,0.,-3)
+            ! else;print*,'no contour'
+
+            deallocate(r1,g1,b1)
+        end subroutine
+        ! can draw contours on 1 column arrays 
+        subroutine butler_cont(array_2D,dim1,dim2,width,height,maskval,conti,continc,thicc,r,g,b,gap)
+            implicit none
+            integer,intent(in)::dim1,dim2
+            real,intent(in)::maskval,conti,continc,width,height
+            real,intent(in)::array_2D(:,:)
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real,dimension(:,:),allocatable::another
+            integer,dimension(:,:),allocatable::anothermask
+            real,intent(in),optional::r,g,b
+            integer,intent(in),optional::thicc,gap
+            real::dx,dy
+            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
+
+            write(ounit,*)'%begin butler_cont'
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
             end if
-        end if
-        write(ounit,*)'%end butler_psk'
+            call box(width,height,3)
+            do i = 1,dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)== maskval) then;mask(i,j)=0
+                    else;mask(i,j)=1
+                    end if
+                end do
+            end do
 
-    end subroutine
-    ! can draw contours on 1 column arrays
-    subroutine butler_psbet(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,centralize)
-        implicit none
-        integer,intent(in)::dim1,dim2,iterations
-        real,intent(in)::maskval,ival,fval,inc,width,height
-        integer,intent(in),optional::bpt1,bpt2,bpt3,thicc,centralize
-        real,intent(in),optional::conti,continc
-        real,intent(in)::array_2D(:,:)
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        real,dimension(:,:),allocatable::another
-        character(len=*),intent(in)::colorscheme
-        real,dimension(:),allocatable::r1,g1,b1
-        real,dimension(:),allocatable,intent(out),optional::r,g,b
-        real::dx,dy
-        integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
-
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psbet)';end if
-        dx = width/real(dim1);dy = height/real(dim2)
-        call box(width,height,3)
-        select case(colorscheme)
-        case('red');call colorgrad('red',iterations,r1,g1,b1)
-        case('wred');call colorgrad('wred',iterations,r1,g1,b1)
-        case('green');call colorgrad('green',iterations,r1,g1,b1)
-        case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
-        case('blue');call colorgrad('blue',iterations,r1,g1,b1)
-        case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-        case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-        case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-        case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-        case default;print*,'Invalid colorscheme';stop
-        end select
-
-        if(present(centralize))then
-            call centeralize_colors(iterations,centralize,r1,g1,b1)
-        endif
-        
-        if(present(r).and.present(g).and.present(b)) then
-            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1));r = r1;g = g1;b = b1
-        ! else;print*,'color arrays are not allocated'
-        end if
-
-        do i = 1, dim1
-            do j = 1, dim2
-                if(array_2D(i,j)==maskval) then;mask(i,j)=0
-                else;mask(i,j)=1
+            zerocolumns = 0
+            do i = 1, dim1
+                if(all(mask(i,1:dim2)==0).eqv..true.)then
+                    zerocolumns = zerocolumns + 1
+                else;nonzerocol = i
                 end if
             end do
-        end do
-        zerocolumns = 0
-        do i = 1, dim1
-            if(all(mask(i,1:dim2)==0).eqv..true.)then
-                zerocolumns = zerocolumns + 1
-            else;nonzerocol = i
-            end if
-        end do
-        if(nonzerocol==0)then;print*,'zero matrix';endif
-        ! print*,'psbet',zerocolumns,nonzerocol
-        call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
-        call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
-        do n = 1, iterations
-            call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
-        end do
 
-        contquan = int((maxval(array_2D)-conti)/continc+1)
-        if(present(conti).and.present(continc)) then
+            if(nonzerocol==0)then;print*,'zero matrix';endif
+
+            if(dim1-zerocolumns>1)then ! normal case
+                if(.not.present(gap))then
+                    dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                end if
+            else ! 1 column array
+                if(.not.present(gap))then
+                    dx = width/real(dim1);dy = height/real(dim2)
+                else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
+                end if
+            end if
+
+            contquan = int((maxval(array_2D)-conti)/continc+1)
+            if(present(r).and.present(g).and.present(b))then;call rgbk(r,g,b);else;call rgbk(0.,0.,0.);end if
             if(dim1-zerocolumns>1)then
                 do n = 0, contquan
-                    if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
-                    if(present(thicc))then
-                        if(mod(n,thicc)==0)then
-                            if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
-                        end if
-                    end if
-                    call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
-                end do
-            else if(dim1-zerocolumns==1)then
-                print*,'psbet nonzero column=',nonzerocol
-                allocate(another(dim1,dim2));another = array_2D;another(nonzerocol-1,1:dim2) = another(nonzerocol,1:dim2)
-                mask(nonzerocol-1,1:dim2) = mask(nonzerocol,1:dim2)
-                call plot(dx/2.,0.,-3)
-                do n = 0,contquan
-                    if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
-                    if(present(thicc))then
-                        if(mod(n,thicc)==0)then
-                            if(abs(width)<=2.)then;call newpen2(4);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
-                        end if
-                    end if
-                    call pscont3(dx,dy,another,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
-                end do
-                call plot(-dx/2.,0.,-3)
-                deallocate(another)
-            end if
-        end if
-        ! else;print*,'no contour'
-
-        deallocate(r1,g1,b1)
-    end subroutine
-    ! can draw contours on 1 column arrays 
-    subroutine butler_cont(array_2D,dim1,dim2,width,height,maskval,conti,continc,thicc,r,g,b,gap)
-        implicit none
-        integer,intent(in)::dim1,dim2
-        real,intent(in)::maskval,conti,continc,width,height
-        real,intent(in)::array_2D(:,:)
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        real,dimension(:,:),allocatable::another
-        integer,dimension(:,:),allocatable::anothermask
-        real,intent(in),optional::r,g,b
-        integer,intent(in),optional::thicc,gap
-        real::dx,dy
-        integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
-
-        write(ounit,*)'%begin butler_cont'
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        call box(width,height,3)
-        do i = 1,dim1
-            do j = 1, dim2
-                if(array_2D(i,j)== maskval) then;mask(i,j)=0
-                else;mask(i,j)=1
-                end if
-            end do
-        end do
-
-        zerocolumns = 0
-        do i = 1, dim1
-            if(all(mask(i,1:dim2)==0).eqv..true.)then
-                zerocolumns = zerocolumns + 1
-            else;nonzerocol = i
-            end if
-        end do
-
-        if(nonzerocol==0)then;print*,'zero matrix';endif
-
-        if(dim1-zerocolumns>1)then ! normal case
-            if(.not.present(gap))then
-                dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-            else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
-            end if
-        else ! 1 column array
-            if(.not.present(gap))then
-                dx = width/real(dim1);dy = height/real(dim2)
-            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
-            end if
-        end if
-
-        contquan = int((maxval(array_2D)-conti)/continc+1)
-        if(present(r).and.present(g).and.present(b))then;call rgbk(r,g,b);else;call rgbk(0.,0.,0.);end if
-        if(dim1-zerocolumns>1)then
-            do n = 0, contquan
-                if(abs(width)<=2.5)then;call newpen2(2);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
-                if(present(thicc))then
-                    if(mod(n,thicc)==0)then
-                        if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
-                    end if
-                end if
-                call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
-            end do
-        else
-            if(dim1-zerocolumns==1)then
-                print*,'has only one nonzero column=',nonzerocol
-                allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
-                another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
-                anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
-                call plot(-dx/2.,0.,-3)
-                do n = 0,contquan
                     if(abs(width)<=2.5)then;call newpen2(2);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
                     if(present(thicc))then
                         if(mod(n,thicc)==0)then
                             if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
                         end if
                     end if
-                    call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
+                    call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
                 end do
-                deallocate(another);deallocate(anothermask)
-                call plot(dx/2.,0.,-3)
-            end if
-        end if
-
-        call rgbk(0.,0.,0.)
-        if(dim1-zerocolumns>1)then
-            if(.not.present(gap))then
-                call plot(dx/2.,dy/2.,-3)
-            else;call plot(0.,dy/2.,-3)
-            end if
-        else
-            if(.not.present(gap))then
-                ! call plot(-dx/2.,0.,-3)
-            else;call plot(-width/real(dim1)/2.,0.,-3)
-            end if
-        end if
-        write(ounit,*)'%end butler_cont'
-        
-    end subroutine
-    ! paints areas within range with color given, other regions will not be painted. betcolork2
-    subroutine butler_mask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
-        implicit none
-        integer,intent(in)::dim1,dim2
-        integer,intent(in),optional::gap
-        real,intent(in),optional::r,g,b
-        real,intent(in)::width,height
-        real,intent(in)::array_2D(:,:)
-        real,intent(in)::mask_ini,mask_fin
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        real::dx,dy,r1,g1,b1
-        integer::i,j
-        
-        write(16,*)"% begin butler_mask"
-
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        call box(width,height,3)
-        if(.not.present(gap))then
-            dx = width/real(dim1);dy = height/real(dim2)
-        else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
-        end if
-        do i = 1, dim1
-            do j = 1, dim2
-                if(mask_ini<=array_2D(i,j).and.array_2D(i,j)<=mask_fin) then;mask(i,j)=1
-                else;mask(i,j)=0
+            else
+                if(dim1-zerocolumns==1)then
+                    print*,'has only one nonzero column=',nonzerocol
+                    allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
+                    another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
+                    anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
+                    call plot(-dx/2.,0.,-3)
+                    do n = 0,contquan
+                        if(abs(width)<=2.5)then;call newpen2(2);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
+                        if(present(thicc))then
+                            if(mod(n,thicc)==0)then
+                                if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
+                            end if
+                        end if
+                        call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
+                    end do
+                    deallocate(another);deallocate(anothermask)
+                    call plot(dx/2.,0.,-3)
                 end if
-
-            end do
-        end do
-        ! print*,mask
-
-        if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
-        call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,-10.**(10.),10.**(10.),r1,g1,b1)
-        if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
-        write(16,*)"% end butler_mask"
-
-    end subroutine
-    ! for integer arrays
-    subroutine butler_imask(array_2D,dim1,dim2,width,height,integer_in,r,g,b,gap)
-        implicit none
-        integer,intent(in)::dim1,dim2,integer_in
-        integer,intent(in),optional::gap
-        real,intent(in),optional::r,g,b
-        real,intent(in)::width,height
-        integer,intent(in)::array_2D(:,:)
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        real::dx,dy,r1,g1,b1
-        integer::i,j
-        
-        write(16,*)"% begin butler_mask"
-
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        call box(width,height,3)
-        if(.not.present(gap))then
-            dx = width/real(dim1);dy = height/real(dim2)
-        else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
-        end if
-        do i = 1, dim1
-            do j = 1, dim2
-                if(array_2D(i,j)==integer_in) then;mask(i,j)=1
-                else;mask(i,j)=0
-                end if
-
-            end do
-        end do
-        ! print*,mask
-
-        if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
-        call betcolorI(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,integer_in,r1,g1,b1)
-        if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
-        write(16,*)"% end butler_mask"
-
-    end subroutine
-    ! paints areas within range with color given, other regions will not be painted. pscolork
-    subroutine butler_psmask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
-        implicit none
-        integer,intent(in)::dim1,dim2
-        integer,intent(in),optional::gap
-        real,intent(in),optional::r,g,b
-        real,intent(in)::width,height
-        real,intent(in)::array_2D(:,:)
-        real,intent(in)::mask_ini,mask_fin
-        integer,dimension(size(array_2D,1),size(array_2D,2))::mask
-        real,dimension(:,:),allocatable::another
-        integer,dimension(:,:),allocatable::anothermask
-        real::dx,dy,r1,g1,b1
-        integer::i,j,zerocolumns,nonzerocol
-        
-        write(16,*)"% begin butler_psmask"
-        call newpen2(3)
-        if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-            print*,'Array size < dim1 or dim2';stop
-        end if
-        call box(width,height,3)
-
-        do i = 1, dim1
-            do j = 1, dim2
-                if(array_2D(i,j)/=0..and.array_2D(i,j)/=0.) then;mask(i,j)=1
-                else;mask(i,j)=0
-                end if
-
-            end do
-        end do
-
-        zerocolumns = 0
-        do i = 1, dim1
-            if(all(mask(i,1:dim2)==0).eqv..true.)then
-                zerocolumns = zerocolumns + 1
-            else;nonzerocol = i
             end if
-        end do
-        if(nonzerocol==0)then;print*,'zero matrix';return;endif
 
-        if(dim1-zerocolumns>1)then
-            if(.not.present(gap))then
-                dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-            else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+            call rgbk(0.,0.,0.)
+            if(dim1-zerocolumns>1)then
+                if(.not.present(gap))then
+                    call plot(dx/2.,dy/2.,-3)
+                else;call plot(0.,dy/2.,-3)
+                end if
+            else
+                if(.not.present(gap))then
+                    ! call plot(-dx/2.,0.,-3)
+                else;call plot(-width/real(dim1)/2.,0.,-3)
+                end if
             end if
-        else
+            write(ounit,*)'%end butler_cont'
+            
+        end subroutine
+        ! paints areas within range with color given, other regions will not be painted. betcolork2
+        subroutine butler_mask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
+            implicit none
+            integer,intent(in)::dim1,dim2
+            integer,intent(in),optional::gap
+            real,intent(in),optional::r,g,b
+            real,intent(in)::width,height
+            real,intent(in)::array_2D(:,:)
+            real,intent(in)::mask_ini,mask_fin
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real::dx,dy,r1,g1,b1
+            integer::i,j
+            
+            write(16,*)"% begin butler_mask"
+
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
+            end if
+            call box(width,height,3)
             if(.not.present(gap))then
                 dx = width/real(dim1);dy = height/real(dim2)
             else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
             end if
-        end if
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(mask_ini<=array_2D(i,j).and.array_2D(i,j)<=mask_fin) then;mask(i,j)=1
+                    else;mask(i,j)=0
+                    end if
 
+                end do
+            end do
+            ! print*,mask
 
-        if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
-        if(dim1-zerocolumns>1)then
-            call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,mask_ini,mask_fin,r1,g1,b1)
-        else 
-            allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
-            another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
-            anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
-            call plot(-dx/2.,0.,-3)
-            call pscolork(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,mask_ini,mask_fin,r1,g1,b1)
-            deallocate(another);deallocate(anothermask)
-            call plot(dx/2.,0.,-3)
-        end if
+            if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
+            call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,-10.**(10.),10.**(10.),r1,g1,b1)
+            if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
+            write(16,*)"% end butler_mask"
 
+        end subroutine
+        ! for integer arrays
+        subroutine butler_imask(array_2D,dim1,dim2,width,height,integer_in,r,g,b,gap)
+            implicit none
+            integer,intent(in)::dim1,dim2,integer_in
+            integer,intent(in),optional::gap
+            real,intent(in),optional::r,g,b
+            real,intent(in)::width,height
+            integer,intent(in)::array_2D(:,:)
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real::dx,dy,r1,g1,b1
+            integer::i,j
+            
+            write(16,*)"% begin butler_mask"
 
-        if(dim1-zerocolumns>1)then
-            if(.not.present(gap))then
-                call plot(dx/2.,dy/2.,-3)
-            else;call plot(0.,dy/2.,-3)
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
             end if
-        else
+            call box(width,height,3)
             if(.not.present(gap))then
-                ! call plot(-dx/2.,0.,-3)
-            else;call plot(-width/real(dim1)/2.,0.,-3)
+                dx = width/real(dim1);dy = height/real(dim2)
+            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
             end if
-        end if
-        write(16,*)"% end butler_psmask"
-    end subroutine
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)==integer_in) then;mask(i,j)=1
+                    else;mask(i,j)=0
+                    end if
 
+                end do
+            end do
+            ! print*,mask
+
+            if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
+            call betcolorI(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,integer_in,r1,g1,b1)
+            if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
+            write(16,*)"% end butler_mask"
+
+        end subroutine
+        ! paints areas within range with color given, other regions will not be painted. pscolork
+        subroutine butler_psmask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
+            implicit none
+            integer,intent(in)::dim1,dim2
+            integer,intent(in),optional::gap
+            real,intent(in),optional::r,g,b
+            real,intent(in)::width,height
+            real,intent(in)::array_2D(:,:)
+            real,intent(in)::mask_ini,mask_fin
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real,dimension(:,:),allocatable::another
+            integer,dimension(:,:),allocatable::anothermask
+            real::dx,dy,r1,g1,b1
+            integer::i,j,zerocolumns,nonzerocol
+            
+            write(16,*)"% begin butler_psmask"
+            call newpen2(3)
+            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+                print*,'Array size < dim1 or dim2';stop
+            end if
+            call box(width,height,3)
+
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)/=0..and.array_2D(i,j)/=0.) then;mask(i,j)=1
+                    else;mask(i,j)=0
+                    end if
+
+                end do
+            end do
+
+            zerocolumns = 0
+            do i = 1, dim1
+                if(all(mask(i,1:dim2)==0).eqv..true.)then
+                    zerocolumns = zerocolumns + 1
+                else;nonzerocol = i
+                end if
+            end do
+            if(nonzerocol==0)then;print*,'zero matrix';return;endif
+
+            if(dim1-zerocolumns>1)then
+                if(.not.present(gap))then
+                    dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                end if
+            else
+                if(.not.present(gap))then
+                    dx = width/real(dim1);dy = height/real(dim2)
+                else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
+                end if
+            end if
+
+
+            if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
+            if(dim1-zerocolumns>1)then
+                call pscolork(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,mask_ini,mask_fin,r1,g1,b1)
+            else 
+                allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
+                another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
+                anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
+                call plot(-dx/2.,0.,-3)
+                call pscolork(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,mask_ini,mask_fin,r1,g1,b1)
+                deallocate(another);deallocate(anothermask)
+                call plot(dx/2.,0.,-3)
+            end if
+
+
+            if(dim1-zerocolumns>1)then
+                if(.not.present(gap))then
+                    call plot(dx/2.,dy/2.,-3)
+                else;call plot(0.,dy/2.,-3)
+                end if
+            else
+                if(.not.present(gap))then
+                    ! call plot(-dx/2.,0.,-3)
+                else;call plot(-width/real(dim1)/2.,0.,-3)
+                end if
+            end if
+            write(16,*)"% end butler_psmask"
+        end subroutine
+    ! ps bois
     ! RANDOM 
         
 end module subroutines
