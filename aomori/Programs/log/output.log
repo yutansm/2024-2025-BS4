@@ -1,0 +1,29 @@
+Logging started at 2024-11-12 21:23:47
+Logging ended at 2024-11-12 21:23:47
+Logging started at 2024-11-12 21:24:03
+Logging ended at 2024-11-12 21:24:03
+Logging started at 2024-11-12 21:26:39
+Logging ended at 2024-11-12 21:26:40
+Logging started at 2024-11-12 21:27:41
+Logging ended at 2024-11-12 21:27:42
+Logging started at 2024-11-12 21:29:16
+Logging ended at 2024-11-12 21:29:17
+Logging started at 2024-11-12 21:31:36
+Logging ended at 2024-11-12 21:31:37
+Logging started at 2024-11-12 21:32:38
+Logging ended at 2024-11-12 21:32:39
+Logging started at 2024-11-12 21:35:49
+]633;D;0]633;P;Cwd=/Users/yuta/LABWORK/2024-2025-BS4/aomori/Programs]633;E;gforty ongongo.f90;3fba168d-388c-40f9-abe9-8786491bbc1d]633;CCompiled [ongongo.f90] as Source file
+Executing: ./a.out
+           1
+           2
+           3
+           4
+           5
+           6
+           7
+           8
+           9
+          10
+]633;D;0]633;P;Cwd=/Users/yuta/LABWORK/2024-2025-BS4/aomori/Programs]633;E;end_log;3fba168d-388c-40f9-abe9-8786491bbc1d]633;CLogging ended at 2024-11-12 21:35:58
+Logging ended at 2024-11-12 21:35:58

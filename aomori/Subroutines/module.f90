@@ -7,12 +7,531 @@ module psstat
 end module psstat
 
 module mypsstat
-    integer::savecount = 0,plots2count = 0
+    logical::topstat = .false.,centerstat = .false.,bottomstat = .false.,logstat = .false. 
+    integer::savecount = 0,plots2count = 0,logunit = 254
     real,parameter::precision = 1.5*10.**(-4)
     real::xn,yn
     character(len=20),dimension(100)::labels
     real,dimension(100)::label_x,label_y
 end module mypsstat
+
+module functions
+    implicit none
+    contains
+    function minex0(D1, D2, D3, D4, D5, D6) result(min_val)
+        implicit none
+        real, dimension(:), intent(in), optional :: D1
+        real, dimension(:,:), intent(in), optional :: D2
+        real, dimension(:,:,:), intent(in), optional :: D3
+        real, dimension(:,:,:,:), intent(in), optional :: D4
+        real, dimension(:,:,:,:,:), intent(in), optional :: D5
+        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
+        real, dimension(:), allocatable :: array1
+        real, dimension(:,:), allocatable :: array2
+        real, dimension(:,:,:), allocatable :: array3
+        real, dimension(:,:,:,:), allocatable :: array4
+        real, dimension(:,:,:,:,:), allocatable :: array5
+        real, dimension(:,:,:,:,:,:), allocatable :: array6
+        real :: min_val
+        integer :: n, l, m, o, p, q
+    
+        if (present(D1)) then
+            allocate(array1(size(D1)))
+            do n = 1, size(D1)
+                if (D1(n) /= 0.0) then
+                    array1(n) = D1(n)
+                else
+                    array1(n) = 10.0**10.0
+                end if
+            end do
+            min_val = minval(array1)
+            deallocate(array1)
+    
+        else if (present(D2)) then
+            allocate(array2(size(D2, 1), size(D2, 2)))
+            do n = 1, size(D2, 1)
+                do l = 1, size(D2, 2)
+                    if (D2(n, l) /= 0.0) then
+                        array2(n, l) = D2(n, l)
+                    else
+                        array2(n, l) = 10.0**10.0
+                    end if
+                end do
+            end do
+            min_val = minval(array2)
+            deallocate(array2)
+    
+        else if (present(D3)) then
+            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
+            do n = 1, size(D3, 1)
+                do l = 1, size(D3, 2)
+                    do m = 1, size(D3, 3)
+                        if (D3(n, l, m) /= 0.0) then
+                            array3(n, l, m) = D3(n, l, m)
+                        else
+                            array3(n, l, m) = 10.0**10.0
+                        end if
+                    end do
+                end do
+            end do
+            min_val = minval(array3)
+            deallocate(array3)
+    
+        else if (present(D4)) then
+            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
+            do n = 1, size(D4, 1)
+                do l = 1, size(D4, 2)
+                    do m = 1, size(D4, 3)
+                        do o = 1, size(D4, 4)
+                            if (D4(n, l, m, o) /= 0.0) then
+                                array4(n, l, m, o) = D4(n, l, m, o)
+                            else
+                                array4(n, l, m, o) = 10.0**10.0
+                            end if
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array4)
+            deallocate(array4)
+    
+        else if (present(D5)) then
+            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
+            do n = 1, size(D5, 1)
+                do l = 1, size(D5, 2)
+                    do m = 1, size(D5, 3)
+                        do o = 1, size(D5, 4)
+                            do p = 1, size(D5, 5)
+                                if (D5(n, l, m, o, p) /= 0.0) then
+                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
+                                else
+                                    array5(n, l, m, o, p) = 10.0**10.0
+                                end if
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array5)
+            deallocate(array5)
+    
+        else if (present(D6)) then
+            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
+            do n = 1, size(D6, 1)
+                do l = 1, size(D6, 2)
+                    do m = 1, size(D6, 3)
+                        do o = 1, size(D6, 4)
+                            do p = 1, size(D6, 5)
+                                do q = 1, size(D6, 6)
+                                    if (D6(n, l, m, o, p, q) /= 0.0) then
+                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
+                                    else
+                                        array6(n, l, m, o, p, q) = 10.0**10.0
+                                    end if
+                                end do
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array6)
+            deallocate(array6)
+    
+        else
+            print *, 'no, or invalid input'
+            stop
+        end if
+    end function minex0
+    function minexn(D1, D2, D3, D4, D5, D6,r1) result(min_val)
+        implicit none
+        real, dimension(:), intent(in), optional :: D1
+        real, dimension(:,:), intent(in), optional :: D2
+        real, dimension(:,:,:), intent(in), optional :: D3
+        real, dimension(:,:,:,:), intent(in), optional :: D4
+        real, dimension(:,:,:,:,:), intent(in), optional :: D5
+        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
+        real, dimension(:), allocatable :: array1
+        real, dimension(:,:), allocatable :: array2
+        real, dimension(:,:,:), allocatable :: array3
+        real, dimension(:,:,:,:), allocatable :: array4
+        real, dimension(:,:,:,:,:), allocatable :: array5
+        real, dimension(:,:,:,:,:,:), allocatable :: array6
+        real,intent(in)::r1
+        ! integer,intent(in),optional::loc
+        real :: min_val
+        integer :: n, l, m, o, p, q
+    
+        if (present(D1)) then
+            allocate(array1(size(D1)))
+            do n = 1, size(D1)
+                if (D1(n) /=r1) then
+                    array1(n) = D1(n)
+                else
+                    array1(n) = 10.0**10.0
+                end if
+            end do
+            min_val = minval(array1)
+            ! if(present(loc))print*,minloc(array1)
+            deallocate(array1)
+    
+        else if (present(D2)) then
+            allocate(array2(size(D2, 1), size(D2, 2)))
+            do n = 1, size(D2, 1)
+                do l = 1, size(D2, 2)
+                    if (D2(n, l) /=r1) then
+                        array2(n, l) = D2(n, l)
+                    else
+                        array2(n, l) = 10.0**10.0
+                    end if
+                end do
+            end do
+            min_val = minval(array2)
+            ! if(present(loc))print*,minloc(array2)
+            deallocate(array2)
+    
+        else if (present(D3)) then
+            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
+            do n = 1, size(D3, 1)
+                do l = 1, size(D3, 2)
+                    do m = 1, size(D3, 3)
+                        if (D3(n, l, m) /=r1) then
+                            array3(n, l, m) = D3(n, l, m)
+                        else
+                            array3(n, l, m) = 10.0**10.0
+                        end if
+                    end do
+                end do
+            end do
+            min_val = minval(array3)
+            ! if(present(loc))print*,minloc(array3)
+            deallocate(array3)
+    
+        else if (present(D4)) then
+            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
+            do n = 1, size(D4, 1)
+                do l = 1, size(D4, 2)
+                    do m = 1, size(D4, 3)
+                        do o = 1, size(D4, 4)
+                            if (D4(n, l, m, o) /=r1) then
+                                array4(n, l, m, o) = D4(n, l, m, o)
+                            else
+                                array4(n, l, m, o) = 10.0**10.0
+                            end if
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array4)
+            ! if(present(loc))print*,minloc(array4)
+            deallocate(array4)
+    
+        else if (present(D5)) then
+            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
+            do n = 1, size(D5, 1)
+                do l = 1, size(D5, 2)
+                    do m = 1, size(D5, 3)
+                        do o = 1, size(D5, 4)
+                            do p = 1, size(D5, 5)
+                                if (D5(n, l, m, o, p) /=r1) then
+                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
+                                else
+                                    array5(n, l, m, o, p) = 10.0**10.0
+                                end if
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array5)
+            ! if(present(loc))print*,minloc(array5)
+            deallocate(array5)
+    
+        else if (present(D6)) then
+            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
+            do n = 1, size(D6, 1)
+                do l = 1, size(D6, 2)
+                    do m = 1, size(D6, 3)
+                        do o = 1, size(D6, 4)
+                            do p = 1, size(D6, 5)
+                                do q = 1, size(D6, 6)
+                                    if (D6(n, l, m, o, p, q) /=r1) then
+                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
+                                    else
+                                        array6(n, l, m, o, p, q) = 10.0**10.0
+                                    end if
+                                end do
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array6)
+            ! if(present(loc))print*,minloc(array6)
+            deallocate(array6)
+    
+        else
+            print *, 'no, or invalid input'
+            stop
+        end if
+    end function minexn
+    function minexrange(D1, D2, D3, D4, D5, D6,r1,r2) result(min_val)
+        implicit none
+        real, dimension(:), intent(in), optional :: D1
+        real, dimension(:,:), intent(in), optional :: D2
+        real, dimension(:,:,:), intent(in), optional :: D3
+        real, dimension(:,:,:,:), intent(in), optional :: D4
+        real, dimension(:,:,:,:,:), intent(in), optional :: D5
+        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
+        real, dimension(:), allocatable :: array1
+        real, dimension(:,:), allocatable :: array2
+        real, dimension(:,:,:), allocatable :: array3
+        real, dimension(:,:,:,:), allocatable :: array4
+        real, dimension(:,:,:,:,:), allocatable :: array5
+        real, dimension(:,:,:,:,:,:), allocatable :: array6
+        real,intent(in)::r1,r2
+        real :: min_val
+        integer :: n, l, m, o, p, q
+
+        if (present(D1)) then
+            allocate(array1(size(D1)))
+            do n = 1, size(D1)
+                if (r1<=D1(n).and.D1(n)<=r2) then
+                    array1(n) = D1(n)
+                else
+                    array1(n) = 10.0**10.0
+                end if
+            end do
+            min_val = minval(array1)
+            deallocate(array1)
+
+        else if (present(D2)) then
+            allocate(array2(size(D2, 1), size(D2, 2)))
+            do n = 1, size(D2, 1)
+                do l = 1, size(D2, 2)
+                    if(r1<=D2(n, l).and.D2(n, l)<=r2) then
+                        array2(n, l) = D2(n, l)
+                    else
+                        array2(n, l) = 10.0**10.0
+                    end if
+                end do
+            end do
+            min_val = minval(array2)
+            deallocate(array2)
+
+        else if (present(D3)) then
+            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
+            do n = 1, size(D3, 1)
+                do l = 1, size(D3, 2)
+                    do m = 1, size(D3, 3)
+                        if(r1<=D3(n, l, m).and.D3(n, l, m)<=r2) then
+                            array3(n, l, m) = D3(n, l, m)
+                        else
+                            array3(n, l, m) = 10.0**10.0
+                        end if
+                    end do
+                end do
+            end do
+            min_val = minval(array3)
+            deallocate(array3)
+
+        else if (present(D4)) then
+            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
+            do n = 1, size(D4, 1)
+                do l = 1, size(D4, 2)
+                    do m = 1, size(D4, 3)
+                        do o = 1, size(D4, 4)
+                            if(r1<=D4(n, l, m, o).and.D4(n, l, m, o)<=r2) then
+                                array4(n, l, m, o) = D4(n, l, m, o)
+                            else
+                                array4(n, l, m, o) = 10.0**10.0
+                            end if
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array4)
+            deallocate(array4)
+
+        else if (present(D5)) then
+            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
+            do n = 1, size(D5, 1)
+                do l = 1, size(D5, 2)
+                    do m = 1, size(D5, 3)
+                        do o = 1, size(D5, 4)
+                            do p = 1, size(D5, 5)
+                                if(r1<=D5(n, l, m, o, p).and.D5(n, l, m, o, p)<=r2) then
+                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
+                                else
+                                    array5(n, l, m, o, p) = 10.0**10.0
+                                end if
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array5)
+            deallocate(array5)
+
+        else if (present(D6)) then
+            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
+            do n = 1, size(D6, 1)
+                do l = 1, size(D6, 2)
+                    do m = 1, size(D6, 3)
+                        do o = 1, size(D6, 4)
+                            do p = 1, size(D6, 5)
+                                do q = 1, size(D6, 6)
+                                    if(r1<=D6(n, l, m, o, p, q).and.D6(n, l, m, o, p, q)<=r2) then
+                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
+                                    else
+                                        array6(n, l, m, o, p, q) = 10.0**10.0
+                                    end if
+                                end do
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+            min_val = minval(array6)
+            deallocate(array6)
+
+        else
+            print *, 'no, or invalid input'
+            stop
+        end if
+    end function minexrange
+    function f_t95(df) result(t95coeff)
+        implicit none
+        integer,intent(in)::df
+        real::t95coeff
+        real,dimension(0:30)::t95
+
+        t95(1) = 12.706 ; t95(11) = 2.2010 ; t95(21) = 2.0796
+        t95(2) = 4.3026 ; t95(12) = 2.1788 ; t95(22) = 2.0739
+        t95(3) = 3.1824 ; t95(13) = 2.1604 ; t95(23) = 2.0687
+        t95(4) = 2.7765 ; t95(14) = 2.1448 ; t95(24) = 2.0639
+        t95(5) = 2.5706 ; t95(15) = 2.1315 ; t95(25) = 2.0595
+        t95(6) = 2.4469 ; t95(16) = 2.1191 ; t95(26) = 2.0555
+        t95(7) = 2.3646 ; t95(17) = 2.1098 ; t95(27) = 2.0518
+        t95(8) = 2.3060 ; t95(18) = 2.1009 ; t95(28) = 2.0484
+        t95(9) = 2.2621 ; t95(19) = 2.0930 ; t95(29) = 2.0452
+        t95(10) = 2.2281 ;t95(20) = 2.0860 ; t95(30) = 2.0423
+
+        t95(0) = 0. !just for the sake of programs
+
+        if(df>=0 .and. df<=30) then
+            t95coeff = t95(df)
+        else
+            t95coeff = 911; print*, 'df out of range'
+        end if
+    end function f_t95
+    function f_t90(df) result(t90coeff)
+        implicit none
+        integer,intent(in)::df
+        real::t90coeff
+        real,dimension(0:30)::t90
+
+        t90(1) = 6.3138 ; t90(11) = 1.7959 ; t90(21) = 1.7210
+        t90(2) = 2.9200 ; t90(12) = 1.7823 ; t90(22) = 1.7171
+        t90(3) = 2.3534 ; t90(13) = 1.7709 ; t90(23) = 1.7139
+        t90(4) = 2.1318 ; t90(14) = 1.7613 ; t90(24) = 1.7109
+        t90(5) = 2.0150 ; t90(15) = 1.7531 ; t90(25) = 1.7081
+        t90(6) = 1.9432 ; t90(16) = 1.7459 ; t90(26) = 1.7056
+        t90(7) = 1.8946 ; t90(17) = 1.7396 ; t90(27) = 1.7033
+        t90(8) = 1.8595 ; t90(18) = 1.7341 ; t90(28) = 1.7011
+        t90(9) = 1.8331 ; t90(19) = 1.7291 ; t90(29) = 1.6991
+        t90(10) = 1.8125 ; t90(20) = 1.7250 ; t90(30) = 1.6973
+
+        t90(0) = 0. !just for the sake of programs
+
+        if(df>=0 .and. df<=30) then
+            t90coeff = t90(df)
+        else
+            t90coeff = 911; print*, 'df out of range'
+        end if
+    end function f_t90
+    function fwelchdf(s1, dataquan1, s2, dataquan2) result(df)
+        implicit none
+        real, intent(in) :: s1, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        real ::  n1, n2
+        integer :: df
+
+        n1 = real(dataquan1)
+        n2 = real(dataquan2)
+        df = int((((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1))))
+
+    end function fwelchdf
+                                                                                                                                                                                                                      
+    function fwelcht(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
+        implicit none
+        real, intent(in) :: mean1, s1, mean2, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        integer :: result
+        ! real, dimension(0:30) :: t_95 = 0.0
+        real :: diff_mean, n1, n2, df, sem, bottomCI, topCI
+    
+        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
+            diff_mean = mean1 - mean2
+            n1 = real(dataquan1)
+            n2 = real(dataquan2)
+            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
+            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
+            ! call t95_value(t_95)
+            bottomCI = diff_mean - f_t95(int(df)) * sem
+            topCI = diff_mean + f_t95(int(df)) * sem
+            ! print*, diff_mean, bottomCI, topCI, int(df)
+            if (bottomCI > 0.0) then
+                result = 1 ! larger
+            else if (topCI < 0.0) then
+                result = -1 ! smaller
+            else
+                result = 0 ! no difference in the desired level
+            end if
+        else
+            result = 911 ! error
+        end if
+    
+    end function fwelcht
+    function fwelcht90(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
+        implicit none
+        real, intent(in) :: mean1, s1, mean2, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        integer :: result
+        ! real, dimension(0:30) :: t_90 = 0.0
+        real :: diff_mean, n1, n2, df, sem, bottomCI, topCI
+
+        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
+            diff_mean = mean1 - mean2
+            n1 = real(dataquan1)
+            n2 = real(dataquan2)
+            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
+            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
+            ! call t90_value(t_90)
+            bottomCI = diff_mean - f_t90(int(df)) * sem
+            topCI = diff_mean + f_t90(int(df)) * sem
+            ! print*, diff_mean, bottomCI, topCI, int(df)
+            if (bottomCI > 0.0) then
+                result = 1 ! larger
+            else if (topCI < 0.0) then
+                result = -1 ! smaller
+            else
+                result = 0 ! no difference in the desired level
+            end if
+        else
+            result = 911 ! error
+        end if
+    end function fwelcht90
+
+    function int2str(i) result(str)
+        integer, intent(in) :: i
+        character(:), allocatable :: str
+        character(range(i)+2) :: tmp
+        write(tmp, '(i0)') i
+        str = trim(tmp)
+    end function int2str
+
+
+end module functions
 
 module origin
     use psstat
@@ -231,8 +750,8 @@ module origin
 
         return
     end
-    subroutine plots2(psfile,mode)
-        character(len=*),intent(in),optional:: psfile,mode
+    subroutine plots2(psfile,mode,h,oopt)
+        character(len=*),intent(in),optional:: psfile,mode,h,oopt
         integer::intmode
         character(len=3)::countstr
 
@@ -252,15 +771,37 @@ module origin
         if(present(psfile))then
             call plots(0.,0.,intmode,psfile)
         else;
-            call plots(0.,0.,intmode,'/Users/yuta/LABWORK/2024-2025-BS4/aomori/nonames/'//trim(countstr)//'.ps')
+            call plots(0.,0.,intmode,'../nonames/'//trim(countstr)//'.ps')
+        end if
+        if(present(h))then
+            call header(h)
+        end if
+        if(present(oopt))then
+            if(oopt == 'otops')then
+                call otops;topstat = .true.
+            else if(oopt == 'ocenter')then
+                call ocenter;centerstat = .true.
+            else if(oopt == 'obottoms')then
+                call obottoms;bottomstat = .true.
+            else
+                call otops;topstat = .true.;print*,'otops is default'
+            end if
         end if
         return
     end 
-    subroutine newpage
-        call endpage
-        call inipage      
+    subroutine newpage(h,x,y)
+        implicit none
+        character(len=*),optional,intent(in):: h
+        real,intent(in),optional:: x,y
+            call endpage
+            call inipage      
 
-        ! call plot(0.,0.,-3)
+            ! call plot(0.,0.,-3)
+            if(present(h))then
+                call header(h)
+            end if
+            if(present(x))call plot(x,0.,-3)
+            if(present(y))call plot(0.,y,-3)
 
         return
     end
@@ -275,14 +816,14 @@ module origin
     subroutine plot(x1,y1,im)
         use ieee_arithmetic
 
-        if(ieee_is_nan(x1))then;print*,'x1 is NaN';stop;endif
-        if(ieee_is_nan(y1))then;print*,'y1 is NaN';stop;endif
-        if(ieee_is_finite(x1).eqv. .false.)then;print*,'x1 is Inf';stop;endif
-        if(ieee_is_finite(y1).eqv..false.)then;print*,'y1 is Inf';stop;endif
+        ! if(ieee_is_nan(x1))then;print*,'x1 is NaN at subroutine plot';stop;endif
+        ! if(ieee_is_nan(y1))then;print*,'y1 is NaN at subroutine plot';stop;endif
+        ! if(ieee_is_finite(x1).eqv. .false.)then;print*,'x1 is Inf at subroutine plot';stop;endif
+        ! if(ieee_is_finite(y1).eqv..false.)then;print*,'y1 is Inf at subroutine plot';stop;endif
 
-        ! if(land.eqv..true.)then
-            if(x1+xn>29.7)then;print*,'definitely drawing out of paper ','xn=',xn,'x1=',x1;stop;endif
-            if(y1+yn>29.7)then;print*,'definitely drawing out of paper ','yn=',yn,'y1=',y1;stop;endif
+        ! ! if(land.eqv..true.)then
+        !     if(x1+xn>29.7)then;print*,'definitely drawing out of paper ','xn=',xn,'x1=',x1;stop;endif
+        !     if(y1+yn>29.7)then;print*,'definitely drawing out of paper ','yn=',yn,'y1=',y1;stop;endif
         ! else
         !     if(x1+xn>21.0)then;print*,'drawing out of paper ','xn=',xn,'x1=',x1;stop;endif
         !     if(y1+yn>29.7)then;print*,'drawing out of paper ','yn=',yn,'y1=',y1;stop;endif
@@ -401,6 +942,7 @@ module origin
         implicit none
         real,intent(in),optional::x,y
 
+        call plotmove(0.,0.)        
         if(land)then
             if(present(x))then
                 if(present(y))then
@@ -435,6 +977,7 @@ module origin
         implicit none
         real,intent(in),optional::x,y
 
+        call plotmove(0.,0.)
         if(land)then
             if(present(x))then
                 if(present(y))then
@@ -469,6 +1012,7 @@ module origin
         implicit none
         real,intent(in),optional::x,y
 
+        call plotmove(0.,0.)
         if(land)then
             if(present(x))then
                 if(present(y))then
@@ -520,6 +1064,9 @@ module origin
             write(ounit,'(a)') " np 0.0 0.0  mv" 
             pageend=.false.
             xn = xorig;yn = yorig
+            if(topstat)call otops
+            if(centerstat)call ocenter
+            if(bottomstat)call obottoms
             return
     end      
     subroutine endpage     
@@ -3895,6 +4442,50 @@ module origin
         write(ounit,*) "% end symbolr"
         return
     end
+            !gets put in the Programs/log directory 
+    ! subroutine begin_log(basename)
+    !     implicit none
+    !     character(len=*),intent(in),optional::basename
+    !     character(len=256)::filename
+        
+    !     if(present(basename))then
+    !         filename = 'Programs/log/'//trim(basename)
+    !         call execute_command_line('begin_log '//trim(filename))
+    !     else
+    !         call execute_command_line('begin_log')
+    !     end if
+    ! end subroutine
+    ! subroutine end_log()
+    !     call execute_command_line('end_log')
+    ! end subroutine
+    subroutine begin_log(basename)
+        implicit none
+        character(len=*), intent(in), optional :: basename
+        character(len=256) :: command
+        integer :: int
+    
+        ! Construct the command string
+        if (present(basename)) then
+            write(command, '(A,A)') 'zsh -c "source ~/log.sh; begin_log ', trim(adjustl(basename)), '"'
+        else
+            write(command, '(A)') 'zsh -c "source ~/log.sh; begin_log"'
+        end if
+    
+        ! Execute the command
+        call execute_command_line(trim(command),wait=.true.,exitstat=int)
+        ! print*, 'Log file opened with exit status ', int
+        call sleep(1)
+    end subroutine
+    
+    subroutine end_log()
+        character(len=256) :: command
+        integer :: int
+        write(command, '(A)') 'zsh -c "source ~/log.sh; end_log"'
+        call execute_command_line(trim(command),wait=.true.,exitstat=int)
+        ! print*, 'Log file closed with exit status ', int
+        call sleep(1)
+    end subroutine
+        
 end module origin
 
 module oldsubs
@@ -4669,15 +5260,15 @@ module oldsubs
         
     end subroutine
     ! for calbrating SSH using SSP units must be in mm 
-    subroutine calibrate_SSH(SSH,SSP,calibratedSSH)
-        implicit none
-        real,intent(in)::SSH,SSP
-        real,intent(out)::calibratedSSH
+    ! subroutine calibrate_SSH(SSH,SSAP)
+    !     implicit none
+    !     real,intent(in)::SSAP
+    !     real,intent(inout)::SSH
 
-        if(SSH/=0.) then
-            calibratedSSH = SSH + (SSP-10130)
-        else;end if 
-    end subroutine 
+    !     if(SSH/=0..and.SSAP/=0.) then
+    !         SSH = SSH + (SSAP-10130.)
+    !     else;end if 
+    ! end subroutine 
 
                                                 ! SUBROUTINES FOR DATA MANIPULATION !
 
@@ -5056,7 +5647,7 @@ module subroutines
 
     ! DATA
         ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data
-        subroutine SSH_data(SSH2D,ilabel,slabel,convert)
+        subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate)
             implicit none
             type :: labeled_array
                 integer, dimension(:,:),allocatable:: num_labels
@@ -5068,8 +5659,9 @@ module subroutines
             integer,parameter::num_rows=150,num_years=15,num_months=12
             integer,intent(in),optional::ilabel
             character(len=*),intent(in),optional::slabel
-            integer,intent(in),optional::convert
+            integer,intent(in),optional::convert,calibrate
             real,dimension(num_years,num_months),intent(out)::SSH2D
+            real,dimension(:,:),allocatable::SSAP2D
             integer::n,i,ios,convint=0
             character::yyyy*4,row1*999,convstr*30
 
@@ -5105,7 +5697,7 @@ module subroutines
                         if(localssh%num_labels(n,i)==ilabel)then
                             SSH2D(n,:) = localssh%values(n,i,:)
                             if(present(convert))then
-                                if(n==1)convstr = localssh%str_labels(n,i)
+                                if(n==1)convstr = trim(localssh%str_labels(n,i))
                                 if(n/=1.and.convstr/=localssh%str_labels(n,i))then
                                     print*,'inconsistant station labels at',convstr,'and',localssh%str_labels(n,i)
                                 end if
@@ -5116,6 +5708,27 @@ module subroutines
                     end do
                 end do
                 if(present(convert))print*,ilabel,'-->',convstr
+                do n = 1, num_years
+                    do i = 1, num_months
+                        if(SSH2D(n,i)<100..and.SSH2D(n,i)/=-999.)then
+                            print'(12(f6.1,1x),A,i5,A,i2)',SSH2D(n,1:num_months),'SSH<100 at Year ',n+2008,' Month',i
+                        end if
+                    end do
+                    if(all(SSH2D(n,:)==-999.))then
+                        print*,'No Data for Year',n+2008,'at Index',ilabel
+                    else if(any(SSH2D(n,:)==-999.))then
+                        do i = 1, num_months
+                            if(SSH2D(n,i)==-999.)then
+                                print*,'No Data for',n+2008,'Month',i
+                            end if
+                        end do
+                    end if
+                end do
+                if(present(calibrate))then
+                    allocate(SSAP2D(num_years,num_months))
+                    call SSAP_data(SSAP2D,ilabel=ilabel)
+                    call SSH_calibration(SSH2D, SSAP2D)
+                end if
             else if(.not.present(ilabel).and.present(slabel))then
                 do n = 1, num_years
                     do i = 1, num_rows
@@ -5133,6 +5746,27 @@ module subroutines
                     end do
                 end do
                 if(present(convert))print*,slabel,'-->',convint
+                    do n = 1, num_years
+                        do i = 1, num_months
+                            if(SSH2D(n,i)<100..and.SSH2D(n,i)/=-999.)then
+                                print'(12(f6.1,1x),A,i5,A,i2)',SSH2D(n,1:num_months),'SSH<100 at Year ',n+2008,' Month',i
+                            end if
+                        end do
+                        if(all(SSH2D(n,:)==-999.))then
+                            print*,'No Data for Year',n+2008,'at Station',slabel
+                        else if(any(SSH2D(n,:)==-999.))then
+                            do i = 1, num_months
+                                if(SSH2D(n,i)==-999.)then
+                                    print*,'No Data for',n+2008,'Month',i
+                                end if
+                            end do
+                        end if
+                    end do
+                if(present(calibrate))then
+                    allocate(SSAP2D(num_years,num_months))
+                    call SSAP_data(SSAP2D,slabel=slabel)
+                    call SSH_calibration(SSH2D, SSAP2D)
+                end if
             else;print*,'Provide Either Station Label or Index but not both'
             end if
 
@@ -5177,6 +5811,241 @@ module subroutines
             end subroutine parse_csv_row
 
         end subroutine
+        subroutine SSAP_data(SSAP2D,ilabel,slabel,convert)
+            implicit none
+            type :: labeled_array
+                integer, dimension(:,:),allocatable:: num_labels
+                character(len=30), dimension(:,:),allocatable:: str_labels
+                real, dimension(:,:,:),allocatable:: values
+            end type labeled_array
+            type(labeled_array) :: localssap
+            integer,parameter::num_rows=150,num_years=15,num_months=12
+            integer,intent(in),optional::ilabel
+            character(len=*),intent(in),optional::slabel
+            integer,intent(in),optional::convert
+            real,dimension(num_years,num_months),intent(out)::SSAP2D
+            integer::n,i,ios,convint=0
+            character::yyyy*4,row1*999,convstr*30
+
+            allocate(localssap%num_labels(num_years,num_rows))
+            allocate(localssap%str_labels(num_years,num_rows))
+            allocate(localssap%values(num_years,num_rows,num_months)) ! allocating arrays just to use heap memory
+
+            localssap%num_labels = 0;localssap%str_labels = ' ';localssap%values = 0.
+            convstr = ''
+
+            do n = 1, num_years
+                write(yyyy,'(i4)') n+2008
+                open(unit=20, file='../Data/SSH/data/SSAP'//trim(yyyy)//'.csv', status='old', action='read',iostat=ios)
+                if(ios/=0) then
+                    print*,'Error opening file';stop
+                end if
+                do i = 1, num_rows
+                    read(20,'(A)',iostat = ios)row1
+                    if(ios == 0)then
+                        call parse_csv_row(row1, localssap%num_labels(n,i), localssap%str_labels(n,i), localssap%values(n,i,:))
+                    else if(i<100.and.ios/=0)then
+                        print*,'Error reading file';stop
+                    else;exit
+                    end if
+                end do
+            end do
+
+            if(.not.present(ilabel).and..not.present(slabel))print*,'Provide The Station Label or Index'
+
+            if(present(ilabel).and..not.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(localssap%num_labels(n,i)==ilabel)then
+                            SSAP2D(n,:) = localssap%values(n,i,:)
+                            if(present(convert))then
+                                if(n==1)convstr = trim(localssap%str_labels(n,i))
+                                if(n/=1.and.convstr/=localssap%str_labels(n,i))then
+                                    print*,'inconsistant station labels at',convstr,'and',localssap%str_labels(n,i)
+                                end if
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Index',ilabel,'not found for Year',n+2008
+                    end do
+                end do
+                if(present(convert))print*,ilabel,'-->',convstr
+            else if(.not.present(ilabel).and.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(trim(localssap%str_labels(n,i))==slabel)then
+                            SSAP2D(n,:) = localssap%values(n,i,:)
+                            if(present(convert))then
+                                if(n==1)convint = localssap%num_labels(n,i)
+                                if(n/=1.and.convint/=localssap%num_labels(n,i))then
+                                    print*,'inconsistant station labels at',convint,'and',localssap%num_labels(n,i)
+                                end if
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Label',slabel,'not found for Year',n+2008
+                    end do
+                end do
+                if(present(convert))print*,slabel,'-->',convint
+            else;print*,'Provide Either Station Label or Index but not both'
+            end if
+            do n = 1, num_years
+                do i = 1, num_months
+                    if(SSAP2D(n,i)<10000..and.SSAP2D(n,i)/=-999.)then
+                        print'(12(f7.1,1x),A,i5,A,i2)',SSAP2D(n,1:num_months),'SSAP<10000 at Year ',n+2008,' Month',i
+                    end if
+                end do
+            end do
+
+            contains
+            subroutine parse_csv_row(row, num_label, str_label, values)
+                implicit none
+                character(len=*), intent(in) :: row
+                integer, intent(out) :: num_label
+                character(len=30), intent(out) :: str_label
+                real, dimension(:), intent(out) :: values
+                integer :: pos, start_pos, end_pos,k
+            
+                ! Initialize positions
+                start_pos = 1
+                pos = 0
+            
+                ! Extract num_label
+                end_pos = index(row(start_pos:), ',')
+                read(row(start_pos:start_pos+end_pos-2), '(I4)', iostat=ios) num_label
+                if (ios /= 0) then
+                    print *, 'Error parsing num_label'
+                    stop
+                end if
+                start_pos = start_pos + end_pos
+            
+                ! Extract str_label
+                end_pos = index(row(start_pos:), ',')
+                str_label = adjustl(row(start_pos:start_pos+end_pos-2))
+                start_pos = start_pos + end_pos
+            
+                ! Extract values
+                do k = 1, size(values) ! is 12
+                    end_pos = index(row(start_pos:), ',')
+                    if (end_pos == 0) end_pos = start_pos ! the last iteration
+                    read(row(start_pos:start_pos+end_pos-2), '(F7.1)', iostat=ios) values(k)
+                    if (ios /= 0) then
+                        print *, 'Error parsing values'
+                        stop
+                    end if
+                    start_pos = start_pos + end_pos
+                end do
+            end subroutine parse_csv_row    
+
+        end subroutine
+        subroutine SSHlabelconversion(ilabel,slabel)
+            implicit none
+            integer,parameter::num_rows=150,num_years=15,num_months=12
+            integer,intent(in),optional::ilabel
+            character(len=*),intent(in),optional::slabel
+            integer::n,i,ios,convint=0
+            integer,dimension(num_years,num_rows)::numlabel
+            character::yyyy*4,row1*999,convstr*30
+            character(len=30),dimension(:,:),allocatable::strlabel*30
+
+            allocate(strlabel(num_years,num_rows))
+            convstr = ''
+
+            do n = 1, num_years
+                write(yyyy,'(i4)') n+2008
+                open(unit=20, file='../Data/SSH/data/SSAP'//trim(yyyy)//'.csv', status='old', action='read',iostat=ios)
+                if(ios/=0) then
+                    print*,'Error opening file';stop
+                end if
+                do i = 1, num_rows
+                    read(20,'(A)',iostat = ios)row1
+                    if(ios == 0)then
+                        call parse_csv_row(row1, numlabel(n,i),strlabel(n,i))
+                    else if(i<100.and.ios/=0)then
+                        print*,'Error reading file';stop
+                    else;exit
+                    end if
+                end do
+            end do
+
+            if(.not.present(ilabel).and..not.present(slabel))print*,'Provide The Station Label or Index'
+
+            if(present(ilabel).and..not.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(ilabel==numlabel(n,i))then
+                            if(n==1)convstr = trim(strlabel(n,i))
+                            if(n/=1.and.convstr/=strlabel(n,i))then
+                                print*,'inconsistant station labels at',convstr,'and',strlabel(n,i),'at Year',n+2008
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Index',ilabel,'not found for Year',n+2008
+                    end do
+                end do
+                print*,ilabel,'-->',convstr
+            else if(.not.present(ilabel).and.present(slabel))then
+                do n = 1, num_years
+                    do i = 1, num_rows
+                        if(trim(slabel)==trim(strlabel(n,i)))then
+                            if(n==1)convint = numlabel(n,i)
+                            if(n/=1.and.convint/=numlabel(n,i))then
+                                print*,'inconsistant station labels at',convint,'and',numlabel(n,i),'at Year',n+2008
+                            end if
+                            exit
+                        end if
+                        if(i==num_rows)print*,'Station Label',slabel,'not found for Year',n+2008
+                    end do
+                end do
+                print*,slabel,'-->',convint
+            else;print*,'Provide Either Station Label or Index but not both'
+            end if
+
+            contains
+            subroutine parse_csv_row(row, num_label, str_label)
+                implicit none
+                character(len=*), intent(in) :: row
+                integer, intent(out) :: num_label
+                character(len=30), intent(out) :: str_label
+                integer :: pos, start_pos, end_pos
+            
+                ! Initialize positions
+                start_pos = 1
+                pos = 0
+            
+                ! Extract num_label
+                end_pos = index(row(start_pos:), ',')
+                read(row(start_pos:start_pos+end_pos-2), '(I4)', iostat=ios) num_label
+                if (ios /= 0) then
+                    print *, 'Error parsing num_label'
+                    stop
+                end if
+                start_pos = start_pos + end_pos
+            
+                ! Extract str_label
+                end_pos = index(row(start_pos:), ',')
+                str_label = adjustl(row(start_pos:start_pos+end_pos-2))
+                start_pos = start_pos + end_pos
+            
+            end subroutine parse_csv_row  
+
+        end subroutine
+        subroutine SSH_calibration(SSH2D,SSAP2D)
+            implicit none
+            real,dimension(:,:),intent(inout)::SSH2D,SSAP2D
+            integer::y,m
+
+            do y = 1, size(SSH2D,1)
+                do m = 1, size(SSH2D,2)
+                    if(SSH2D(y,m)==-999..or.SSAP2D(y,m)==-999.)then
+                        SSH2D(y,m) = -999.
+                    else
+                        SSH2D(y,m) = SSH2D(y,m)+(SSAP2D(y,m)-10130.)
+                    end if
+                end do
+            end do
+        end subroutine
+
     ! COLORGRAD
         ! r,g,b individual color gradient
         subroutine colorgrad(rgb,iterations,r,g,b)
@@ -5185,48 +6054,48 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b
             integer::n
             character(len=*),intent(in)::rgb
-            real::tops
+            real::topsy
 
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             if(rgb=='red'.or.rgb=='wred')then
                 r(0) = 1.; g(0) = 1.; b(0) = 1.
                 r(1) = 1.; g(1) = 0.9; b(1) = 0.9
-                tops=0.9
+                topsy=0.9
                 if(rgb=='wred')then
                     r(1) = 1.; g(1) = 1.; b(1) = 1.
-                    tops = 1.
+                    topsy = 1.
                 end if
                 do n = 2, iterations
                     r(n) = 1.
-                    g(n) = tops-(real(n-1)/real(iterations-1))*tops
-                    b(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    g(n) = topsy-(real(n-1)/real(iterations-1))*topsy
+                    b(n) = topsy-(real(n-1)/real(iterations-1))*topsy
                 end do
                 r(iterations+1) = 0.6 ; g(iterations+1) = 0. ; b(iterations+1) = 0.
             else if(rgb=='green'.or.rgb=='wgreen')then
                 r(0) = 1.; g(0) = 1.; b(0) = 1.
                 r(1) = 0.9; g(1) = 1.; b(1) = 0.9
-                tops = 0.9
+                topsy = 0.9
                 if(rgb=='wgreen')then
                     r(1) = 1.; g(1) = 1.; b(1) = 1.
-                    tops = 1.
+                    topsy = 1.
                 end if
                 do n = 2, iterations
-                    r(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    r(n) = topsy-(real(n-1)/real(iterations-1))*topsy
                     g(n) = 1.
-                    b(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    b(n) = topsy-(real(n-1)/real(iterations-1))*topsy
                 end do
                 r(iterations+1) = 0. ; g(iterations+1) = 0.6 ; b(iterations+1) = 0.
             else if(rgb=='blue'.or.rgb=='wblue')then
                 r(0) = 1.; g(0) = 1.; b(0) = 1.
                 r(1) = 0.9; g(1) = 0.9; b(1) = 1.
-                tops = 0.9
+                topsy = 0.9
                 if(rgb=='wblue')then
                     r(1) = 1.; g(1) = 1.; b(1) = 1.
-                    tops=1.
+                    topsy=1.
                 end if
                 do n = 2, iterations
-                    r(n) = tops-(real(n-1)/real(iterations-1))*tops
-                    g(n) = tops-(real(n-1)/real(iterations-1))*tops
+                    r(n) = topsy-(real(n-1)/real(iterations-1))*topsy
+                    g(n) = topsy-(real(n-1)/real(iterations-1))*topsy
                     b(n) = 1.
                 end do
                 r(iterations+1) = 0. ; g(iterations+1) = 0. ; b(iterations+1) = 0.6
@@ -5541,16 +6410,18 @@ module subroutines
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
         end subroutine
         subroutine floating_lines(length,rangle,iterations,line_thickness,x_inc,y_inc,x,y,dashy)
-            real,intent(in)::length,x_inc,y_inc,rangle
-            real,intent(in),optional::x,y
+            real,intent(in)::rangle
+            real,intent(in),optional::x,y,length,x_inc,y_inc
             integer,intent(in),optional::dashy
             integer,intent(in)::iterations,line_thickness
             integer::n
+            real::incx,incy
 
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
-
+            if(present(x_inc))then;incx = x_inc;else;incx = 0.;endif
+            if(present(y_inc))then;incy = y_inc;else;incy = 0.;endif
             call newpen2(line_thickness)
             if(present(dashy))call newpen2(dashy)
             write(ounit,*) "% begin floating_lines"
@@ -5558,10 +6429,10 @@ module subroutines
                 write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
                 call plot(0.,0.,3);call plot(length,0.,2)
                 write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
-                call plot(x_inc,y_inc,-3)
+                call plot(incx,incy,-3)
             end do
             write(ounit,*) "% end floating_lines"
-            call plot(-real(iterations)*x_inc,-real(iterations)*y_inc,-3)
+            call plot(-real(iterations)*incx,-real(iterations)*incy,-3)
 
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
@@ -5980,7 +6851,7 @@ module subroutines
                     printm = m
                     if(present(num_freq))then
                         if(present(num_st))then
-                            if(n>=num_st.and.mod(n,num_freq)==0)then
+                            if(n>=num_st.and.mod(n,num_freq)==0.or.n==1.or.n==iterations)then
                                 call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
                             end if
                         else;if(mod(n,num_freq)==0)call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
@@ -6162,20 +7033,60 @@ module subroutines
         end subroutine
     
         ! avsdsemdataquan better series
-        ! gives an array of mean arrays    DO NOT USE INSIDE A LOOP ALLOCATION IS TRICKY
-        subroutine avsemdata_2D(array_2D,dim1,dim2,dec_dim,mean_1D,s_1D,sem_1D,dataquan_1D)
+        ! gives an array of mean arrays    DO NOT USE INSIDE A LOOP ALLOCATION IS TRICKY maybe not
+        subroutine avsemdata_1D(array_1D,mean,s,sem,dataquan,rmask)
             implicit none
-            integer,intent(in)::dim1,dim2
+            real,intent(in)::array_1D(:)
+            real,intent(out),optional::mean,s,sem
+            integer,intent(out),optional::dataquan
+            real,intent(in),optional::rmask
+            integer::n,count
+            real::rmaskl,sum1,sum0,meanl,sl,seml
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
+
+            count = 0;sum0=0.;sum1 = 0.
+            do n = 1, size(array_1D)
+                if (array_1D(n) /= 0.0.and. array_1D(n)/=rmaskl)then;count = count + 1;sum0 = sum0 + array_1D(n);end if
+            end do
+            if (count <=1 ) then
+                if(present(mean))mean = 0.
+                if(present(s))s = 0.
+                if(present(sem))sem = 0.
+                if(present(dataquan))dataquan = 0
+            else
+                meanl = sum0 / real(count)
+                if(present(mean))mean = meanl
+                if(present(dataquan))dataquan = count
+                do n = 1, size(array_1D)
+                    if(array_1D(n)/=0..and.array_1D(n)/=rmaskl) then
+                        sum1 = sum1 + (array_1D(n) - meanl)**2.
+                    end if
+                end do
+                sl = sqrt(sum1 / real(count-1))
+                seml = sl / sqrt(real(count))
+                if(present(s))s = sl
+                if(present(sem))sem = seml
+            end if
+
+        end subroutine
+
+        subroutine avsemdata_2D(array_2D,dec_dim,mean_1D,s_1D,sem_1D,dataquan_1D,rmask)
+            implicit none
+            ! integer,intent(in)::dim1,dim2
             character(len=*),intent(in)::dec_dim
             real,intent(in)::array_2D(:,:)
             real,dimension(:),allocatable,intent(out),optional::mean_1D,s_1D,sem_1D
             integer,dimension(:),allocatable,intent(out),optional::dataquan_1D
-            integer::n,i,count=0
-            real::smean, s, sem, sum0=0.,sum1=0.
+            real,intent(in),optional::rmask
+            integer::n,i,count=0,dim1,dim2
+            real::smean, s, sem, sum0=0.,sum1=0.,rmaskl
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
 
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
-            end if
+            ! if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
+            !     print*,'Array size < dim1 or dim2';stop
+            ! end if
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
+            ! print*,'dim1 = ',dim1,'dim2 = ',dim2,'dec_dim = ',dec_dim
             if (dec_dim == 'dim1') then
                 if (present(mean_1D)) allocate(mean_1D(dim2))
                 if (present(s_1D)) allocate(s_1D(dim2))
@@ -6184,14 +7095,14 @@ module subroutines
                 do n = 1, dim2
                     count = 0;sum0=0.;sum1 = 0.
                     do i = 1, dim1
-                        if (array_2D(i, n) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(i,n);end if
+                        if (array_2D(i, n) /= 0.0.and. array_2D(i,n)/=rmaskl)then;count = count + 1;sum0 = sum0 + array_2D(i,n);end if
                     end do
                     if (count <=1 ) then
                         smean = 0.;s = 0.;sem = 0.
                     else
                         smean = sum0 / real(count)
                         do i = 1, dim1
-                            if(array_2D(i,n)/=0.) then
+                            if(array_2D(i,n)/=0..and.array_2D(i,n)/=rmaskl) then
                                 sum1 = sum1 + (array_2D(i,n) - smean)**2.
                             end if
                         end do
@@ -6211,7 +7122,7 @@ module subroutines
                 do n = 1, dim1
                     count = 0;sum0=0.;sum1 = 0.
                     do i = 1, dim2
-                        if (array_2D(n, i) /= 0.0)then;count = count + 1;sum0 = sum0 + array_2D(n,i);end if
+                        if (array_2D(n, i) /= 0.0.and.array_2D(n,i)/=rmaskl)then;count = count + 1;sum0 = sum0 + array_2D(n,i);end if
                         ! print*,n,i,count,sum0
                     end do
                     if (count <=1 ) then
@@ -6219,7 +7130,7 @@ module subroutines
                     else
                         smean = sum0 / real(count)
                         do i = 1, dim2
-                            if(array_2D(n,i)/=0.) then
+                            if(array_2D(n,i)/=0..and.array_2D(n,i)/=rmaskl) then
                                 sum1 = sum1 + (array_2D(n,i) - smean)**2.
                             end if
                         end do
@@ -6244,19 +7155,22 @@ module subroutines
 
         end subroutine
 
-        subroutine avsemdata_3D(array_3D,dim1,dim2,dim3,dec_dim,mean_2D,s_2D,sem_2D,dataquan_2D)
+        subroutine avsemdata_3D(array_3D,dec_dim,mean_2D,s_2D,sem_2D,dataquan_2D,rmask)
             implicit none
-            integer,intent(in)::dim1,dim2,dim3
+            ! integer,intent(in)::dim1,dim2,dim3
+            real,intent(in),optional::rmask
             character(len=*),intent(in)::dec_dim
             real,intent(in)::array_3D(:,:,:)
             real,dimension(:,:),allocatable,intent(out),optional::mean_2D,s_2D,sem_2D
             integer,dimension(:,:),allocatable,intent(out),optional::dataquan_2D
-            integer::l1,l2,l3,count=0,loop1,loop2,loop3
-            real::smean, s, sem, sum0=0.,sum1=0.
+            integer::l1,l2,l3,count=0,loop1,loop2,loop3,dim1,dim2,dim3
+            real::smean, s, sem, sum0=0.,sum1=0.,rmaskl
 
-            if(size(array_3D,1)<dim1 .or. size(array_3D,2)<dim2 .or. size(array_3D,3)<dim3) then 
-                print*,'Array size < dim1 or dim2 or dim3';stop
-            end if
+            ! if(size(array_3D,1)<dim1 .or. size(array_3D,2)<dim2 .or. size(array_3D,3)<dim3) then 
+            !     print*,'Array size < dim1 or dim2 or dim3';stop
+            ! end if
+            dim1 = size(array_3D,1);dim2 = size(array_3D,2);dim3 = size(array_3D,3)
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
             ! loop determination
                 if (dec_dim == 'dim1') then
                     loop1 = dim2
@@ -6292,17 +7206,17 @@ module subroutines
                     count = 0; sum0 = 0.;sum1 = 0.
                     do l3 = 1, loop3 !dec_dim loop
                         if(dec_dim=='dim1') then
-                            if(array_3D(l3,l1,l2)/=0.) then
+                            if(array_3D(l3,l1,l2)/=0..or.array_3D(l3,l1,l2)/=rmaskl) then
                                 count = count + 1
                                 sum0 = sum0 + array_3D(l3,l1,l2)
                             end if
                         else if(dec_dim=='dim2') then
-                            if(array_3D(l1,l3,l2)/=0.) then
+                            if(array_3D(l1,l3,l2)/=0..and.array_3D(l1,l3,l2)/=rmaskl) then
                                 count = count + 1
                                 sum0 = sum0 + array_3D(l1,l3,l2)
                             end if
                         else if(dec_dim=='dim3') then
-                            if(array_3D(l1,l2,l3)/=0.) then
+                            if(array_3D(l1,l2,l3)/=0..and.array_3D(l1,l2,l3)/=rmaskl) then
                                 count = count + 1
                                 sum0 = sum0 + array_3D(l1,l2,l3)
                             end if
@@ -6312,15 +7226,15 @@ module subroutines
                         else;smean = sum0/real(count)
                             do l3 = 1, loop3
                                 if(dec_dim=='dim1') then
-                                    if(array_3D(l3,l1,l2)/=0.) then
+                                    if(array_3D(l3,l1,l2)/=0..and.array_3D(l3,l1,l2)/=rmaskl) then
                                         sum1 = sum1 + (array_3D(l3,l1,l2) - smean)**2.
                                     end if
                                 else if(dec_dim=='dim2') then
-                                    if(array_3D(l1,l3,l2)/=0.) then
+                                    if(array_3D(l1,l3,l2)/=0..and.array_3D(l1,l3,l2)/=rmaskl) then
                                         sum1 = sum1 + (array_3D(l1,l3,l2) - smean)**2.
                                     end if
                                 else if(dec_dim=='dim3') then
-                                    if(array_3D(l1,l2,l3)/=0.) then
+                                    if(array_3D(l1,l2,l3)/=0..and.array_3D(l1,l2,l3)/=rmaskl) then
                                         sum1 = sum1 + (array_3D(l1,l2,l3) - smean)**2.
                                     end if
                                 end if
@@ -6340,19 +7254,22 @@ module subroutines
 
         end subroutine
 
-        subroutine avsemdata_4D(array_4D,dim1,dim2,dim3,dim4,dec_dim,mean_3D,s_3D,sem_3D,dataquan_3D)
+        subroutine avsemdata_4D(array_4D,dec_dim,mean_3D,s_3D,sem_3D,dataquan_3D,rmask)
             implicit none
-            integer,intent(in)::dim1,dim2,dim3,dim4
+            ! integer,intent(in)::dim1,dim2,dim3,dim4
             character(len=*),intent(in)::dec_dim
+            integer,intent(in),optional::rmask
             real,intent(in)::array_4D(:,:,:,:)
             real,dimension(:,:,:),allocatable,intent(out),optional::mean_3D,s_3D,sem_3D
             integer,dimension(:,:,:),allocatable,intent(out),optional::dataquan_3D
-            integer::l1,l2,l3,l4,count=0,loop1,loop2,loop3,loop4
-            real::smean, s, sem, sum0=0.,sum1=0.
+            integer::l1,l2,l3,l4,count=0,loop1,loop2,loop3,loop4,dim1,dim2,dim3,dim4
+            real::smean, s, sem, sum0=0.,sum1=0.,rmaskl
 
-            if(size(array_4D,1)<dim1 .or. size(array_4D,2)<dim2 .or. size(array_4D,3)<dim3 .or. size(array_4D,4)<dim4) then 
-                print*,'Array size < dim1 or dim2 or dim3 or dim4';stop
-            end if
+            ! if(size(array_4D,1)<dim1 .or. size(array_4D,2)<dim2 .or. size(array_4D,3)<dim3 .or. size(array_4D,4)<dim4) then 
+            !     print*,'Array size < dim1 or dim2 or dim3 or dim4';stop
+            ! end if
+            dim1 = size(array_4D,1);dim2 = size(array_4D,2);dim3 = size(array_4D,3);dim4 = size(array_4D,4)
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
             ! loop determination
                 if (dec_dim == 'dim1') then
                     loop1 = dim2
@@ -6399,22 +7316,22 @@ module subroutines
                         count = 0; sum0 = 0.;sum1 = 0.
                         do l4 = 1, loop4 !dec_dim loop
                             if(dec_dim=='dim1') then
-                                if(array_4D(l4,l1,l2,l3)/=0.) then
+                                if(array_4D(l4,l1,l2,l3)/=0..and.array_4D(l4,l1,l2,l3)/=rmaskl) then
                                     count = count + 1
                                     sum0 = sum0 + array_4D(l4,l1,l2,l3)
                                 end if
                             else if(dec_dim=='dim2') then
-                                if(array_4D(l1,l4,l2,l3)/=0.) then
+                                if(array_4D(l1,l4,l2,l3)/=0..and.array_4D(l1,l4,l2,l3)/=rmaskl) then
                                     count = count + 1
                                     sum0 = sum0 + array_4D(l1,l4,l2,l3)
                                 end if
                             else if(dec_dim=='dim3') then
-                                if(array_4D(l1,l2,l4,l3)/=0.) then
+                                if(array_4D(l1,l2,l4,l3)/=0..and.array_4D(l1,l2,l4,l3)/=rmaskl) then
                                     count = count + 1
                                     sum0 = sum0 + array_4D(l1,l2,l4,l3)
                                 end if
                             else if(dec_dim=='dim4') then
-                                if(array_4D(l1,l2,l3,l4)/=0.) then
+                                if(array_4D(l1,l2,l3,l4)/=0..and.array_4D(l1,l2,l3,l4)/=rmaskl) then
                                     count = count + 1
                                     sum0 = sum0 + array_4D(l1,l2,l3,l4)
                                 end if
@@ -6424,19 +7341,19 @@ module subroutines
                             else;smean = sum0/real(count)
                                 do l4 = 1, loop4
                                     if(dec_dim=='dim1') then
-                                        if(array_4D(l4,l1,l2,l3)/=0.) then
+                                        if(array_4D(l4,l1,l2,l3)/=0..and.array_4D(l4,l1,l2,l3)/=rmaskl) then
                                             sum1 = sum1 + (array_4D(l4,l1,l2,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim2') then
-                                        if(array_4D(l1,l4,l2,l3)/=0.) then
+                                        if(array_4D(l1,l4,l2,l3)/=0..and.array_4D(l1,l4,l2,l3)/=rmaskl) then
                                             sum1 = sum1 + (array_4D(l1,l4,l2,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim3') then
-                                        if(array_4D(l1,l2,l4,l3)/=0.) then
+                                        if(array_4D(l1,l2,l4,l3)/=0..and.array_4D(l1,l2,l4,l3)/=rmaskl) then
                                             sum1 = sum1 + (array_4D(l1,l2,l4,l3) - smean)**2.
                                         end if
                                     else if(dec_dim=='dim4') then
-                                        if(array_4D(l1,l2,l3,l4)/=0.) then
+                                        if(array_4D(l1,l2,l3,l4)/=0..and.array_4D(l1,l2,l3,l4)/=rmaskl) then
                                             sum1 = sum1 + (array_4D(l1,l2,l3,l4) - smean)**2.
                                         end if
                                     end if
@@ -6454,19 +7371,22 @@ module subroutines
 
         end subroutine
 
-        subroutine avsemdata_5D(array_5D,dim1,dim2,dim3,dim4,dim5,dec_dim,mean_4D,s_4D,sem_4D,dataquan_4D)
+        subroutine avsemdata_5D(array_5D,dec_dim,mean_4D,s_4D,sem_4D,dataquan_4D,rmask)
             implicit none
-            integer,intent(in)::dim1,dim2,dim3,dim4,dim5
+            ! integer,intent(in)::dim1,dim2,dim3,dim4,dim5
+            integer,intent(in),optional::rmask
             character(len=*),intent(in)::dec_dim
             real,intent(in)::array_5D(:,:,:,:,:)
             real,dimension(:,:,:,:),allocatable,intent(out),optional::mean_4D,s_4D,sem_4D
             integer,dimension(:,:,:,:),allocatable,intent(out),optional::dataquan_4D
-            integer::l1,l2,l3,l4,l5,count=0,loop1,loop2,loop3,loop4,loop5
-            real::smean, s, sem, sum0=0.,sum1=0.
+            integer::l1,l2,l3,l4,l5,count=0,loop1,loop2,loop3,loop4,loop5,dim1,dim2,dim3,dim4,dim5
+            real::smean, s, sem, sum0=0.,sum1=0.,rmaskl
 
-            if(size(array_5D,1)<dim1 .or. size(array_5D,2)<dim2 .or. size(array_5D,3)<dim3 .or. size(array_5D,4)<dim4 .or. size(array_5D,5)<dim5) then 
-                print*,'Array size < dim1 or dim2 or dim3 or dim4 or dim5';stop
-            end if
+            ! if(size(array_5D,1)<dim1 .or. size(array_5D,2)<dim2 .or. size(array_5D,3)<dim3 .or. size(array_5D,4)<dim4 .or. size(array_5D,5)<dim5) then 
+            !     print*,'Array size < dim1 or dim2 or dim3 or dim4 or dim5';stop
+            ! end if
+            dim1 = size(array_5D,1);dim2 = size(array_5D,2);dim3 = size(array_5D,3);dim4 = size(array_5D,4);dim5 = size(array_5D,5)
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
             ! loop determination
                 if (dec_dim == 'dim1') then
                     loop1 = dim2
@@ -6529,27 +7449,27 @@ module subroutines
                             count = 0; sum0 = 0.;sum1 = 0.
                             do l5 = 1, loop5 !dec_dim loop
                                 if(dec_dim=='dim1') then
-                                    if(array_5D(l5,l1,l2,l3,l4)/=0.) then
+                                    if(array_5D(l5,l1,l2,l3,l4)/=0..and.array_5D(l5,l1,l2,l3,l4)/=rmaskl) then
                                         count = count + 1
                                         sum0 = sum0 + array_5D(l5,l1,l2,l3,l4)
                                     end if
                                 else if(dec_dim=='dim2') then
-                                    if(array_5D(l1,l5,l2,l3,l4)/=0.) then
+                                    if(array_5D(l1,l5,l2,l3,l4)/=0..and.array_5D(l1,l5,l2,l3,l4)/=rmaskl) then
                                         count = count + 1
                                         sum0 = sum0 + array_5D(l1,l5,l2,l3,l4)
                                     end if
                                 else if(dec_dim=='dim3') then
-                                    if(array_5D(l1,l2,l5,l3,l4)/=0.) then
+                                    if(array_5D(l1,l2,l5,l3,l4)/=0..and.array_5D(l1,l2,l5,l3,l4)/=rmaskl) then
                                         count = count + 1
                                         sum0 = sum0 + array_5D(l1,l2,l5,l3,l4)
                                     end if
                                 else if(dec_dim=='dim4') then
-                                    if(array_5D(l1,l2,l3,l5,l4)/=0.) then
+                                    if(array_5D(l1,l2,l3,l5,l4)/=0..and.array_5D(l1,l2,l3,l5,l4)/=rmaskl) then
                                         count = count + 1
                                         sum0 = sum0 + array_5D(l1,l2,l3,l5,l4)
                                     end if
                                 else if(dec_dim=='dim5') then
-                                    if(array_5D(l1,l2,l3,l4,l5)/=0.) then
+                                    if(array_5D(l1,l2,l3,l4,l5)/=0..and.array_5D(l1,l2,l3,l4,l5)/=rmaskl) then
                                         count = count + 1
                                         sum0 = sum0 + array_5D(l1,l2,l3,l4,l5)
                                     end if
@@ -6559,23 +7479,23 @@ module subroutines
                                 else;smean = sum0/real(count)
                                     do l5 = 1, loop5
                                         if(dec_dim=='dim1') then
-                                            if(array_5D(l5,l1,l2,l3,l4)/=0.) then
+                                            if(array_5D(l5,l1,l2,l3,l4)/=0..and.array_5D(l5,l1,l2,l3,l4)/=rmaskl) then
                                                 sum1 = sum1 + (array_5D(l5,l1,l2,l3,l4) - smean)**2.
                                             end if
                                         else if(dec_dim=='dim2') then
-                                            if(array_5D(l1,l5,l2,l3,l4)/=0.) then
+                                            if(array_5D(l1,l5,l2,l3,l4)/=0..and.array_5D(l1,l5,l2,l3,l4)/=rmaskl) then
                                                 sum1 = sum1 + (array_5D(l1,l5,l2,l3,l4) - smean)**2.
                                             end if
                                         else if(dec_dim=='dim3') then
-                                            if(array_5D(l1,l2,l5,l3,l4)/=0.) then
+                                            if(array_5D(l1,l2,l5,l3,l4)/=0..and.array_5D(l1,l2,l5,l3,l4)/=rmaskl) then
                                                 sum1 = sum1 + (array_5D(l1,l2,l5,l3,l4) - smean)**2.
                                             end if
                                         else if(dec_dim=='dim4') then
-                                            if(array_5D(l1,l2,l3,l5,l4)/=0.) then
+                                            if(array_5D(l1,l2,l3,l5,l4)/=0..and.array_5D(l1,l2,l3,l5,l4)/=rmaskl) then
                                                 sum1 = sum1 + (array_5D(l1,l2,l3,l5,l4) - smean)**2.
                                             end if
                                         else if(dec_dim=='dim5') then
-                                            if(array_5D(l1,l2,l3,l4,l5)/=0.) then
+                                            if(array_5D(l1,l2,l3,l4,l5)/=0..and.array_5D(l1,l2,l3,l4,l5)/=rmaskl) then
                                                 sum1 = sum1 + (array_5D(l1,l2,l3,l4,l5) - smean)**2.
                                             end if
                                         end if
@@ -6592,6 +7512,177 @@ module subroutines
                 end do
             end do
         end subroutine
+
+        subroutine avsemdata_6D(array_6D,dec_dim,mean_5D,s_5D,sem_5D,dataquan_5D,rmask)
+            implicit none
+            ! integer,intent(in)::dim1,dim2,dim3,dim4,dim5,dim6
+            integer,intent(in),optional::rmask
+            character(len=*),intent(in)::dec_dim
+            real,intent(in)::array_6D(:,:,:,:,:,:)
+            real,dimension(:,:,:,:,:),allocatable,intent(out),optional::mean_5D,s_5D,sem_5D
+            integer,dimension(:,:,:,:,:),allocatable,intent(out),optional::dataquan_5D
+            integer::l1,l2,l3,l4,l5,l6,count=0,loop1,loop2,loop3,loop4,loop5,loop6,dim1,dim2,dim3,dim4,dim5,dim6
+            real::smean, s, sem, sum0=0.,sum1=0.,rmaskl
+
+            ! if(size(array_6D,1)<dim1 .or. size(array_6D,2)<dim2 .or. size(array_6D,3)<dim3 .or. size(array_6D,4)<dim4 .or. size(array_6D,5)<dim5 .or. size(array_6D,6)<dim6) then
+            !     print*,'Array size < dim1 or dim2 or dim3 or dim4 or dim5 or dim6';stop
+            ! end if
+            dim1 = size(array_6D,1);dim2 = size(array_6D,2);dim3 = size(array_6D,3);dim4 = size(array_6D,4);dim5 = size(array_6D,5);dim6 = size(array_6D,6)
+            if(present(rmask))then;rmaskl = rmask;else;rmaskl = 0.;endif
+            ! loop determination
+                if (dec_dim == 'dim1') then
+                    loop1 = dim2
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim6
+                    loop6 = dim1
+                    if(present(mean_5D)) allocate(mean_5D(dim2,dim3,dim4,dim5,dim6))
+                    if(present(s_5D)) allocate(s_5D(dim2,dim3,dim4,dim5,dim6))
+                    if(present(sem_5D)) allocate(sem_5D(dim2,dim3,dim4,dim5,dim6))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim2,dim3,dim4,dim5,dim6))
+                elseif (dec_dim == 'dim2') then
+                    loop1 = dim1
+                    loop2 = dim3
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim6
+                    loop6 = dim2
+                    if(present(mean_5D)) allocate(mean_5D(dim1,dim3,dim4,dim5,dim6))
+                    if(present(s_5D)) allocate(s_5D(dim1,dim3,dim4,dim5,dim6))
+                    if(present(sem_5D)) allocate(sem_5D(dim1,dim3,dim4,dim5,dim6))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim1,dim3,dim4,dim5,dim6))
+                elseif (dec_dim == 'dim3') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim4
+                    loop4 = dim5
+                    loop5 = dim6
+                    loop6 = dim3
+                    if(present(mean_5D)) allocate(mean_5D(dim1,dim2,dim4,dim5,dim6))
+                    if(present(s_5D)) allocate(s_5D(dim1,dim2,dim4,dim5,dim6))
+                    if(present(sem_5D)) allocate(sem_5D(dim1,dim2,dim4,dim5,dim6))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim1,dim2,dim4,dim5,dim6))
+                elseif (dec_dim == 'dim4') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim5
+                    loop5 = dim6
+                    loop6 = dim4
+                    if(present(mean_5D)) allocate(mean_5D(dim1,dim2,dim3,dim5,dim6))
+                    if(present(s_5D)) allocate(s_5D(dim1,dim2,dim3,dim5,dim6))
+                    if(present(sem_5D)) allocate(sem_5D(dim1,dim2,dim3,dim5,dim6))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim1,dim2,dim3,dim5,dim6))
+                elseif (dec_dim == 'dim5') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim4
+                    loop5 = dim6
+                    loop6 = dim5
+                    if(present(mean_5D)) allocate(mean_5D(dim1,dim2,dim3,dim4,dim6))
+                    if(present(s_5D)) allocate(s_5D(dim1,dim2,dim3,dim4,dim6))
+                    if(present(sem_5D)) allocate(sem_5D(dim1,dim2,dim3,dim4,dim6))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim1,dim2,dim3,dim4,dim6))
+                elseif (dec_dim == 'dim6') then
+                    loop1 = dim1
+                    loop2 = dim2
+                    loop3 = dim3
+                    loop4 = dim4
+                    loop5 = dim5
+                    loop6 = dim6
+                    if(present(mean_5D)) allocate(mean_5D(dim1,dim2,dim3,dim4,dim5))
+                    if(present(s_5D)) allocate(s_5D(dim1,dim2,dim3,dim4,dim5))
+                    if(present(sem_5D)) allocate(sem_5D(dim1,dim2,dim3,dim4,dim5))
+                    if(present(dataquan_5D)) allocate(dataquan_5D(dim1,dim2,dim3,dim4,dim5))
+                else;print*, 'Invalid dec_dim value';stop
+                end if
+
+            ! loop determination end
+
+                do l1 = 1, loop1
+                    do l2 = 1, loop2
+                        do l3 = 1, loop3
+                            do l4 = 1, loop4
+                                count = 0; sum0 = 0.;sum1 = 0.
+                                do l5 = 1, loop5
+                                    do l6 = 1, loop6 !dec_dim loop
+                                        if(dec_dim=='dim1') then
+                                            if(array_6D(l6,l1,l2,l3,l4,l5)/=0..and.array_6D(l6,l1,l2,l3,l4,l5)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l6,l1,l2,l3,l4,l5)
+                                            end if
+                                        else if(dec_dim=='dim2') then
+                                            if(array_6D(l1,l6,l2,l3,l4,l5)/=0..and.array_6D(l1,l6,l2,l3,l4,l5)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l1,l6,l2,l3,l4,l5)
+                                            end if
+                                        else if(dec_dim=='dim3') then
+                                            if(array_6D(l1,l2,l6,l3,l4,l5)/=0..and.array_6D(l1,l2,l6,l3,l4,l5)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l1,l2,l6,l3,l4,l5)
+                                            end if
+                                        else if(dec_dim=='dim4') then
+                                            if(array_6D(l1,l2,l3,l6,l4,l5)/=0..and.array_6D(l1,l2,l3,l6,l4,l5)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l1,l2,l3,l6,l4,l5)
+                                            end if
+                                        else if(dec_dim=='dim5') then
+                                            if(array_6D(l1,l2,l3,l4,l6,l5)/=0..and.array_6D(l1,l2,l3,l4,l6,l5)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l1,l2,l3,l4,l6,l5)
+                                            end if
+                                        else if(dec_dim=='dim6') then
+                                            if(array_6D(l1,l2,l3,l4,l5,l6)/=0..and.array_6D(l1,l2,l3,l4,l5,l6)/=rmaskl) then
+                                                count = count + 1
+                                                sum0 = sum0 + array_6D(l1,l2,l3,l4,l5,l6)
+                                            end if
+                                        end if
+                                    end do
+
+                                    if(count<=1) then;smean= 0.;s=0.;sem=0.
+                                    else;smean = sum0/real(count)
+                                        do l6 = 1, loop6
+                                            if(dec_dim=='dim1') then
+                                                if(array_6D(l6,l1,l2,l3,l4,l5)/=0..and.array_6D(l6,l1,l2,l3,l4,l5)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l6,l1,l2,l3,l4,l5) - smean)**2.
+                                                end if
+                                            else if(dec_dim=='dim2') then
+                                                if(array_6D(l1,l6,l2,l3,l4,l5)/=0..and.array_6D(l1,l6,l2,l3,l4,l5)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l1,l6,l2,l3,l4,l5) - smean)**2.
+                                                end if
+                                            else if(dec_dim=='dim3') then
+                                                if(array_6D(l1,l2,l6,l3,l4,l5)/=0..and.array_6D(l1,l2,l6,l3,l4,l5)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l1,l2,l6,l3,l4,l5) - smean)**2.
+                                                end if
+                                            else if(dec_dim=='dim4') then
+                                                if(array_6D(l1,l2,l3,l6,l4,l5)/=0..and.array_6D(l1,l2,l3,l6,l4,l5)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l1,l2,l3,l6,l4,l5) - smean)**2.
+                                                end if
+                                            else if(dec_dim=='dim5') then
+                                                if(array_6D(l1,l2,l3,l4,l6,l5)/=0..and.array_6D(l1,l2,l3,l4,l6,l5)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l1,l2,l3,l4,l6,l5) - smean)**2.
+                                                end if
+                                            else if(dec_dim=='dim6') then
+                                                if(array_6D(l1,l2,l3,l4,l5,l6)/=0..and.array_6D(l1,l2,l3,l4,l5,l6)/=rmaskl) then
+                                                    sum1 = sum1 + (array_6D(l1,l2,l3,l4,l5,l6) - smean)**2.
+                                                end if
+                                            end if
+                                        end do
+                                        s = sqrt(sum1/real(count-1))
+                                        sem = s / sqrt(real(count))
+                                    end if
+                                    if(present(mean_5D)) mean_5D(l1,l2,l3,l4,l5) = smean
+                                    if(present(s_5D)) s_5D(l1,l2,l3,l4,l5) = s
+                                    if(present(sem_5D)) sem_5D(l1,l2,l3,l4,l5) = sem
+                                    if(present(dataquan_5D)) dataquan_5D(l1,l2,l3,l4,l5) = count
+                            end do
+                        end do
+                    end do
+                end do
+            end do
+        end subroutine  
     !END BASIC STATISTICS 
 
     ! ps boys are good bois 
@@ -7097,259 +8188,16 @@ module subroutines
             write(16,*)"% end butler_psmask"
         end subroutine
     ! ps bois
-    ! RANDOM 
-        
+    ! RANDOM
 end module subroutines
-
-module functions
-    implicit none
-    contains
-    function minex0(D1, D2, D3, D4, D5, D6) result(min_val)
-        implicit none
-        real, dimension(:), intent(in), optional :: D1
-        real, dimension(:,:), intent(in), optional :: D2
-        real, dimension(:,:,:), intent(in), optional :: D3
-        real, dimension(:,:,:,:), intent(in), optional :: D4
-        real, dimension(:,:,:,:,:), intent(in), optional :: D5
-        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
-        real, dimension(:), allocatable :: array1
-        real, dimension(:,:), allocatable :: array2
-        real, dimension(:,:,:), allocatable :: array3
-        real, dimension(:,:,:,:), allocatable :: array4
-        real, dimension(:,:,:,:,:), allocatable :: array5
-        real, dimension(:,:,:,:,:,:), allocatable :: array6
-        real :: min_val
-        integer :: n, l, m, o, p, q
-    
-        if (present(D1)) then
-            allocate(array1(size(D1)))
-            do n = 1, size(D1)
-                if (D1(n) /= 0.0) then
-                    array1(n) = D1(n)
-                else
-                    array1(n) = 10.0**10.0
-                end if
-            end do
-            min_val = minval(array1)
-            deallocate(array1)
-    
-        else if (present(D2)) then
-            allocate(array2(size(D2, 1), size(D2, 2)))
-            do n = 1, size(D2, 1)
-                do l = 1, size(D2, 2)
-                    if (D2(n, l) /= 0.0) then
-                        array2(n, l) = D2(n, l)
-                    else
-                        array2(n, l) = 10.0**10.0
-                    end if
-                end do
-            end do
-            min_val = minval(array2)
-            deallocate(array2)
-    
-        else if (present(D3)) then
-            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
-            do n = 1, size(D3, 1)
-                do l = 1, size(D3, 2)
-                    do m = 1, size(D3, 3)
-                        if (D3(n, l, m) /= 0.0) then
-                            array3(n, l, m) = D3(n, l, m)
-                        else
-                            array3(n, l, m) = 10.0**10.0
-                        end if
-                    end do
-                end do
-            end do
-            min_val = minval(array3)
-            deallocate(array3)
-    
-        else if (present(D4)) then
-            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
-            do n = 1, size(D4, 1)
-                do l = 1, size(D4, 2)
-                    do m = 1, size(D4, 3)
-                        do o = 1, size(D4, 4)
-                            if (D4(n, l, m, o) /= 0.0) then
-                                array4(n, l, m, o) = D4(n, l, m, o)
-                            else
-                                array4(n, l, m, o) = 10.0**10.0
-                            end if
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array4)
-            deallocate(array4)
-    
-        else if (present(D5)) then
-            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
-            do n = 1, size(D5, 1)
-                do l = 1, size(D5, 2)
-                    do m = 1, size(D5, 3)
-                        do o = 1, size(D5, 4)
-                            do p = 1, size(D5, 5)
-                                if (D5(n, l, m, o, p) /= 0.0) then
-                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
-                                else
-                                    array5(n, l, m, o, p) = 10.0**10.0
-                                end if
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array5)
-            deallocate(array5)
-    
-        else if (present(D6)) then
-            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
-            do n = 1, size(D6, 1)
-                do l = 1, size(D6, 2)
-                    do m = 1, size(D6, 3)
-                        do o = 1, size(D6, 4)
-                            do p = 1, size(D6, 5)
-                                do q = 1, size(D6, 6)
-                                    if (D6(n, l, m, o, p, q) /= 0.0) then
-                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
-                                    else
-                                        array6(n, l, m, o, p, q) = 10.0**10.0
-                                    end if
-                                end do
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array6)
-            deallocate(array6)
-    
-        else
-            print *, 'no, or invalid input'
-            stop
-        end if
-    end function minex0
-
-    function f_t95(df) result(t95coeff)
-        implicit none
-        integer,intent(in)::df
-        real::t95coeff
-        real,dimension(0:30)::t95
-
-        t95(1) = 12.706 ; t95(11) = 2.2010 ; t95(21) = 2.0796
-        t95(2) = 4.3026 ; t95(12) = 2.1788 ; t95(22) = 2.0739
-        t95(3) = 3.1824 ; t95(13) = 2.1604 ; t95(23) = 2.0687
-        t95(4) = 2.7765 ; t95(14) = 2.1448 ; t95(24) = 2.0639
-        t95(5) = 2.5706 ; t95(15) = 2.1315 ; t95(25) = 2.0595
-        t95(6) = 2.4469 ; t95(16) = 2.1191 ; t95(26) = 2.0555
-        t95(7) = 2.3646 ; t95(17) = 2.1098 ; t95(27) = 2.0518
-        t95(8) = 2.3060 ; t95(18) = 2.1009 ; t95(28) = 2.0484
-        t95(9) = 2.2621 ; t95(19) = 2.0930 ; t95(29) = 2.0452
-        t95(10) = 2.2281 ;t95(20) = 2.0860 ; t95(30) = 2.0423
-
-        t95(0) = 0. !just for the sake of programs
-
-        if(df>=0 .and. df<=30) then
-            t95coeff = t95(df)
-        else
-            t95coeff = 911; print*, 'df out of range'
-        end if
-    end function f_t95
-    function f_t90(df) result(t90coeff)
-        implicit none
-        integer,intent(in)::df
-        real::t90coeff
-        real,dimension(0:30)::t90
-
-        t90(1) = 6.3138 ; t90(11) = 1.7959 ; t90(21) = 1.7210
-        t90(2) = 2.9200 ; t90(12) = 1.7823 ; t90(22) = 1.7171
-        t90(3) = 2.3534 ; t90(13) = 1.7709 ; t90(23) = 1.7139
-        t90(4) = 2.1318 ; t90(14) = 1.7613 ; t90(24) = 1.7109
-        t90(5) = 2.0150 ; t90(15) = 1.7531 ; t90(25) = 1.7081
-        t90(6) = 1.9432 ; t90(16) = 1.7459 ; t90(26) = 1.7056
-        t90(7) = 1.8946 ; t90(17) = 1.7396 ; t90(27) = 1.7033
-        t90(8) = 1.8595 ; t90(18) = 1.7341 ; t90(28) = 1.7011
-        t90(9) = 1.8331 ; t90(19) = 1.7291 ; t90(29) = 1.6991
-        t90(10) = 1.8125 ; t90(20) = 1.7250 ; t90(30) = 1.6973
-
-        t90(0) = 0. !just for the sake of programs
-
-        if(df>=0 .and. df<=30) then
-            t90coeff = t90(df)
-        else
-            t90coeff = 911; print*, 'df out of range'
-        end if
-    end function f_t90
-
-    function fwelcht(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
-        implicit none
-        real, intent(in) :: mean1, s1, mean2, s2
-        integer, intent(in) :: dataquan1, dataquan2
-        integer :: result
-        ! real, dimension(0:30) :: t_95 = 0.0
-        real :: diff_mean, n1, n2, df, sem, bottomCI, topCI
-    
-        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
-            diff_mean = mean1 - mean2
-            n1 = real(dataquan1)
-            n2 = real(dataquan2)
-            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
-            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
-            ! call t95_value(t_95)
-            bottomCI = diff_mean - f_t95(int(df)) * sem
-            topCI = diff_mean + f_t95(int(df)) * sem
-            ! print*, diff_mean, bottomCI, topCI, int(df)
-            if (bottomCI > 0.0) then
-                result = 1 ! larger
-            else if (topCI < 0.0) then
-                result = -1 ! smaller
-            else
-                result = 0 ! no difference in the desired level
-            end if
-        else
-            result = 911 ! error
-        end if
-    
-    end function fwelcht
-    function fwelcht90(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
-        implicit none
-        real, intent(in) :: mean1, s1, mean2, s2
-        integer, intent(in) :: dataquan1, dataquan2
-        integer :: result
-        ! real, dimension(0:30) :: t_90 = 0.0
-        real :: diff_mean, n1, n2, df, sem, bottomCI, topCI
-
-        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
-            diff_mean = mean1 - mean2
-            n1 = real(dataquan1)
-            n2 = real(dataquan2)
-            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
-            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
-            ! call t90_value(t_90)
-            bottomCI = diff_mean - f_t90(int(df)) * sem
-            topCI = diff_mean + f_t90(int(df)) * sem
-            ! print*, diff_mean, bottomCI, topCI, int(df)
-            if (bottomCI > 0.0) then
-                result = 1 ! larger
-            else if (topCI < 0.0) then
-                result = -1 ! smaller
-            else
-                result = 0 ! no difference in the desired level
-            end if
-        else
-            result = 911 ! error
-        end if
-    end function fwelcht90
-
-end module functions
 
 module constants
     implicit none
     integer, parameter :: years = 15, months = 12, lines = 2, stations = 9, depth = 400
     real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.,geovel_5=0.
     real,dimension(:),allocatable::r,g,b,r1,g1,b1,r2,g2,b2,r3,g3,b3,r4,g4,b4,r5,g5,b5,r6,g6,b6
-    character(len=4),dimension(12)::month_names = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
-    integer::y,m,l,st,d,i,j,k,n,x,z,h
-    real::dx,dy,a,c,e,f,q,s
+    character(len=4),dimension(12)::monthnames = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
+    integer::y,m,l,st,d,i,j,k,n
 end module constants
 
 module always

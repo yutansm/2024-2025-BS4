@@ -73,7 +73,7 @@ program SSH_csv2array
                         tokens(num_tokens) = adjustl(line(start_pos:start_pos+end_pos-2))
                         start_pos = start_pos + end_pos
                     else ! is a number
-                        if(rnum<15.)then! the maximum days without data is 14 from hoancho
+                        if(rnum<30.)then! the maximum days without data is around 30
                             start_pos = start_pos + end_pos
                         else ! only 4 digits or so but are SSH values
                             num_tokens = num_tokens + 1
@@ -88,7 +88,7 @@ program SSH_csv2array
                         tokens(num_tokens) = adjustl(line(start_pos:start_pos+end_pos-2))
                         start_pos = start_pos + end_pos
                     else ! is a number
-                        if(rnum<15.)then! the maximum days without data is 14 from hoancho
+                        if(rnum<30.)then! the maximum days without data is around 30
                             start_pos = start_pos + end_pos
                         else ! only 3 digits or so but are SSH values
                             num_tokens = num_tokens + 1
@@ -103,7 +103,7 @@ program SSH_csv2array
                             tokens(num_tokens) = adjustl(line(start_pos:start_pos+end_pos-2))
                             start_pos = start_pos + end_pos
                         else ! is a number
-                            if(rnum<15.)then! the maximum days without data is 14 from hoancho
+                            if(rnum<30.)then! the maximum days without data is around 30
                                 start_pos = start_pos + end_pos
                             else ! only 2 digits or so but are SSH values
                                 num_tokens = num_tokens + 1
@@ -165,32 +165,32 @@ program SSH_csv2array
 
     ! begin write
 
-    ! do j = 1, num_years
-    !     write(yyyy, '(I4.4)') 2008 + j
-    !     open(unit=20, file='../Data/SSH/data/SSH'//trim(yyyy)//'.csv', status='replace', action='write')
-    !     ! write(20, '(A)') ''
-    !     ! write(20, '(A)') 'Year: ' // trim(yyyy)
-    !     do n = 1, num_rows
-    !         if (SSAP%num_labels(j,n) == 0) cycle
-    !         write(20, '(I4,",",A,",",12(F7.1,","))') SSAP%num_labels(j,n), trim(SSAP%str_labels(j,n)), (SSAP%values(n,j,i), i = 1, num_months)
-    !     end do
-    !     ! write(20, '(A)') ''
-    !     close(20)
-    ! end do
-
-        open(unit=20, file='../Data/SSH/data/SSH_total.csv', status='replace', action='write')
-
     do j = 1, num_years
         write(yyyy, '(I4.4)') 2008 + j
-        write(20, '(A)') ''
-        write(20, '(A)') 'Year: ' // trim(yyyy)
+        open(unit=20, file='../Data/SSH/data/SSH'//trim(yyyy)//'.csv', status='replace', action='write')
+        ! write(20, '(A)') ''
+        ! write(20, '(A)') 'Year: ' // trim(yyyy)
         do n = 1, num_rows
             if (SSAP%num_labels(j,n) == 0) cycle
             write(20, '(I4,",",A,",",12(F7.1,","))') SSAP%num_labels(j,n), trim(SSAP%str_labels(j,n)), (SSAP%values(n,j,i), i = 1, num_months)
         end do
-        write(20, '(A)') ''
+        ! write(20, '(A)') ''
+        close(20)
     end do
 
-        close(20)
+    !     open(unit=20, file='../Data/SSH/data/SSH_total.csv', status='replace', action='write')
+
+    ! do j = 1, num_years
+    !     write(yyyy, '(I4.4)') 2008 + j
+    !     write(20, '(A)') ''
+    !     write(20, '(A)') 'Year: ' // trim(yyyy)
+    !     do n = 1, num_rows
+    !         if (SSAP%num_labels(j,n) == 0) cycle
+    !         write(20, '(I4,",",A,",",12(F7.1,","))') SSAP%num_labels(j,n), trim(SSAP%str_labels(j,n)), (SSAP%values(n,j,i), i = 1, num_months)
+    !     end do
+    !     write(20, '(A)') ''
+    ! end do
+
+    !     close(20)
 
 end program
