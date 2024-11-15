@@ -8,7 +8,7 @@ end module psstat
 
 module mypsstat
     logical::topstat = .false.,centerstat = .false.,bottomstat = .false.,logstat = .false. 
-    integer::savecount = 0,plots2count = 0,logunit = 254
+    integer::savecount = 0,plots2count = 0,tolog = 254
     real,parameter::precision = 1.5*10.**(-4)
     real::xn,yn
     character(len=20),dimension(100)::labels
@@ -871,7 +871,7 @@ module origin
                 exit
             endif
             if(i == savecount .and. labels(i)/=label)then
-                print*,'label not found'
+                print*,label,' label not found'
                 stop
             end if
         end do
@@ -899,7 +899,7 @@ module origin
             call plot(-xn,-yn,-3);call plot(x,y,-3)
         return
     end
-    ! y is the ratio
+    ! y is in cm
     subroutine header(head_str,symbol_size,rangle,y)
         implicit none
         character(len=*),intent(in)::head_str
@@ -910,15 +910,15 @@ module origin
         write(ounit,*) '% begin header'
         if(land)then;
             if(present(y))then
-                call plotmove(0.5,y)
+                call plotmove2(29.7*0.5,21.*0.93+y)
             else 
-                call plotmove(0.5,0.93)
+                call plotmove2(29.7*0.5,21.*0.93)
             end if
         else
             if(present(y))then
-                call plotmove(0.5,y)
+                call plotmove2(21.*0.5,29.7*0.95+y)
             else 
-                call plotmove(0.5,0.95)
+                call plotmove2(21.*0.5,29.7*0.95)
             end if
         end if
 
@@ -4442,49 +4442,52 @@ module origin
         write(ounit,*) "% end symbolr"
         return
     end
-            !gets put in the Programs/log directory 
-    ! subroutine begin_log(basename)
-    !     implicit none
-    !     character(len=*),intent(in),optional::basename
-    !     character(len=256)::filename
-        
-    !     if(present(basename))then
-    !         filename = 'Programs/log/'//trim(basename)
-    !         call execute_command_line('begin_log '//trim(filename))
-    !     else
-    !         call execute_command_line('begin_log')
-    !     end if
-    ! end subroutine
-    ! subroutine end_log()
-    !     call execute_command_line('end_log')
-    ! end subroutine
-    subroutine begin_log(basename)
+    subroutine openlog(omit,basename)
         implicit none
-        character(len=*), intent(in), optional :: basename
-        character(len=256) :: command
-        integer :: int
-    
-        ! Construct the command string
-        if (present(basename)) then
-            write(command, '(A,A)') 'zsh -c "source ~/log.sh; begin_log ', trim(adjustl(basename)), '"'
-        else
-            write(command, '(A)') 'zsh -c "source ~/log.sh; begin_log"'
+        character(len=*), intent(in),optional :: basename
+        character(len=256) :: filename,date_str,time_str,date,status
+        logical,intent(in),optional :: omit
+        integer :: values(8)
+        if(logstat)then
+            print*, 'log file is already open'
+            return
         end if
-    
-        ! Execute the command
-        call execute_command_line(trim(command),wait=.true.,exitstat=int)
-        ! print*, 'Log file opened with exit status ', int
-        call sleep(1)
-    end subroutine
-    
-    subroutine end_log()
-        character(len=256) :: command
-        integer :: int
-        write(command, '(A)') 'zsh -c "source ~/log.sh; end_log"'
-        call execute_command_line(trim(command),wait=.true.,exitstat=int)
-        ! print*, 'Log file closed with exit status ', int
-        call sleep(1)
-    end subroutine
+        if(present(basename))then
+            filename = 'log/'//trim(adjustl(basename))
+        else 
+            filename = 'log/output.log'
+        end if
+        if(present(omit))then
+            if(omit)then
+                status = 'replace'
+            else 
+                status = 'unknown'
+            end if
+        else;status = 'unknown'
+        end if
+        open(tolog, file=filename, status=trim(adjustl(status)),action = 'write',position='append')
+        logstat = .true.
+        call date_and_time(values = values)
+            write(date_str, '(i4.4, i2.2, i2.2)') values(1), values(2), values(3)
+            write(time_str, '(i2.2, i2.2, i2.2)') values(5), values(6), values(7)
+            date = trim(date_str) // 'T' // trim(time_str) // 'Z'
+            write(tolog,*) 'Log file opened on ', date   
+        return
+    end
+    subroutine closelog()
+        integer :: values(8)
+        character(len=256) :: date_str,time_str,date
+        if(logstat)then
+            call date_and_time(values = values)
+            write(date_str, '(i4.4, i2.2, i2.2)') values(1), values(2), values(3)
+            write(time_str, '(i2.2, i2.2, i2.2)') values(5), values(6), values(7)
+            date = trim(date_str) // 'T' // trim(time_str) // 'Z'
+            write(tolog,*) 'Log file closed on ', date
+            close(tolog);return
+        else
+            print*, 'log file is not open'
+        end if
+    end
         
 end module origin
 
@@ -5313,14 +5316,14 @@ module oldsubs
         intrinsic sin,cos,tan,asin,acos
         integer,parameter::imax = 2080,jmax = 2640,station_x = 9, station_y = 2
         real,dimension(:,:),allocatable::dep
-        integer,dimension(:,:),allocatable::dep_m
+        integer,dimension(:,:),allocatable::dep_0
         integer::i,j,is,ie,js,je,n,line_num
         real::dx,dy,height,ratio,pi,xco,NLineYco,SLineYco
         character::line_name*10,filename*999
         real,dimension(station_y,station_x)::lon
 
-        allocate(dep(imax,jmax));allocate(dep_m(imax,jmax))
-        dep = 0.;dep_m = 0
+        allocate(dep(imax,jmax));allocate(dep_0(imax,jmax))
+        dep = 0.;dep_0 = 0
         open(21,file='../Data/japan1km122-148_24-46.bin',form='unformatted',status='old')
         do j=jmax,1,-1
             if(j>jmax) then; exit;end if
@@ -5328,11 +5331,11 @@ module oldsubs
         end do
         close(21)
 
-        dep(1:imax,1:jmax) = -dep(1:imax,1:jmax)
-        ! mask sea level, meaning height = 1
+        ! dep(1:imax,1:jmax) = -dep(1:imax,1:jmax)
+        ! masking nothing, depth is a positive value
         do i=1,imax
             do j=1,jmax
-                dep_m(i,j)=1
+                dep_0(i,j)=1
             end do
         end do
 
@@ -5352,7 +5355,15 @@ module oldsubs
             ! call plot(x,y,-3)
             if (symbol_size<=0.2) then;call newpen2(2);else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3);else;call newpen2(4);end if
             call rgbk(0.,0.,0.)
-            call pscont3(dx,dy,dep,dep_m,is,ie,js,je,imax,jmax,1,0.,10.)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+            call rgbk(.85,.85,1.)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,100.,0.)
+            call rgbk(0.5,0.5,1.)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,200.,0.)
+            call rgbk(0.2,0.2,1.)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,400.,0.)
+            call rgbk(0.,0.,.7)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,1000.,0.)
         end if
         call rgbk(0.,0.,0.)
         call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
@@ -5365,7 +5376,7 @@ module oldsubs
             end if
         end do
         do n = 0,fin_lat-ini_lat
-            call plot(0.,dy*120.*real(n),3);call plot(-symbol_size*0.5,dy*120.*real(n),2);call numberc(-symbol_size*1.2,dy*120.*real(n),symbol_size,real(n+ini_lat),0.,-1)
+            call plot(0.,dy*120.*real(n),3);call plot(-symbol_size*0.5,dy*120.*real(n),2);call numberc(-symbol_size*1.2,dy*120.*real(n)-symbol_size*0.3,symbol_size,real(n+ini_lat),0.,-1)
             if(n/=fin_lat - ini_lat) then
                 do i = 1,9
                     call plot(0.,dy*120.*(real(n)+real(i)/10.),3);call plot(-symbol_size*0.25,dy*120.*(real(n)+real(i)/10.),2)
@@ -5377,35 +5388,61 @@ module oldsubs
         if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
             do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
                 filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
-                NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
                 open(32,file=filename,status = 'old',action = 'read')
                 read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
                 close(32)
+                NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
+                if(line_opt/=2)then
+                    call plot(dx*(137.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
+                end if
+                if(line_opt/=1)then
+                    call plot(dx*(137.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
+                end if
                 do n = ini_st,fin_st; xco = dx*(lon(line_num,10-n)-real(ini_long))*80.
                     if (line_num ==1 .and. line_opt/=2) then
-                        if(n==1.or.n==2.or.n==3)then;call gmark(xco,NLineYco,symbol_size*0.4,1);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==4.or.n==5.or.n==6)then;call gmark(xco,NLineYco,symbol_size*0.4,6);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==7.or.n==8.or.n==9)then;call gmark(xco,NLineYco,symbol_size*0.4,8);call numberc(xco,NLineYco+symbol_size*0.6,symbol_size*0.8,real(n),0.,-1)
+                        if(n==1.or.n==2.or.n==3)then;call gmark(xco,NLineYco,symbol_size*0.3,1);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
+                        else if(n==4.or.n==5.or.n==6)then;call gmark(xco,NLineYco,symbol_size*0.3,1);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
+                        else if(n==7.or.n==8.or.n==9)then;call gmark(xco,NLineYco,symbol_size*0.3,8);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
                         else;end if
-                    else if(line_num ==2 .and. line_opt /= 1) then
-                        if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,symbol_size*0.4,1);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,symbol_size*0.4,6);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,symbol_size*0.4,8);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                        else;end if
+                    ! else if(line_num ==2 .and. line_opt /= 1) then
+                    !     if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,symbol_size*0.4,1);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
+                    !     else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,symbol_size*0.4,6);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
+                    !     else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,symbol_size*0.4,8);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
+                    !     else;end if
                     else;end if
                 end do
             end do
             if(line_opt ==1 ) then
-                call symbol(dx*(lon(1,1)-real(ini_long))*80.,NLineYco+symbol_size*1.5,symbol_size,'N-Line',0.,6)
+                call symbolr(dx*(lon(1,4)-real(ini_long))*80.-symbol_size/2.,NLineYco+symbol_size/4.,symbol_size,'N-Line',0.,6)
             else if(line_opt==2) then
-                call symbol(dx*(lon(2,1)-real(ini_long))*80.,SLineYco-symbol_size*2.3,symbol_size,'S-Line',0.,6)
-            else;call symbol(dx*(lon(1,1)-real(ini_long))*80.,NLineYco+symbol_size*1.5,symbol_size,'N-Line',0.,6)
-                call symbol(dx*(lon(2,1)-real(ini_long))*80.,SLineYco-symbol_size*2.3,symbol_size,'S-Line',0.,6)
+                call symbolr(dx*(lon(2,4)-real(ini_long))*80.-symbol_size/2.,SLineYco+symbol_size/4.,symbol_size,'S-Line',0.,6)
+            else;call symbolr(dx*(lon(1,4)-real(ini_long))*80.-symbol_size/2.,NLineYco+symbol_size/4.,symbol_size,'N-Line',0.,6)
+                call symbolr(dx*(lon(2,4)-real(ini_long))*80.-symbol_size/2.,SLineYco+symbol_size/4.,symbol_size,'S-Line',0.,6)
             end if
         else
             print*,'stations are just outside of your map, like a perfect flower that is just beyond your reach...(mj)'
         end if
-        deallocate(dep);deallocate(dep_m)
+        ! ESA
+        if(ini_lat<41.and.fin_lat>41.and.ini_long<140.and.fin_long>140)then
+            call gmark(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
+            call symbol(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.+symbol_size/3.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size*0.8,'ESA',0.)
+        end if
+        ! OKU esa and oku 61km apart
+        if(ini_lat<42.and.fin_lat>42.and.ini_long<139.and.fin_long>139)then
+            call gmark(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
+            call symbolr(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.-symbol_size/3.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size*0.8,'OKU',0.)
+        end if
+        ! SAK
+        if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
+            call gmark(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
+            call symbol(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.+symbol_size/3.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size*0.8,'SAK',0.)
+        end if
+        ! TOB sak and tob 38km apart
+        if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
+            call gmark(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
+            call symbolr(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.-symbol_size/3.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size*0.8,'TOB',0.)
+        end if
+        deallocate(dep);deallocate(dep_0)
 
         ! call plot(-x,-y,-3)
             
@@ -6374,7 +6411,7 @@ module subroutines
                 end if
             end if
         end subroutine
-    ! END COLORGRAD 
+    ! END COLORGRAD  
 
     ! PLOTS
         subroutine box(width,height,thickness,x,y)
@@ -8204,6 +8241,7 @@ module always
     use subroutines
     use constants
     use functions
+    contains
 end module
 
 module test

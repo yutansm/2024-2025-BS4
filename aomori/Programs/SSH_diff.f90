@@ -28,6 +28,7 @@ program SSHdiff
     ! print*,esa
     ! print*,ncalesa
 
+    esa(2,2)=-999.;esa(4,2)=-999.
     call avsemdata_2D(esa,'dim2',mean_1D = ymeane,rmask = -999.) ! 15 yearly means
     call avsemdata_2D(oku,'dim2',mean_1D = ymeano,rmask = -999.) ! 15 yearly means
     call avsemdata_2D(nez,'dim2',mean_1D = ymeann,rmask = -999.) ! 15 yearly means
@@ -36,6 +37,7 @@ program SSHdiff
     call avsemdata_2D(rawoku,'dim2',mean_1D = ymeanrawo,rmask = -999.) ! 15 yearly means
     call avsemdata_2D(rawnez,'dim2',mean_1D = ymeanrawn,rmask = -999.) ! 15 yearly means
     call avsemdata_2D(rawawa,'dim2',mean_1D = ymeanrawawa,rmask = -999.) ! 15 yearly means
+    ! esa(2,2)=-999.;esa(4,2)=-999.
     ! print*,ymeane,'esashi'
     ! print*,ymeano,'okushiri'
     ! print*,ymeann,'nezugaseki'
