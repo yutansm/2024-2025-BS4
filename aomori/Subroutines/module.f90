@@ -1068,7 +1068,7 @@ module origin
             if(centerstat)call ocenter
             if(bottomstat)call obottoms
             return
-    end      
+     end      
     subroutine endpage     
         if(pageend) return
         write(ounit,'(a)') "PslEndPage"

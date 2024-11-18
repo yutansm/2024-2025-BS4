@@ -213,8 +213,5 @@ call plot(0.5,-1.,-3);call plotsave('first')
     call create_map(38,43,137,142,1,6,3,9.,0.6)
 
 
-
-
-
 call plote
 end program
