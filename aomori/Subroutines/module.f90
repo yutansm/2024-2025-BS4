@@ -529,6 +529,54 @@ module functions
         write(tmp, '(i0)') i
         str = trim(tmp)
     end function int2str
+    function remove_extension(filename) result(filenamewoex)
+        implicit none
+        character(len=*), intent(in) :: filename
+        character(len=len(filename)) :: filenamewoex
+        integer :: dot_position
+
+        ! Initialize filenamewoex with the input filename
+        filenamewoex = filename
+
+        ! Find the position of the last dot in the filename
+        dot_position = index(filename, '.', back=.true.)
+        if (dot_position > 3) then
+            filenamewoex = filename(:dot_position-1)
+        else;print*,'no extension'
+        end if
+
+    end function remove_extension
+    function append_extension(filename, extension) result(new_filename)
+        implicit none
+        character(len=*), intent(in) :: filename, extension
+        character(len=len(filename) + len(extension)+1) :: new_filename
+
+        ! Append the extension to the filename
+        new_filename = trim(adjustl(filename)) // '.' // trim(adjustl(extension))
+
+    end function append_extension
+    function change_extension(filename, new_extension) result(new_filename)
+        implicit none
+        character(len=*), intent(in) :: filename, new_extension
+        character(len=len(filename) + len(new_extension)+1) :: new_filename
+        character(len=len(filename)) :: basename
+        integer :: dot_position
+
+        ! Initialize basename with the input filename
+        basename = filename
+
+        ! Find the position of the last dot in the filename
+        dot_position = index(filename, '.', back=.true.)
+        if (dot_position > 3) then
+            basename = filename(:dot_position-1)
+        else
+            basename = filename
+        end if
+
+        ! Append the new extension to the basename
+        new_filename = trim(adjustl(basename)) // '.' // trim(adjustl(new_extension))
+
+    end function change_extension
 
 
 end module functions
@@ -1068,7 +1116,7 @@ module origin
             if(centerstat)call ocenter
             if(bottomstat)call obottoms
             return
-     end      
+    end      
     subroutine endpage     
         if(pageend) return
         write(ounit,'(a)') "PslEndPage"
@@ -1520,6 +1568,7 @@ module origin
     subroutine pscont3(dx,dy,a,ib,ips,ipe,jps,jpe &
                                     ,mx,my,icnu,contst,contint)
         dimension conta(1000),a(mx,my),ib(mx,my),x(5),y(5)
+        ! real,dimension
         !-------------------schematic of contour-----------------------
         !---> x direction is (i)
         ! c   |  ---      a(i,j)-----x(1),y(1)-----a(i+1,j)
@@ -1812,6 +1861,308 @@ module origin
         300    continue
         ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             return
+    end
+    subroutine pscont4(dx,dy,a,ib,ips,ipe,jps,jpe &
+        ,mx,my,icnu,contst,contint)
+        dimension conta(1000),x(5),y(5)
+        real::a(:,:)
+        integer::ib(:,:)
+        
+        mx = size(a,1); my = size(a,2)
+        ! print*, mx, my,'yo'
+        ! real,dimension
+        !-------------------schematic of contour-----------------------
+        !---> x direction is (i)
+        ! c   |  ---      a(i,j)-----x(1),y(1)-----a(i+1,j)
+        ! c   |   |         |                         |
+        ! c   |   |         |                         |
+        ! c   |   |         |                         |
+        ! c   y   dy    x(2),y(2)                 x(4),y(4)
+        ! c       |         |                         |
+        ! c   i   |         |                         |
+        ! c   s   |         |                         |
+        ! c      ---     a(i,j+1)----x(3),y(3)-----a(i+1,j+1)
+        ! c  (j)            |<-----------dx---------->|
+        ! c
+        ! c       | 
+        ! c       |<-yycop
+        ! c       |____xxcop_
+        ! c
+        ! c********correct of x and y axis**********
+        !-----------------------
+        pxm=-dx*float(ips-1)
+        pym=-dy*float(jps-1)
+        !-----------------------
+        xxcop= 0.5*dx + pxm
+        yycop= 0.5*dy + pym
+        ! c***********************
+        !------ The positions of contour line are 1~4x,y 
+        ! c            The contour lines are drawn by these position
+        !---------------------------------------
+        !------setting the value of contour line
+        do 200 i=1,icnu
+        conta(i)=contst+float(i-1)*contint
+        200  continue
+
+        x5=0.
+        y5=0.
+        x4=0.
+        y4=0.
+        ! c
+        xdx1=0.
+        xdx2=0.
+        xdx3=0.
+        xdx4=0.
+        ydy1=0.
+        ydy2=0.
+        ydy3=0.
+        ydy4=0.
+        !---
+        do kk=1,4
+        x(kk)=0.
+        y(kk)=0.
+        enddo
+        ! c<<<<<<<<<<<<<<<<<<<<<<<<start>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !------------cont.        
+        do 300 k=1,icnu
+        !------------y axis        
+        do 280 j=jps,jpe-1
+        !------------x axis        
+        do 270 i=ips,ipe-1
+        if ((ib(i,j).eq.0).or.(ib(i+1,j).eq.0) &
+            .or.(ib(i,j+1).eq.0).or.(ib(i+1,j+1).eq.0)) &
+        go to 270
+        ! !------------compare value of conta. to value of a(i,j)
+        if ((a(i,j).eq.conta(k)).and.(a(i+1,j).eq.conta(k)) &
+        .and.(a(i,j+1).eq.conta(k)).and.(a(i+1,j+1).eq.conta(k))) then
+        go to 270
+        end if
+        if ((a(i,j).lt.conta(k)).and.(a(i+1,j).lt.conta(k)) &
+        .and.(a(i,j+1).lt.conta(k)).and.(a(i+1,j+1).lt.conta(k))) then
+
+        go to 270
+        end if
+        ! c
+        if (a(i,j).eq.conta(k)) then
+        a( i , j )=a( i , j )+0.001*contint
+        end if
+        ! c
+        if (a(i+1,j).eq.conta(k)) then
+        a(i+1, j )=a(i+1, j )+0.001*contint
+        end if
+        ! c
+        if (a(i,j+1).eq.conta(k)) then
+        a( i ,j+1)=a( i ,j+1)+0.001*contint
+        end if
+        if (a(i+1,j+1).eq.conta(k)) then
+        a(i+1,j+1)=a(i+1,j+1)+0.001*contint
+        end if
+        ! c
+        ! c==========search position (1)============
+        dex1=a(i,j)-conta(k)
+        dex2=a(i+1,j)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 211
+        else
+        go to 212
+        end if
+        !-----------
+        211     dex4=a(i,j)-a(i+1,j)
+        if (dex4.eq.0.) then
+        go to 212
+        end if
+
+        ! !----------judgment of land and sea
+        jnd1=ib(i,j)*ib(i+1,j)
+        if (jnd1 .eq. 0) then
+        go to 212
+        end if
+
+        ! c*********position (1)
+        x(1)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+        y(1)=dy*float((j-1))+yycop
+
+        !         write(*,*) 'x(1),y(1)',x(1),y(1)
+        ! c==========search position (2)================
+        212     dex1=a(i,j)-conta(k)
+        dex2=a(i,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 213
+        else
+        go to 214
+        end if
+        !-----------
+        213     dex4=a(i,j)-a(i,j+1)
+        if (dex4.eq.0.) then
+        go to 214
+        else
+        end if
+
+        ! !----------judgment of land and sea
+        jnd2=ib(i,j)*ib(i,j+1)
+        if (jnd2 .eq. 0) then
+        go to 214
+        end if
+        ! c
+        ! c**********position (2)
+        x(2)=dx*float(i-1)+xxcop
+        y(2)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+        +yycop 
+
+        ! !         write(*,*) 'x(2),y(2)',x(2),y(2)
+        ! c==========search position (3)================
+        214    dex1=a(i,j+1)-conta(k)
+        dex2=a(i+1,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 215
+        else
+        go to 216
+        end if
+        !-----------
+        215    dex4=a(i,j+1)-a(i+1,j+1)
+        if (dex4.eq.0.) then
+        go to 216
+        end if
+        ! c
+        ! !----------judgment of land and sea
+        jnd3=ib(i,j+1)*ib(i+1,j+1)
+        if (jnd3 .eq. 0) then
+        go to 216
+        end if
+        ! c
+        ! c*********position (3)
+        x(3)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+        y(3)=dy*float((j))+yycop
+
+        !         write(*,*) 'x(3),y(3)',x(3),y(3)
+        ! c==========search position (4)================
+        216     dex1=a(i+1,j)-conta(k)
+        dex2=a(i+1,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 217
+        else
+        go to 240
+        end if
+        !-----------
+        217     dex4=a(i+1,j)-a(i+1,j+1)
+        if (dex4.eq.0.) then
+        go to 230
+        end if
+        ! c
+        ! !----------judgment of land and sea
+        jnd4=ib(i+1,j)*ib(i+1,j+1)
+        if (jnd4 .eq. 0) then
+        go to 240
+        end if
+        ! c
+        ! c**********position (4)
+        x(4)=dx*float(i)+xxcop
+        y(4)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+        +yycop
+        !         write(*,*) 'x(4),y(4)',x(4),y(4)
+        ! c#########################################################
+        ! c===========drawing contour line==========================
+        ! !-----------case of four positions 
+        230    if ((x(1).ne.0.).and.(x(2).ne.0.).and.(x(3).ne.0.).and. &
+        (x(4).ne.0.)) then
+
+        go to 235
+        else
+        go to 240
+        end if
+        ! c
+        235     xlong1=(x(1)-x(2))**2+(y(1)-y(2))**2
+        xlong2=(x(1)-x(4))**2+(y(1)-y(4))**2
+        if (xlong1.le.xlong2) then
+        go to 236
+        else
+        goto 237
+        end if
+        ! c
+        236   call plot(x(1),y(1),3)
+        call plot(x(2),y(2),2)
+        call plot(x(3),y(3),3)
+        call plot(x(4),y(4),2)
+
+
+
+        !       write(*,*) 1,i,j,x(1),y(1)
+        !       write(*,*) 1,i,j,x(2),y(2)
+        !       write(*,*) 1,i,j,x(3),y(3)
+        !       write(*,*) 1,i,j,x(4),y(4)
+        ! C       stop 
+
+        go to 250
+
+        237   call plot(x(1),y(1),3)
+        call plot(x(4),y(4),2)
+        call plot(x(2),y(2),3)
+        call plot(x(3),y(3),2)
+
+        !       write(*,*) 2,i,j,x(1),y(1)
+        !       write(*,*) 2,i,j,x(2),y(2)
+        !       write(*,*) 2,i,j,x(3),y(3)
+        !       write(*,*) 2,i,j,x(4),y(4)
+        ! C       stop 
+
+        go to 250
+        ! c
+        ! !-----------else case /  
+        240   do 245 kk=1,4
+        !        if(kk.eq.1) write(*,*)0,(x(jm),y(jm),jm=1,4) 
+        if (x(kk).eq.0.) then
+        !               write(*,*) 'x(kk)',kk,x(kk)
+        go to 245
+        end if
+        x4=x(kk)
+        y4=y(kk)
+        !       write(*,*) 'U',kk,x4,y4
+
+        if (x5.eq.0.) then
+        go to 238
+        end if
+
+        call plot(x4,y4,3)
+        call plot(x5,y5,2)
+
+        !        write(*,*) 3,i,j,x4,y4
+        !        write(*,*) 3,i,j,x5,y5
+
+
+        238          x5=x4
+        y5=y4
+        !       write(*,*) 'L',kk,x4,y4,x5,y5
+        x(kk)=0.
+        245    continue
+        250     x5=0.
+        y5=0.
+        x4=0.
+        y4=0.
+
+        xdx1=0.
+        xdx2=0.
+        xdx3=0.
+        xdx4=0.
+        ydy1=0.
+        ydy2=0.
+        ydy3=0.
+        ydy4=0.
+        !---
+        do 260 kk=1,4
+        x(kk)=0.
+        y(kk)=0.
+        260    continue
+        !---
+
+        270    continue
+        280    continue
+        300    continue
+        ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        return
     end
     subroutine pscolorK(px,py,ss,is,ist,ied,jst,jed,ix,iy,cst,ced,rr,gg,bb)
         ! ***********************************************************************
@@ -4319,7 +4670,8 @@ module origin
         implicit none
         character(len=*), intent(in) :: isymb
         integer, intent(in), optional :: n
-        real, intent(in) :: x, y, h, ang
+        real, intent(in) :: x, y, h
+        real, intent(in), optional :: ang
         character(len=256) :: segment
         integer :: i, iend, istart,count = 0,lol
     
@@ -4332,7 +4684,7 @@ module origin
         write(ounit,*) "se"
     
         call plot(x,y,-3)
-        write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
         istart = 1;count=0
         ! print*,len_trim(isymb)
         do i = 1, len_trim(isymb)
@@ -4349,7 +4701,7 @@ module origin
             end if
         end do
         call plot(0.,h*real(count),-3)
-        write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
         call plot(-x,-y,-3)
         write(ounit,*) "% end symbol"
         return
@@ -4358,7 +4710,8 @@ module origin
         implicit none
         character(len=*), intent(in) :: isymb
         integer, intent(in), optional :: n
-        real, intent(in) :: x, y, h, ang
+        real, intent(in) :: x, y, h
+        real,intent(in),optional :: ang
         character(len=256) :: segment
         integer :: i, iend, istart,count = 0,lol
         if (present(n)) lol = 420 ! no need to specify length anymore
@@ -4377,7 +4730,7 @@ module origin
         write(ounit,*) "se"
     
         call plot(x,y,-3)
-        write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
         istart = 1;count=0
         ! print*,len_trim(isymb)
         do i = 1, len_trim(isymb)
@@ -4397,7 +4750,7 @@ module origin
             end if
         end do
         call plot(0.,h*real(count),-3)
-        write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
         call plot(-x,-y,-3)
         write(ounit,*) "% end symbolc"
         return
@@ -4406,7 +4759,8 @@ module origin
         implicit none
         character(len=*), intent(in) :: isymb
         integer, intent(in), optional :: n
-        real, intent(in) :: x, y, h, ang
+        real, intent(in) :: x, y, h
+        real,intent(in),optional :: ang
         character(len=256) :: segment
         integer :: i, iend, istart,count = 0,lol
         if (present(n)) lol = 420 ! no need to specify length anymore
@@ -4418,7 +4772,7 @@ module origin
         write(ounit,*) "se"
 
         call plot(x,y,-3)
-        write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') ang, ' ro '
         istart = 1;count=0
         ! print*,len_trim(isymb)
         do i = 1, len_trim(isymb)
@@ -4437,7 +4791,7 @@ module origin
             end if
         end do
         call plot(0.,h*real(count),-3)
-        write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
+        if(present(ang))write(ounit, '(f9.4, 2x, a4)') -ang, ' ro '
         call plot(-x,-y,-3)
         write(ounit,*) "% end symbolr"
         return
@@ -5383,8 +5737,8 @@ module oldsubs
                 end do
             end if
         end do
-        call symbolc(width/2.,-symbol_size*2.5,symbol_size*0.8,'Long (E)',0.,len('Long (e)'))
-        call symbolc(-symbol_size*2.5,height/2.,symbol_size*0.8,'Lat (N)',90.,len('Lat (n)'))
+        ! call symbolc(width/2.,-symbol_size*2.5,symbol_size*0.8,'Long (E)',0.,len('Long (e)'))
+        ! call symbolc(-symbol_size*2.5,height/2.,symbol_size*0.8,'Lat (N)',90.,len('Lat (n)'))
         if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
             do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
                 filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
@@ -5682,7 +6036,7 @@ module subroutines
     implicit none
     contains
 
-    ! DATA
+    ! DATA obtainment and manipulation
         ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data
         subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate)
             implicit none
@@ -6082,7 +6436,121 @@ module subroutines
                 end do
             end do
         end subroutine
+        subroutine calc_density(temp_2D,sal_2D,den_2D)
+            implicit none
+            real,intent(in)::temp_2D(:,:),sal_2D(:,:)
+            real,intent(out)::den_2D(lbound(temp_2D,1):ubound(temp_2D,1),lbound(temp_2D,2):ubound(temp_2D,2))
+            integer::i,j,iterations1,iterations2
+            ! real::den_local
+            
+            if(size(temp_2D,1)/=size(sal_2D,1))then;print*,'Temperature and Salinity arrays must have the same size';stop;endif
+            if(size(temp_2D,2)/=size(sal_2D,2))then;print*,'Temperature and Salinity arrays must have the same size';stop;endif
 
+            iterations1 = size(temp_2D,1);iterations2 = size(temp_2D,2)
+
+            do i = 1, iterations1
+                do j = 1, iterations2
+                    call sigma_T_S(den_2D(i,j),temp_2D(i,j),sal_2D(i,j))
+                end do
+            end do
+
+
+        end subroutine
+        ! returns an array with one less column than the input array,arguments are all real(kind=4),the bottom row is the reference surface 
+        subroutine calc_geovel(geovel_2D, delta_xm, delta_zdb, temp_2D, sal_2D, den_2D, f, lat)
+            implicit none
+            real, intent(in), optional :: temp_2D(:,:), sal_2D(:,:)
+            real, intent(in), optional :: den_2D(:,:)
+            real, dimension(:,:), allocatable :: den_2D_local
+            real, intent(out), allocatable :: geovel_2D(:,:)
+            real, intent(in) :: delta_xm,delta_zdb
+            real, intent(in), optional :: f, lat
+            intrinsic :: sin, cos, tan, asin, acos
+            real, parameter :: omega = 7.2921*(10.**(-5.))
+            real :: f_local, pi
+            integer :: i, j
+            real(kind=8) :: sum_p, sum_d, g, diff
+            real(kind=8), dimension(:,:), allocatable :: integral_D, a, delta_D, v_ref0, v_refbottom
+        
+            ! Calculation of horizontal Coriolis factor
+            pi = 2.0 * asin(1.0)
+            if (present(f)) then
+                f_local = f
+            else if (present(lat)) then
+                f_local = 2.0 * omega * sin(lat * pi / 180.0)
+            else
+                print *, 'Horizontal Coriolis factor (f) or Latitude is required'
+                stop
+            end if
+        
+            if (present(temp_2D) .and. present(sal_2D)) then
+                if (size(temp_2D, 1) /= size(sal_2D, 1)) then
+                    print *, 'Temperature and Salinity arrays must have the same size'
+                    stop
+                end if
+                if (size(temp_2D, 2) /= size(sal_2D, 2)) then
+                    print *, 'Temperature and Salinity arrays must have the same size'
+                    stop
+                end if
+                allocate(den_2D_local(lbound(temp_2D, 1):ubound(temp_2D, 1), lbound(temp_2D, 2):ubound(temp_2D, 2)))
+                call calc_density(temp_2D, sal_2D, den_2D_local)
+            else if (present(den_2D)) then
+                allocate(den_2D_local(lbound(den_2D, 1):ubound(den_2D, 1), lbound(den_2D, 2):ubound(den_2D, 2)))
+                den_2D_local = den_2D
+            else
+                print *, 'A pair of Temperature and Salinity arrays or a Density array is required'
+                stop
+            end if
+        
+            allocate(integral_D(lbound(den_2D_local, 1):ubound(den_2D_local, 1), lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(a(lbound(den_2D_local, 1):ubound(den_2D_local, 1), lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(delta_D(lbound(den_2D_local, 1):ubound(den_2D_local, 1)-1, lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(v_ref0(lbound(den_2D_local, 1):ubound(den_2D_local, 1)-1, lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(v_refbottom(lbound(den_2D_local, 1):ubound(den_2D_local, 1)-1, lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(geovel_2D(lbound(den_2D_local, 1):ubound(den_2D_local, 1)-1, lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+        
+            ! print *, size(den_2D_local, 1), size(den_2D_local, 2), size(geovel_2D, 1), size(geovel_2D, 2)
+        
+            g = 9.81d0
+            sum_p = 0.0d0
+            sum_d = 0.0d0
+        
+            ! Integration of (specific volume) * dp = dynamic height
+            do i = lbound(den_2D_local, 1), ubound(den_2D_local, 1)
+                do j = lbound(den_2D_local, 2), ubound(den_2D_local, 2)
+                    if (den_2D_local(i, j) /= 0.0) then
+                        a(i, j) = 1.0d0 / (1000.0d0 + real(den_2D_local(i, j), kind=8)) ! Specific volume
+                    else
+                        a(i, j) = 0.0d0
+                    end if
+                    if (j == lbound(den_2D_local, 2)) cycle
+                    integral_D(i, j) = sum_d + a(i, j) * (10.0d0**(4.0d0)) * real(delta_zdb,kind=8) !1db is roughly 10^4 pascals
+                    sum_d = integral_D(i, j)
+                end do
+                sum_p = 0.0d0
+                sum_d = 0.0d0
+            end do
+        
+            ! Calculation of differences in dynamic height (delta_D) in reference to the bottom row
+            do i = lbound(den_2D_local, 1), ubound(den_2D_local, 1)-1
+                do j = lbound(den_2D_local, 2), ubound(den_2D_local, 2)
+                    if (integral_D(i, j) /= 0.0 .and. integral_D(i+1, j) /= 0.0) then
+                        delta_D(i, j) = (integral_D(i+1, j) - integral_D(i, j))
+                    else
+                        delta_D(i, j) = 0.0d0
+                    end if
+                    v_ref0(i, j) = -delta_D(i, j) / (real(f_local, kind=8) * real(delta_xm, kind=8)) * 100.0d0
+                end do
+                diff = v_ref0(i, ubound(den_2D_local, 2)) * (-1.0d0)
+                v_refbottom(i, :) = v_ref0(i, :) + diff
+            end do
+        
+            geovel_2D = real(v_refbottom, kind=4)
+            deallocate(integral_D, a, delta_D, v_ref0, v_refbottom, den_2D_local)
+            return
+        
+        end subroutine 
+    ! END DATA obtainment and manipulation
     ! COLORGRAD
         ! r,g,b individual color gradient
         subroutine colorgrad(rgb,iterations,r,g,b)
@@ -6146,6 +6614,7 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b
             integer::n
             
+            if(iterations-midpoint<2)then;print*,'midpoint is too close to the end (b2r)';stop;endif
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             do n = 1, iterations
                 if(midpoint==1.and.n==1)then;r(1)=0.;g(1)=0.;b(1)=1.;cycle;endif
@@ -6170,6 +6639,7 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b
             integer::n
             
+            if(iterations-midpoint<2)then;print*,'midpoint is too close to the end (b2w2r)';stop;endif
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             do n = 1, iterations
                 if(midpoint==1)then;print*,'midpoint of 0 is invalid for b2w2r colorgrad';stop;endif
@@ -6197,6 +6667,7 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b
             integer::n
             
+            if(iterations-midpoint<2)then;print*,'midpoint is too close to the end (b2gy2r)';stop;endif
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             do n = 1, midpoint-1
                     r(n) = 0.+(real(n-1)/real(midpoint-2))*0.8
@@ -6222,6 +6693,7 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b
             integer::n 
 
+            if(iterations==midpoint)then;print*,'iterations and midpoint cannot be the same value (r2g)';stop;endif
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             do n = 1,iterations
                 if(n<=midpoint) then
@@ -6243,6 +6715,7 @@ module subroutines
             real,dimension(:),allocatable,intent(out)::r,g,b 
             integer::n 
 
+            if(iterations==midpoint)then;print*,'iterations and midpoint cannot be the same value (bk2r2g)';stop;endif
             allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
             r(1) = 0.; g(1) = 0.; b(1) = 0.
             do n = 2,iterations
@@ -7720,13 +8193,13 @@ module subroutines
                 end do
             end do
         end subroutine  
-    !END BASIC STATISTICS 
+    ! END BASIC STATISTICS 
+    ! PS boys, NOTE: THE ARRAY LBOUND NEED NOT BE 1 as [assumed shape arrays] reshape the array lbound to 1 (tested)
 
-    ! ps boys are good bois 
-        ! if present, gap is dx/2. ;centralization of colors is done relative to integer centralize
-        subroutine butler_psk(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
+        ! if present, gap is dx/2. ;centralization of colors is done relative to integer centralize * dirty due to unnecessary use of bounds
+        subroutine butler_psk(array_2D,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
             implicit none
-            integer,intent(in)::dim1,dim2,iterations
+            integer,intent(in)::iterations
             real,intent(in)::maskval,ival,fval,inc,width,height
             integer,intent(in),optional::bpt1,bpt2,bpt3,gap,thicc,centralize
             real,intent(in),optional::conti,continc
@@ -7738,10 +8211,12 @@ module subroutines
             integer,dimension(:,:),allocatable::anothermask
             real,dimension(:),allocatable,intent(out),optional::r,g,b
             real::dx,dy
-            integer::i,j,n,contquan,zerocolumns,nonzerocol
+            integer::i,j,n,contquan,zerocolumns,nonzerocol,dim1,dim2
             write(ounit,*)'%begin butler_psk'
-            if(size(array_2D,1)<dim1)then;print*,'Array size < dim1 ';stop;endif
-            if(size(array_2D,2)<dim2)then;print*,'Array size < dim2 ';stop;endif
+            ! if(size(array_2D,1)/=dim1)then;print*,'Array size /= dim1 (butler_psk)';stop;endif
+            ! if(size(array_2D,2)/=dim2)then;print*,'Array size /= dim2 (butler_psk)';stop;endif
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
+            ! print*,lbound(array_2D,1),ubound(array_2D,1),lbound(array_2D,2),ubound(array_2D,2)
 
             if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psk)';end if
             call box(width,height,3)
@@ -7753,14 +8228,14 @@ module subroutines
             case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
             case('blue');call colorgrad('blue',iterations,r1,g1,b1)
             case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-            case default;print*,'Invalid colorscheme';stop
+            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
+            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
+            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
+            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
+            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
+            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psk)';stop;end if
+            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psk)';stop;end if
+            case default;print*,'Invalid colorscheme (butler_psk)';stop
             end select
 
             if(present(centralize))then
@@ -7772,26 +8247,26 @@ module subroutines
             ! else;print*,'color arrays are not allocated'
             end if
 
-            do i = 1, dim1
-                do j = 1, dim2
+            do i = lbound(array_2D,1), ubound(array_2D,1)
+                do j = lbound(array_2D,2), ubound(array_2D,2)
                     if(array_2D(i,j)==maskval) then;mask(i,j)=0
                     else;mask(i,j)=1
                     end if
                 end do
             end do
             zerocolumns = 0
-            do i = 1, dim1
-                if(all(mask(i,1:dim2)==0).eqv..true.)then
+            do i = lbound(mask,1), ubound(mask,1)
+                if(all(mask(i,lbound(array_2D,2):ubound(array_2D,2))==0).eqv..true.)then
                     zerocolumns = zerocolumns + 1
                 else;nonzerocol = i
                 end if
             end do
-            if(nonzerocol==0)then;print*,'zero matrix';return;endif
+            if(nonzerocol==0)then;print*,'zero matrix (butler_psk)';return;endif
 
             if(dim1-zerocolumns>1)then
                 if(.not.present(gap))then
                     dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,0.,-3)
                 end if
             else
                 if(.not.present(gap))then
@@ -7830,10 +8305,13 @@ module subroutines
                     else
                         if(dim1-zerocolumns==1)then
                             ! if(present(gap))print*,'Having GAP for an array with one column'
-                            print*,'has only one nonzero column=',nonzerocol
-                            allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
-                            another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
-                            anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
+                            print*,'has only one nonzero column=',nonzerocol,'(butler_psk)'
+                            allocate(another(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                            allocate(anothermask(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                            another(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2)) = array_2D
+                            another(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = another(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
+                            anothermask(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2))=mask
+                            anothermask(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = anothermask(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
                             call plot(-dx/2.,0.,-3)
                             do n = 0,contquan
                                 if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
@@ -7855,7 +8333,6 @@ module subroutines
             if(dim1-zerocolumns>1)then
                 if(.not.present(gap))then
                     call plot(dx/2.,dy/2.,-3)
-                else;call plot(0.,dy/2.,-3)
                 end if
             else
                 if(.not.present(gap))then
@@ -7867,9 +8344,9 @@ module subroutines
 
         end subroutine
         ! can draw contours on 1 column arrays
-        subroutine butler_psbet(array_2D,dim1,dim2,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,centralize)
+        subroutine butler_psbet(array_2D,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,centralize)
             implicit none
-            integer,intent(in)::dim1,dim2,iterations
+            integer,intent(in)::iterations
             real,intent(in)::maskval,ival,fval,inc,width,height
             integer,intent(in),optional::bpt1,bpt2,bpt3,thicc,centralize
             real,intent(in),optional::conti,continc
@@ -7880,11 +8357,12 @@ module subroutines
             real,dimension(:),allocatable::r1,g1,b1
             real,dimension(:),allocatable,intent(out),optional::r,g,b
             real::dx,dy
-            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
+            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0,dim1,dim2
 
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
-            end if
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2 (butler_psbet)';stop
+            ! end if
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
             if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psbet)';end if
             dx = width/real(dim1);dy = height/real(dim2)
             call box(width,height,3)
@@ -7895,14 +8373,14 @@ module subroutines
             case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
             case('blue');call colorgrad('blue',iterations,r1,g1,b1)
             case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required';stop;end if
-            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required';stop;end if
-            case default;print*,'Invalid colorscheme';stop
+            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
+            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
+            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
+            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
+            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
+            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
+            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
+            case default;print*,'Invalid colorscheme (butler_pebet)';stop
             end select
 
             if(present(centralize))then
@@ -7928,7 +8406,7 @@ module subroutines
                 else;nonzerocol = i
                 end if
             end do
-            if(nonzerocol==0)then;print*,'zero matrix';endif
+            if(nonzerocol==0)then;print*,'zero matrix (butler_psbet)';endif
             ! print*,'psbet',zerocolumns,nonzerocol
             call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival-10.**(10.),ival,r1(0),g1(0),b1(0))
             call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,fval,fval+10.**(10.),r1(iterations+1),g1(iterations+1),b1(iterations+1))
@@ -7949,7 +8427,7 @@ module subroutines
                         call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
                     end do
                 else if(dim1-zerocolumns==1)then
-                    print*,'psbet nonzero column=',nonzerocol
+                    print*,'psbet nonzero column=',nonzerocol,'(butler_psbet)'
                     allocate(another(dim1,dim2));another = array_2D;another(nonzerocol-1,1:dim2) = another(nonzerocol,1:dim2)
                     mask(nonzerocol-1,1:dim2) = mask(nonzerocol,1:dim2)
                     call plot(dx/2.,0.,-3)
@@ -7970,10 +8448,9 @@ module subroutines
 
             deallocate(r1,g1,b1)
         end subroutine
-        ! can draw contours on 1 column arrays 
-        subroutine butler_cont(array_2D,dim1,dim2,width,height,maskval,conti,continc,thicc,r,g,b,gap)
+        ! can draw contours on 1 column arrays * dirty due to unnecessary use of bounds
+        subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap)
             implicit none
-            integer,intent(in)::dim1,dim2
             real,intent(in)::maskval,conti,continc,width,height
             real,intent(in)::array_2D(:,:)
             integer,dimension(size(array_2D,1),size(array_2D,2))::mask
@@ -7982,15 +8459,16 @@ module subroutines
             real,intent(in),optional::r,g,b
             integer,intent(in),optional::thicc,gap
             real::dx,dy
-            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0
+            integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0,dim1,dim2
 
             write(ounit,*)'%begin butler_cont'
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
-            end if
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2 (butler_cont)';stop
+            ! end if 
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
             call box(width,height,3)
-            do i = 1,dim1
-                do j = 1, dim2
+            do i = lbound(array_2D,1), ubound(array_2D,1)
+                do j = lbound(array_2D,2), ubound(array_2D,2)
                     if(array_2D(i,j)== maskval) then;mask(i,j)=0
                     else;mask(i,j)=1
                     end if
@@ -7998,19 +8476,19 @@ module subroutines
             end do
 
             zerocolumns = 0
-            do i = 1, dim1
-                if(all(mask(i,1:dim2)==0).eqv..true.)then
+            do i = lbound(mask,1), ubound(mask,1)
+                if(all(mask(i,lbound(array_2D,2):ubound(array_2D,2))==0).eqv..true.)then
                     zerocolumns = zerocolumns + 1
                 else;nonzerocol = i
                 end if
             end do
 
-            if(nonzerocol==0)then;print*,'zero matrix';endif
+            if(nonzerocol==0)then;print*,'zero matrix (butler_cont)';endif
 
             if(dim1-zerocolumns>1)then ! normal case
                 if(.not.present(gap))then
                     dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2)
                 end if
             else ! 1 column array
                 if(.not.present(gap))then
@@ -8029,14 +8507,19 @@ module subroutines
                             if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
                         end if
                     end if
-                    call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
+                    ! call pscont3(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,1,conti+continc*real(n),0.)
+                    call pscont3(dx,dy,array_2D,mask,lbound(array_2D,1),ubound(array_2D,1),lbound(array_2D,2),ubound(array_2D,2),dim1,dim2,1,conti+continc*real(n),0.)
+                    ! call pscont4(dx,dy,array_2D,mask,lbound(array_2D,1),ubound(array_2D,1),lbound(array_2D,2),ubound(array_2D,2),dim1,dim2,1,conti+continc*real(n),0.)
                 end do
             else
                 if(dim1-zerocolumns==1)then
-                    print*,'has only one nonzero column=',nonzerocol
-                    allocate(another(dim1+1,dim2));allocate(anothermask(dim1+1,dim2))
-                    another(1:dim1,1:dim2) = array_2D;another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
-                    anothermask(1:dim1,1:dim2)=mask;anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
+                    print*,'has only one nonzero column=',nonzerocol,'(butler_cont)'
+                    allocate(another(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                    allocate(anothermask(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                    another(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2)) = array_2D
+                    another(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = another(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
+                    anothermask(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2))=mask
+                    anothermask(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = anothermask(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
                     call plot(-dx/2.,0.,-3)
                     do n = 0,contquan
                         if(abs(width)<=2.5)then;call newpen2(2);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
@@ -8045,7 +8528,7 @@ module subroutines
                                 if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
                             end if
                         end if
-                        call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
+                        call pscont3(dx,dy,another,anothermask,lbound(array_2D,1),ubound(array_2D,1)+1,lbound(array_2D,2),ubound(array_2D,2),dim1,dim2,1,conti+continc*real(n),0.)
                     end do
                     deallocate(another);deallocate(anothermask)
                     call plot(dx/2.,0.,-3)
@@ -8056,7 +8539,6 @@ module subroutines
             if(dim1-zerocolumns>1)then
                 if(.not.present(gap))then
                     call plot(dx/2.,dy/2.,-3)
-                else;call plot(0.,dy/2.,-3)
                 end if
             else
                 if(.not.present(gap))then
@@ -8068,9 +8550,8 @@ module subroutines
             
         end subroutine
         ! paints areas within range with color given, other regions will not be painted. betcolork2
-        subroutine butler_mask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
+        subroutine butler_mask(array_2D,width,height,mask_ini,mask_fin,r,g,b,gap)
             implicit none
-            integer,intent(in)::dim1,dim2
             integer,intent(in),optional::gap
             real,intent(in),optional::r,g,b
             real,intent(in)::width,height
@@ -8078,13 +8559,14 @@ module subroutines
             real,intent(in)::mask_ini,mask_fin
             integer,dimension(size(array_2D,1),size(array_2D,2))::mask
             real::dx,dy,r1,g1,b1
-            integer::i,j
+            integer::i,j,dim1,dim2
             
             write(16,*)"% begin butler_mask"
 
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
-            end if
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2 (butler_mask)';stop
+            ! end if
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
             call box(width,height,3)
             if(.not.present(gap))then
                 dx = width/real(dim1);dy = height/real(dim2)
@@ -8107,21 +8589,21 @@ module subroutines
 
         end subroutine
         ! for integer arrays
-        subroutine butler_imask(array_2D,dim1,dim2,width,height,integer_in,r,g,b,gap)
+        subroutine butler_imask(array_2D,width,height,integer_in,r,g,b,gap)
             implicit none
-            integer,intent(in)::dim1,dim2,integer_in
+            integer,intent(in)::integer_in
             integer,intent(in),optional::gap
             real,intent(in),optional::r,g,b
             real,intent(in)::width,height
             integer,intent(in)::array_2D(:,:)
             integer,dimension(size(array_2D,1),size(array_2D,2))::mask
             real::dx,dy,r1,g1,b1
-            integer::i,j
+            integer::i,j,dim1,dim2
             
             write(16,*)"% begin butler_mask"
 
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
+            if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+                print*,'Array size /= dim1 or dim2(butler_imask)';stop
             end if
             call box(width,height,3)
             if(.not.present(gap))then
@@ -8145,9 +8627,8 @@ module subroutines
 
         end subroutine
         ! paints areas within range with color given, other regions will not be painted. pscolork
-        subroutine butler_psmask(array_2D,dim1,dim2,width,height,mask_ini,mask_fin,r,g,b,gap)
+        subroutine butler_psmask(array_2D,width,height,mask_ini,mask_fin,r,g,b,gap)
             implicit none
-            integer,intent(in)::dim1,dim2
             integer,intent(in),optional::gap
             real,intent(in),optional::r,g,b
             real,intent(in)::width,height
@@ -8157,13 +8638,14 @@ module subroutines
             real,dimension(:,:),allocatable::another
             integer,dimension(:,:),allocatable::anothermask
             real::dx,dy,r1,g1,b1
-            integer::i,j,zerocolumns,nonzerocol
+            integer::i,j,zerocolumns,nonzerocol,dim1,dim2
             
             write(16,*)"% begin butler_psmask"
             call newpen2(3)
-            if(size(array_2D,1)<dim1 .or. size(array_2D,2)<dim2) then 
-                print*,'Array size < dim1 or dim2';stop
-            end if
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2 (butler_psmask)';stop
+            ! end if
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
             call box(width,height,3)
 
             do i = 1, dim1
@@ -8182,12 +8664,12 @@ module subroutines
                 else;nonzerocol = i
                 end if
             end do
-            if(nonzerocol==0)then;print*,'zero matrix';return;endif
+            if(nonzerocol==0)then;print*,'zero matrix (butler_psmask)';return;endif
 
             if(dim1-zerocolumns>1)then
                 if(.not.present(gap))then
                     dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3)
-                else;dx = width/real(dim1);dy = height/real(dim2);call plot(0.,-dy/2.,-3)
+                else;dx = width/real(dim1);dy = height/real(dim2)
                 end if
             else
                 if(.not.present(gap))then
@@ -8214,7 +8696,6 @@ module subroutines
             if(dim1-zerocolumns>1)then
                 if(.not.present(gap))then
                     call plot(dx/2.,dy/2.,-3)
-                else;call plot(0.,dy/2.,-3)
                 end if
             else
                 if(.not.present(gap))then
@@ -8224,21 +8705,178 @@ module subroutines
             end if
             write(16,*)"% end butler_psmask"
         end subroutine
-    ! ps bois
+    ! END PS bois
     ! RANDOM
 end module subroutines
 
+module MITgcm
+    implicit none 
+    contains
+    ! creates array (and or corresponding bin, csv files) to be used on Northern or Southern Open Boundary conditions, calculated from any hydrographic data
+    subroutine DATA2OBJ(OLx,Nx,Nr,TimeLevels,DATA_2D,filenamewoex,createbin,createcsv,OBJ_2D)
+        use functions
+        implicit none 
+        integer,intent(in)::OLx,Nx,Nr,TimeLevels
+        real,intent(in)::DATA_2D(:,:)
+        real,dimension(:,:),allocatable::DATA_local
+        character(len=*),intent(in),optional::filenamewoex
+        real,dimension(1-OLx:Nx+OLx,Nr),intent(out),optional::OBJ_2D
+        real,dimension(1-OLx:Nx+OLx,Nr)::OBJ_local
+        real,dimension(1-OLx:Nx+OLx,Nr,TimeLevels)::OBJ_file_array
+        logical,intent(in),optional::createcsv,createbin
+        integer,dimension(:),allocatable::leapx,leapz! one less than the number of columns
+        real,dimension(:),allocatable::incx,incz ! for linear interpolation
+        integer::i,j,qx,rx,qz,rz,rx2,rz2,x,d,z,st,t
+        character(len=255)::csv_name,bin_name
+
+        allocate(DATA_local(size(DATA_2D,1),size(DATA_2D,2)));!print*,'DATA_local size =',size(DATA_local,1),size(DATA_local,2)
+        DATA_local = DATA_2D
+
+        qx = int((Nx-1)/(ubound(DATA_local,1)-lbound(DATA_local,1)));!print*,qx,'qx'
+        rx = mod((Nx-1),(ubound(DATA_local,1)-lbound(DATA_local,1)));!print*,rx,'rx'
+        qz = int((Nr-1)/(ubound(DATA_local,2)-lbound(DATA_local,2)));!print*,qz,'qz'
+        rz = mod((Nr-1),(ubound(DATA_local,2)-lbound(DATA_local,2)));!print*,rz,'rz'
+        if(qx==0.and.rx==0)then;print*,'Nx is too small for the given data';stop;endif
+        if(qz==0.and.rz==0)then;print*,'Nr is too small for the given data';stop;endif
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! get info about DATA array and OBJ array
+                                     ! the discrepencies in their dimensions are calculated 
+                ! find the optimal way to fill in the OBJ array (either by spreading or by intermittent filling of DATA array)
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(qx/=0)then
+            allocate(leapx(ubound(DATA_local,1)-1))
+            leapx(:) = qx
+            if(rx/=0)then 
+                leapx(1:rx) = leapx(1:rx) + 1
+            end if
+        else if(qx==0)then 
+            allocate(leapx(Nx-1))
+            leapx(1:rx) = int((ubound(DATA_local,1)-1)/(Nx-1))
+            rx2 = mod((ubound(DATA_local,1)-1),(Nx-1))
+            if(rx2/=0)then
+                leapx(1:rx2) = leapx(1:rx2) + 1
+            end if
+        end if
+        ! print*,leapx
+        if(qz/=0)then
+            allocate(leapz(ubound(DATA_local,2)-1))
+            leapz(:) = qz
+            if(rz/=0)then
+                leapz(1:rz) = leapz(1:rz) + 1
+            end if
+        else if(qz==0)then
+            allocate(leapz(Nr-1))
+            leapz(1:rz) = int((ubound(DATA_local,2)-1)/(Nr-1))
+            rz2 = mod((ubound(DATA_local,2)-1),(Nr-1))
+            if(rz2/=0)then
+                leapz(1:rz2) = leapz(1:rz2) + 1
+            end if
+        end if
+        ! print*,leapz
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! fill the OBJ array with the DATA array
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        st = 1;x = 1
+        do i = lbound(leapx,1), ubound(leapx,1)+1
+            d = 1;z = 1
+            do j = lbound(leapz,1), ubound(leapz,1)+1
+                OBJ_local(x,z) = DATA_local(st,d)
+                if(j==ubound(leapz,1)+1)then;cycle
+                else
+                    if(qz/=0)then;z = z + leapz(j);d = d + 1;endif
+                    if(qz==0)then;d = d + leapz(j);z = z + 1;endif
+                end if
+            end do
+            if(i==ubound(leapx,1)+1)then;cycle
+            else
+                if(qx/=0)then;x = x + leapx(i);st = st + leapx(i);endif
+                if(qx==0)then;st = st + leapx(i);x = x + 1;endif
+            end if
+        end do
+        ! print*,'final x =',x,'final z =',z,'final st =',st,'final d =',d
+
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                    ! copy data of the domain edges of the array to the overlapping grid fields
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        OBJ_local(1-OLx:0,:) = spread(OBJ_local(1,:), 1, OLx)
+        OBJ_local(Nx+1:Nx+OLx,:) = spread(OBJ_local(Nx,:), 1, OLx)
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                    ! linearly interpolate the data in between if necessary (qx,qz/=0)
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(qx/=0)then 
+            allocate(incx(Nr))
+            x = 1
+            do i = lbound(leapx,1), ubound(leapx,1)
+                do j = 1, leapx(i)-1
+                    incx = (OBJ_local(x+leapx(i),:) - OBJ_local(x,:))/leapx(i) ! tis an array of diffs
+                    OBJ_local(x+j,:) = OBJ_local(x,:) + incx*j
+                end do
+                x = x + leapx(i)
+            end do
+        else if(qz/=0)then
+            allocate(incz(Nx))
+            z = 1
+            do i = lbound(leapz,1), ubound(leapz,1)
+                do j = 1, leapz(i)-1
+                    incz = (OBJ_local(:,z+leapz(i)) - OBJ_local(:,z))/leapz(i) ! tis an array of diffs
+                    OBJ_local(:,z+j) = OBJ_local(:,z) + incz*j
+                end do
+                z = z + leapz(i)
+            end do
+        end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                    ! writing data to files or outgoing array
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(present(OBJ_2D))OBJ_2D = OBJ_local
+
+        print*,'OBJ_2D 1st dimension =',lbound(OBJ_local,1),'to',ubound(OBJ_local,1)
+        print*,'OBJ_2D 2nd dimension =',lbound(OBJ_local,2),'to',ubound(OBJ_local,2)
+        print*,'OBJ TimeLevels =',TimeLevels
+        do t = 1, TimeLevels
+            OBJ_file_array(:,:,t) = OBJ_local(:,:)
+        end do
+        if(present(filenamewoex))then
+            if(present(createcsv))then
+                if(createcsv)then
+                    csv_name = change_extension(filenamewoex,'csv')
+                    open(234,file = csv_name, status = 'replace', action = 'write', form = 'formatted')
+                        do j = 1, Nr
+                            write(234,*)OBJ_local(:,j)
+                        end do
+                    close(234)
+                end if
+            end if
+            if(present(createbin))then
+                if(createbin)then
+                    bin_name = change_extension(filenamewoex,'bin')
+                    open(235,file = bin_name,status = 'replace',form = 'unformatted',action = 'write',access = 'direct',recl = (ubound(OBJ_local,1)-lbound(OBJ_local,1)+1)*Nr*TimeLevels*4,convert='big_endian')
+                        write(235,rec=1)OBJ_file_array
+                    close(235)
+                end if
+            end if
+        end if
+      
+
+        deallocate(DATA_local,leapx,leapz)
+    end subroutine
+end module
+
 module constants
     implicit none
+    ! intrinsic::sin,cos,acos,asin,atan,atan2,exp,log,log10,sqrt,abs,mod,aimag,aint,anint,nint
     integer, parameter :: years = 15, months = 12, lines = 2, stations = 9, depth = 400
     real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.,geovel_5=0.
-    real,dimension(:),allocatable::r,g,b,r1,g1,b1,r2,g2,b2,r3,g3,b3,r4,g4,b4,r5,g5,b5,r6,g6,b6
+    real,dimension(:),allocatable::r1,g1,b1,r2,g2,b2,r3,g3,b3,r4,g4,b4,r5,g5,b5,r6,g6,b6
     character(len=4),dimension(12)::monthnames = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
     integer::y,m,l,st,d,i,j,k,n
+    real,parameter::pi = 3.14159265358979323846,g = 9.81
+    
 end module constants
 
 module always
     use subroutines
+    use MITgcm
     use constants
     use functions
     contains

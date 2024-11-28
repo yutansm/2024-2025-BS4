@@ -1066,3 +1066,201 @@
 2024-11-15 17:00:32 - Stopping monitoring...
 2024-11-15 17:02:35 - Monitoring /Users/Yuta/LABWORK/2024-2025-BS4 for New and Modified .ps Files...
 2024-11-15 17:07:14 - Monitoring /Users/Yuta/LABWORK/2024-2025-BS4 for new and modified .ps files...
+2024-11-20 18:08:40 - Monitoring /Users/Yuta/LABWORK/2024-2025-BS4 for new and modified .ps files...
+2024-11-20 18:08:45 - Detected change in .ps file: 1.ps
+2024-11-20 18:08:46 - Converted 1.ps to 1.pdf
+2024-11-20 18:09:02 - Detected change in .ps file: 1.ps
+2024-11-20 18:09:08 - Converted 1.ps to 1.pdf
+2024-11-20 18:09:08 - Detected change in .ps file: 1.ps
+2024-11-20 18:09:14 - Converted 1.ps to 1.pdf
+2024-11-20 18:21:31 - Detected change in .ps file: 1.ps
+2024-11-20 18:21:31 - Converted 1.ps to 1.pdf
+2024-11-20 18:23:03 - Detected change in .ps file: 1.ps
+2024-11-20 18:23:07 - Converted 1.ps to 1.pdf
+2024-11-20 18:23:07 - Detected change in .ps file: 1.ps
+2024-11-20 18:23:10 - Converted 1.ps to 1.pdf
+2024-11-20 18:23:14 - Detected change in .ps file: 1.ps
+2024-11-20 18:23:14 - Converted 1.ps to 1.pdf
+2024-11-20 18:41:49 - Detected change in .ps file: 1.ps
+2024-11-20 18:41:50 - Converted 1.ps to 1.pdf
+2024-11-20 18:41:54 - Detected change in .ps file: 1.ps
+2024-11-20 18:41:56 - Converted 1.ps to 1.pdf
+2024-11-20 18:42:26 - Detected change in .ps file: 1.ps
+2024-11-20 18:42:26 - Converted 1.ps to 1.pdf
+2024-11-20 18:43:20 - Detected change in .ps file: 1.ps
+2024-11-20 18:43:20 - Converted 1.ps to 1.pdf
+2024-11-20 18:43:21 - Detected change in .ps file: 1.ps
+2024-11-20 18:43:21 - Converted 1.ps to 1.pdf
+2024-11-25 15:58:31 - Detected change in .ps file: 1.ps
+2024-11-25 15:58:31 - Converted 1.ps to 1.pdf
+2024-11-25 15:58:55 - Detected change in .ps file: 1.ps
+2024-11-25 15:58:56 - Converted 1.ps to 1.pdf
+2024-11-25 15:59:13 - Detected change in .ps file: 1.ps
+2024-11-25 15:59:13 - Converted 1.ps to 1.pdf
+2024-11-25 15:59:32 - Detected change in .ps file: 1.ps
+2024-11-25 15:59:32 - Converted 1.ps to 1.pdf
+2024-11-25 15:59:49 - Detected change in .ps file: 1.ps
+2024-11-25 15:59:49 - Converted 1.ps to 1.pdf
+2024-11-25 16:00:11 - Detected change in .ps file: 1.ps
+2024-11-25 16:00:12 - Failed to convert 1.pdf
+2024-11-25 16:00:57 - Stopping monitoring...
+2024-11-25 16:01:34 - Monitoring /Users/Yuta/LABWORK/2024-2025-BS4 for new and modified .ps files...
+2024-11-25 16:02:37 - Detected change in .ps file: 1.ps
+2024-11-25 16:02:37 - Failed to convert 1.pdf
+2024-11-25 16:02:57 - Detected change in .ps file: 1.ps
+2024-11-25 16:02:57 - Failed to convert 1.pdf
+2024-11-25 16:04:06 - Detected change in .ps file: 1.ps
+2024-11-25 16:04:06 - Converted 1.ps to 1.pdf
+2024-11-25 16:07:34 - Detected change in .ps file: 1.ps
+2024-11-25 16:07:34 - Converted 1.ps to 1.pdf
+2024-11-25 16:11:07 - Detected change in .ps file: 1.ps
+2024-11-25 16:11:07 - Converted 1.ps to 1.pdf
+2024-11-25 16:12:43 - Detected change in .ps file: 1.ps
+2024-11-25 16:12:43 - Converted 1.ps to 1.pdf
+2024-11-25 16:13:12 - Detected change in .ps file: 1.ps
+2024-11-25 16:13:12 - Converted 1.ps to 1.pdf
+2024-11-25 16:23:22 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:23:22 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:24:14 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:24:15 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:24:42 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:24:42 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:25:01 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:25:01 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:26:52 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:26:52 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:27:21 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:27:21 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:28:58 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:28:58 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:29:18 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:29:18 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:29:47 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:29:47 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:33:55 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:33:55 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:34:09 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:34:09 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 16:34:26 - Detected change in .ps file: input_OBS.ps
+2024-11-25 16:34:26 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:11:33 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:11:34 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:12:22 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:12:22 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:16:09 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:16:09 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:17:24 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:17:24 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:17:51 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:17:51 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:23:23 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:23:24 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:25:10 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:25:10 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:26:30 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:26:30 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:28:03 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:28:03 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:30:19 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:30:19 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:30:40 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:30:40 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 19:33:04 - Detected change in .ps file: input_OBS.ps
+2024-11-25 19:33:05 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:08:41 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:08:42 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:10:45 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:10:45 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:12:34 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:12:35 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:20:06 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:20:07 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:29:26 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:29:26 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:31:32 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:31:32 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:43:27 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:43:27 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:48:12 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:48:12 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:50:00 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:50:00 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 20:58:33 - Detected change in .ps file: input_OBS.ps
+2024-11-25 20:58:33 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:00:39 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:00:39 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:02:20 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:02:20 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:18:30 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:18:30 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:19:13 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:19:13 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:22:34 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:22:34 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:23:22 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:23:22 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:23:38 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:23:39 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:24:20 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:24:20 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:25:23 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:25:24 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:26:34 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:26:34 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:27:01 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:27:01 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:28:17 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:28:17 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:28:45 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:28:46 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:29:33 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:29:33 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:33:46 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:33:50 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:33:51 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:33:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:34:54 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:34:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:39:38 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:39:38 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 21:40:53 - Detected change in .ps file: input_OBS.ps
+2024-11-25 21:40:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:16:54 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:16:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:18:16 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:18:16 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:35:27 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:35:27 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:36:34 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:36:34 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:36:53 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:36:53 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:36:54 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:36:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:44:49 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:44:49 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:44:50 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:44:50 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:45:16 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:45:16 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 22:50:54 - Detected change in .ps file: input_OBS.ps
+2024-11-25 22:50:54 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:22:04 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:22:04 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:23:29 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:23:29 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:27:29 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:27:29 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:28:16 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:28:16 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:33:39 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:33:39 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:33:40 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:33:40 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:34:23 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:34:24 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-25 23:34:46 - Detected change in .ps file: input_OBS.ps
+2024-11-25 23:34:46 - Converted input_OBS.ps to input_OBS.pdf
+2024-11-28 13:44:43 - Monitoring /Users/Yuta/LABWORK/2024-2025-BS4 for new and modified .ps files...
+2024-11-28 14:45:23 - Detected change in .ps file: input_OBS.ps
+2024-11-28 14:45:23 - File no longer exists: input_OBS.ps
