@@ -529,6 +529,18 @@ module functions
         write(tmp, '(i0)') i
         str = trim(tmp)
     end function int2str
+    function real2str(r,digits_after_point) result(str)
+        real, intent(in) :: r
+        integer, intent(in), optional :: digits_after_point
+        character(:), allocatable :: str
+        character(len=32) :: tmp
+        if (present(digits_after_point)) then
+            write(tmp, '(f0.'//int2str(digits_after_point)//')') r
+        else
+            write(tmp, '(f0.1)') r
+        end if
+        str = trim(tmp)
+    end function real2str
     function remove_extension(filename) result(filenamewoex)
         implicit none
         character(len=*), intent(in) :: filename
@@ -904,6 +916,12 @@ module origin
         if(len_trim(label)>20)then;print*,'your label is too long';stop;endif
         if(savecount>100)then;print*,'you have too many labels';stop;endif
         write(ounit,*) '% begin plotsave'
+        do i = 1, savecount
+            if(labels(i)==label)then
+                print*,label,' label already exists'
+                stop;return
+            end if
+        end do
         savecount = savecount +1
         labels(savecount) = trim(label)
         label_x(savecount) = xn;label_y(savecount) = yn
@@ -6456,20 +6474,83 @@ module subroutines
 
 
         end subroutine
-        ! returns an array with one less column than the input array,arguments are all real(kind=4),the bottom row is the reference surface 
+        ! calculates dynamic height at the deepest point in [m], a 2d array is treated as a series of column arrays, same with calc_geovel
+        subroutine calc_dh(dh_1D, temp_2D, sal_2D, den_2D, delta_zdb)
+            implicit none
+            real, intent(in), optional :: temp_2D(:,:), sal_2D(:,:)
+            real, intent(in), optional :: den_2D(:,:)
+            real, dimension(:,:), allocatable :: den_2D_local
+            real, intent(out), allocatable :: dh_1D(:)
+            real,intent(in),optional::delta_zdb
+            integer :: i, j
+            real(kind=8) :: sum_p, sum_d, g, delta_zdb_local
+            real(kind=8), dimension(:,:), allocatable :: integral_D, a
+
+            if (present(temp_2D) .and. present(sal_2D)) then
+                if (size(temp_2D, 1) /= size(sal_2D, 1)) then
+                    print *, 'Temperature and Salinity arrays must have the same size'
+                    stop
+                end if
+                if (size(temp_2D, 2) /= size(sal_2D, 2)) then
+                    print *, 'Temperature and Salinity arrays must have the same size'
+                    stop
+                end if
+                allocate(den_2D_local(lbound(temp_2D, 1):ubound(temp_2D, 1), lbound(temp_2D, 2):ubound(temp_2D, 2)))
+                call calc_density(temp_2D, sal_2D, den_2D_local)
+            else if (present(den_2D)) then
+                allocate(den_2D_local(lbound(den_2D, 1):ubound(den_2D, 1), lbound(den_2D, 2):ubound(den_2D, 2)))
+                den_2D_local = den_2D
+            else
+                print *, 'A pair of Temperature and Salinity arrays or a Density array is required'
+                stop
+            end if
+            ! print*,size(den_2D_local,1),size(den_2D_local,2)
+        
+            allocate(integral_D(lbound(den_2D_local, 1):ubound(den_2D_local, 1), lbound(den_2D_local, 2):ubound(den_2D_local, 2)))
+            allocate(a(lbound(den_2D_local, 1):ubound(den_2D_local, 1), lbound(den_2D_local, 2):ubound(den_2D_local, 2)))                
+            g = 9.81d0
+            sum_p = 0.0d0
+            sum_d = 0.0d0
+            if(present(delta_zdb))then
+                delta_zdb_local = real(delta_zdb,kind = 8)
+            else
+                delta_zdb_local = 1.0d0
+            end if
+            ! Integration of (specific volume) * dp = dynamic height
+            do i = lbound(den_2D_local, 1), ubound(den_2D_local, 1)
+                do j = lbound(den_2D_local, 2), ubound(den_2D_local, 2)
+                    ! print*,i,j
+                    if (den_2D_local(i, j) /= 0.0) then
+                        a(i, j) = 1.0d0 / (1000.0d0 + real(den_2D_local(i, j), kind=8)) ! Specific volume
+                    else
+                        a(i, j) = 0.0d0
+                    end if
+                    integral_D(i, j) = sum_d + a(i, j) * (10.0d0**(4.0d0)) * real(delta_zdb_local,kind=8) / g !1db is roughly 10^4 pascals
+                    sum_d = integral_D(i, j)
+                end do
+                sum_p = 0.0d0
+                sum_d = 0.0d0
+            end do
+            dh_1d = real(integral_D(:,ubound(integral_D, 2)),kind=4) ! dynamic height of the deepest point
+            deallocate(integral_D, a, den_2D_local)
+            return
+        
+        end subroutine 
+        ! returns an array with one less column than the input array,arguments are all real(kind=4),the bottom row is the reference surface. unit is[m]
         subroutine calc_geovel(geovel_2D, delta_xm, delta_zdb, temp_2D, sal_2D, den_2D, f, lat)
             implicit none
             real, intent(in), optional :: temp_2D(:,:), sal_2D(:,:)
             real, intent(in), optional :: den_2D(:,:)
             real, dimension(:,:), allocatable :: den_2D_local
             real, intent(out), allocatable :: geovel_2D(:,:)
-            real, intent(in) :: delta_xm,delta_zdb
+            real, intent(in) :: delta_xm
+            real, intent(in),optional::delta_zdb
             real, intent(in), optional :: f, lat
             intrinsic :: sin, cos, tan, asin, acos
             real, parameter :: omega = 7.2921*(10.**(-5.))
             real :: f_local, pi
             integer :: i, j
-            real(kind=8) :: sum_p, sum_d, g, diff
+            real(kind=8) :: sum_p, sum_d, g, diff, delta_zdb_local
             real(kind=8), dimension(:,:), allocatable :: integral_D, a, delta_D, v_ref0, v_refbottom
         
             ! Calculation of horizontal Coriolis factor
@@ -6514,7 +6595,12 @@ module subroutines
             g = 9.81d0
             sum_p = 0.0d0
             sum_d = 0.0d0
-        
+
+            if(present(delta_zdb))then
+                delta_zdb_local = real(delta_zdb,kind = 8)
+            else
+                delta_zdb_local = 1.0d0
+            end if  
             ! Integration of (specific volume) * dp = dynamic height
             do i = lbound(den_2D_local, 1), ubound(den_2D_local, 1)
                 do j = lbound(den_2D_local, 2), ubound(den_2D_local, 2)
@@ -6523,8 +6609,8 @@ module subroutines
                     else
                         a(i, j) = 0.0d0
                     end if
-                    if (j == lbound(den_2D_local, 2)) cycle
-                    integral_D(i, j) = sum_d + a(i, j) * (10.0d0**(4.0d0)) * real(delta_zdb,kind=8) !1db is roughly 10^4 pascals
+                    ! if (j == lbound(den_2D_local, 2)) cycle
+                    integral_D(i, j) = sum_d + a(i, j) * (10.0d0**(4.0d0)) * real(delta_zdb_local,kind=8) !1db is roughly 10^4 pascals
                     sum_d = integral_D(i, j)
                 end do
                 sum_p = 0.0d0
@@ -6539,7 +6625,7 @@ module subroutines
                     else
                         delta_D(i, j) = 0.0d0
                     end if
-                    v_ref0(i, j) = -delta_D(i, j) / (real(f_local, kind=8) * real(delta_xm, kind=8)) * 100.0d0
+                    v_ref0(i, j) = -delta_D(i, j) / (real(f_local, kind=8) * real(delta_xm, kind=8)) 
                 end do
                 diff = v_ref0(i, ubound(den_2D_local, 2)) * (-1.0d0)
                 v_refbottom(i, :) = v_ref0(i, :) + diff
@@ -8449,7 +8535,7 @@ module subroutines
             deallocate(r1,g1,b1)
         end subroutine
         ! can draw contours on 1 column arrays * dirty due to unnecessary use of bounds
-        subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap)
+        subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap,maskn)
             implicit none
             real,intent(in)::maskval,conti,continc,width,height
             real,intent(in)::array_2D(:,:)
@@ -8458,6 +8544,7 @@ module subroutines
             integer,dimension(:,:),allocatable::anothermask
             real,intent(in),optional::r,g,b
             integer,intent(in),optional::thicc,gap
+            logical,intent(in),optional::maskn
             real::dx,dy
             integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0,dim1,dim2
 
@@ -8482,7 +8569,15 @@ module subroutines
                 else;nonzerocol = i
                 end if
             end do
-
+            if(present(maskn))then
+                if(maskn)then 
+                    if(present(gap))then
+                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.4,g = 0.4,b = 0.4,gap = gap)
+                    else
+                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.4,g = 0.4,b = 0.4)
+                    end if
+                end if
+            end if
             if(nonzerocol==0)then;print*,'zero matrix (butler_cont)';endif
 
             if(dim1-zerocolumns>1)then ! normal case
@@ -8736,8 +8831,8 @@ module MITgcm
         rx = mod((Nx-1),(ubound(DATA_local,1)-lbound(DATA_local,1)));!print*,rx,'rx'
         qz = int((Nr-1)/(ubound(DATA_local,2)-lbound(DATA_local,2)));!print*,qz,'qz'
         rz = mod((Nr-1),(ubound(DATA_local,2)-lbound(DATA_local,2)));!print*,rz,'rz'
-        if(qx==0.and.rx==0)then;print*,'Nx is too small for the given data';stop;endif
-        if(qz==0.and.rz==0)then;print*,'Nr is too small for the given data';stop;endif
+        ! if(qx==0.and.rx==0)then;print*,'Nx is too small for the given data';stop;endif
+        ! if(qz==0.and.rz==0)then;print*,'Nr is too small for the given data';stop;endif
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                         ! get info about DATA array and OBJ array
@@ -8790,7 +8885,7 @@ module MITgcm
             end do
             if(i==ubound(leapx,1)+1)then;cycle
             else
-                if(qx/=0)then;x = x + leapx(i);st = st + leapx(i);endif
+                if(qx/=0)then;x = x + leapx(i);st = st + 1;endif
                 if(qx==0)then;st = st + leapx(i);x = x + 1;endif
             end if
         end do
