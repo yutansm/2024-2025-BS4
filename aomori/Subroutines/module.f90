@@ -11,8 +11,8 @@ module mypsstat
     integer::savecount = 0,plots2count = 0,tolog = 254
     real,parameter::precision = 1.5*10.**(-4)
     real::xn,yn
-    character(len=20),dimension(100)::labels
-    real,dimension(100)::label_x,label_y
+    character(len=20),dimension(100)::labels=''
+    real,dimension(100)::label_x=0.,label_y=0.
 end module mypsstat
 
 module functions
@@ -942,6 +942,11 @@ module origin
             end if
         end do
     end 
+    subroutine plotomit
+        labels = ''
+        label_x = 0.
+        label_y = 0.
+    end subroutine
     ! x and y are ratios
     subroutine plotmove(x,y)
         real,intent(in)::x,y
@@ -1365,6 +1370,39 @@ module origin
             write(ounit,*) "% end arohd"
             return
     end
+    ! types = 1~7 
+    subroutine arrow(x0,y0,x1,y1,width,line_thickness,arrowtype)
+        implicit none
+        real,intent(in)::x0,y0,x1,y1
+        real,intent(in),optional::width
+        integer,intent(in),optional::arrowtype,line_thickness
+        real:: xl,yl,width_local
+        integer::type_local
+        
+        if(present(width))then
+            width_local = width
+        else
+            width_local = sqrt((x1-x0)**2+(y1-y0)**2)/10.
+        end if
+        if(present(line_thickness))then 
+            call newpen2(line_thickness)
+        else
+            call newpen2(3)
+        end if
+        if(present(arrowtype))then
+            type_local = arrowtype
+        else
+            type_local = 4
+        end if
+        xl = x0+real(x1-x0)/4.*3.
+        yl = y0+real(y1-y0)/4.*3.
+
+        call plot(x0,y0,3)
+        call plot(xl,yl,2)
+        call arohd(xl,yl,x1,y1,sqrt((x1-xl)**2+(y1-yl)**2),width_local,type_local)
+
+        return
+    end 
     subroutine factor(fct)
         write(ounit, '(2f9.4,2x,a4)') fct,fct , " sc "
         return
@@ -6519,7 +6557,6 @@ module subroutines
             ! Integration of (specific volume) * dp = dynamic height
             do i = lbound(den_2D_local, 1), ubound(den_2D_local, 1)
                 do j = lbound(den_2D_local, 2), ubound(den_2D_local, 2)
-                    ! print*,i,j
                     if (den_2D_local(i, j) /= 0.0) then
                         a(i, j) = 1.0d0 / (1000.0d0 + real(den_2D_local(i, j), kind=8)) ! Specific volume
                     else
@@ -8572,9 +8609,9 @@ module subroutines
             if(present(maskn))then
                 if(maskn)then 
                     if(present(gap))then
-                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.4,g = 0.4,b = 0.4,gap = gap)
+                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.6,g = 0.6,b = 0.6,gap = gap)
                     else
-                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.4,g = 0.4,b = 0.4)
+                        call butler_psmask(array_2D,width,height,-10.**10.,0.,r = 0.6,g = 0.6,b = 0.6)
                     end if
                 end if
             end if
@@ -8800,6 +8837,59 @@ module subroutines
             end if
             write(16,*)"% end butler_psmask"
         end subroutine
+        ! as of now, mask applies to both x and y arrays
+        subroutine butler_vector(x_2D,y_2D,width,height,scalef,maskini,maskfin,arrowwidth,line_thickness,arrowtype,gap)
+            implicit none
+            real,intent(in)::x_2D(:,:),y_2D(:,:),width,height
+            real,intent(in),optional::maskini,maskfin,arrowwidth,scalef
+            integer,intent(in),optional::gap,arrowtype,line_thickness
+            real::dx,dy,arrowwidth_local,scalef_local,x0,y0,x1,y1
+            integer::dim1,dim2,x,y,arrowtype_local
+
+            write(ounit,*)'%begin butler_vector'
+            call box(width,height,3)
+
+            if(size(x_2D,1)/=size(y_2D,1))then;print*,'Array size do not match in the 1st dimension (butler_vector)';stop;endif
+            if(size(x_2D,2)/=size(y_2D,2))then;print*,'Array size do not match in the 2nd dimension (butler_vector)';stop;endif
+
+            dim1 = size(x_2D,1);dim2 = size(x_2D,2)
+            if(.not.present(gap))then
+                dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3) 
+            else;dx = width/real(dim1);dy = height/real(dim2)
+            end if
+
+            if(present(scalef))then;scalef_local = scalef;else;scalef_local = 1.;end if
+
+            ! if(present(line_thickness))then;call newpen2(line_thickness);else;call newpen2(1);end if
+            do y = 1, dim2
+                do x = 1, dim1
+                    if(.not.present(gap))then
+                        x0 = real(x-1)*dx;y0 = real(y-1)*dy
+                    else;x0 = real(x-1)*dx + dx/2.;y0 = real(y-1)*dy + dy/2.
+                    endif
+                    x1 = x0 + x_2D(x,y)*scalef;y1 = y0 + y_2D(x,y)*scalef
+                    if(present(arrowwidth))then
+                        arrowwidth_local = arrowwidth
+                    else;arrowwidth_local = sqrt((x1-x0)**2+(y1-y0)**2)/10.
+                    end if
+                    if(present(arrowtype))then;arrowtype_local = arrowtype;else;arrowtype_local = 4;end if
+
+                    if(present(maskini).and.present(maskfin))then
+                        if(maskini<=x_2D(x,y).and.x_2D(x,y)<=maskfin.and.maskini<=y_2D(x,y).and.y_2D(x,y)<=maskfin)then
+                            call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
+                        else;cycle ! skip the vector
+                        end if
+                    else
+                        call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
+                    end if
+                end do
+            end do
+
+            if(.not.present(gap))call plot(dx/2.,dy/2.,-3)
+            write(ounit,*)'%end butler_vector'
+            return
+
+        end subroutine
     ! END PS bois
     ! RANDOM
 end module subroutines
@@ -8955,6 +9045,81 @@ module MITgcm
 
         deallocate(DATA_local,leapx,leapz)
     end subroutine
+    ! subroutine nc2array()
+    !     use netcdf
+    !     ! data obtainment
+    !     ! Open the NetCDF file
+    !     status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
+    !     if (status /= nf90_noerr) call handle_err(status)
+
+    !     ! Get information about the file
+    !     status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
+    !     if (status /= nf90_noerr) call handle_err(status)
+
+    !     print *, "Number of variables:", nvars
+
+    !     ! Iterate through all variables to get basic idea of the file
+    !     do varid = 1, nvars
+    !         ! Get variable name and number of dimensions
+    !         status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
+    !         if (status /= nf90_noerr) call handle_err(status)
+
+    !         print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+
+    !         ! Allocate arrays for dimension IDs and lengths
+    !         allocate(dimids(ndims), dimlens(ndims))
+
+    !         ! Get dimension IDs
+    !         status = nf90_inquire_variable(ncid, varid, dimids=dimids)
+    !         if (status /= nf90_noerr) call handle_err(status)
+
+    !         ! Get dimension lengths
+    !         do i = 1, ndims
+    !             status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
+    !             if (status /= nf90_noerr) call handle_err(status)
+    !             print *, "  Dimension ", i, " length: ", dimlens(i)
+    !         end do
+
+    !         ! Allocate arrays based on variable name and then read data
+    !         select case(trim(varname))
+    !         case('U')
+    !             allocate(U(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+    !             status = nf90_get_var(ncid, varid, U)
+    !             print*,'minimum U:',minval(U);print*,'maximum U:',maxval(U)
+    !         case('V')
+    !             allocate(V(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+    !             status = nf90_get_var(ncid, varid, V)
+    !             print*,'minimum V:',minval(V);print*,'maximum V:',maxval(V)
+    !         case('W')
+    !             allocate(W(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+    !             status = nf90_get_var(ncid, varid, W)
+    !             print*,'minimum W:',minval(W);print*,'maximum W:',maxval(W)
+    !         case('Temp')
+    !             allocate(temp(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+    !             status = nf90_get_var(ncid, varid, temp)
+    !             print*,'minimum Temp:',minval(temp);print*,'maximum Temp:',maxval(temp)
+    !         case('S')
+    !             allocate(sal(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+    !             status = nf90_get_var(ncid, varid, sal)
+    !             print*,'minimum S:',minval(sal);print*,'maximum S:',maxval(sal)
+    !         case('Eta')
+    !             allocate(eta(dimlens(1), dimlens(2), dimlens(3)))
+    !             status = nf90_get_var(ncid, varid, eta)
+    !             print*,'minimum Eta:',minval(eta);print*,'maximum Eta:',maxval(eta)
+    !         end select
+    !         deallocate(dimids, dimlens)
+
+
+
+    !         print *, "------------------------"
+    !     end do
+
+    !     ! Close the file
+    !     status = nf90_close(ncid)
+    !     if (status /= nf90_noerr) call handle_err(status)
+
+    !     ! data obtainment ends here
+    ! end subroutine
 end module
 
 module constants
