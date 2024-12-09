@@ -1,21 +1,14 @@
 program plot_model
-    use netcdf
     use always
     implicit none
-
     character(len=256) :: ncfile,psfile
-    integer :: ncid, status
-    integer :: nvars, ndims, ngatts, unlimdimid
-    integer :: varid
-    character(len=nf90_max_name) :: varname
-    integer, allocatable :: dimids(:), dimlens(:)
     real,dimension(:,:,:,:),allocatable::U,V,W,temp,sal
     real,dimension(:,:,:),allocatable::eta
     integer,dimension(:),allocatable::iterations
     real,parameter::width = 2.5,height=4.
     integer::initial_day,day_inc,number_of_graphs,d1,d2,d3,d4,y1,y2,y3,y4,pages,qnog,rnog,gridsx,gridsy,gridsz,gridsizex,gridsizey,gridsizez
-    ncfile = "../MITgcm/verification/Yuta's_first_model/run_bdlvr/lv6x/results/state.nc"
-    psfile = "../MITgcm/verification/Yuta's_first_model/run_bdlvr/lv6x.ps"
+    ncfile = "../MITgcm/verification/Yuta's_first_model/run_bdlvr/lv8x/results/state.nc"
+    psfile = "../MITgcm/verification/Yuta's_first_model/run_bdlvr/lv8x100days.ps"
     gridsx = 60
     gridsy = 100
     gridsz = 20
@@ -23,7 +16,7 @@ program plot_model
     gridsizey = 10000
     gridsizez = 20
     initial_day = 0
-    day_inc = 4                
+    day_inc = 10           
     number_of_graphs = 10           
     d1 = 1                          !depths (in grids) to plot in xy planes
     d2 = 2
@@ -57,78 +50,12 @@ program plot_model
         end if
     end if
         
-! data obtainment
-    ! Open the NetCDF file
-    status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
-    if (status /= nf90_noerr) call handle_err(status)
+    call state2mat(ncfile,Uc=U,Vc=V,T=temp,S=sal,Eta=eta,info = .true.)
+    if((number_of_graphs-1)*day_inc+initial_day>size(temp,4))then 
+        print*,'number of graphs exceeds the number of days in the model'
+        stop
+    end if
 
-    ! Get information about the file
-    status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
-    if (status /= nf90_noerr) call handle_err(status)
-
-    print *, "Number of variables:", nvars
-
-    ! Iterate through all variables to get basic idea of the file
-    do varid = 1, nvars
-        ! Get variable name and number of dimensions
-        status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
-
-        ! Allocate arrays for dimension IDs and lengths
-        allocate(dimids(ndims), dimlens(ndims))
-
-        ! Get dimension IDs
-        status = nf90_inquire_variable(ncid, varid, dimids=dimids)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        ! Get dimension lengths
-        do i = 1, ndims
-            status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
-            if (status /= nf90_noerr) call handle_err(status)
-            print *, "  Dimension ", i, " length: ", dimlens(i)
-        end do
-
-        ! Allocate arrays based on variable name and then read data
-        select case(trim(varname))
-        case('U')
-            allocate(U(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-            status = nf90_get_var(ncid, varid, U)
-            print*,'minimum U:',minval(U);print*,'maximum U:',maxval(U)
-        case('V')
-            allocate(V(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-            status = nf90_get_var(ncid, varid, V)
-            print*,'minimum V:',minval(V);print*,'maximum V:',maxval(V)
-        case('W')
-            allocate(W(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-            status = nf90_get_var(ncid, varid, W)
-            print*,'minimum W:',minval(W);print*,'maximum W:',maxval(W)
-        case('Temp')
-            allocate(temp(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-            status = nf90_get_var(ncid, varid, temp)
-            print*,'minimum Temp:',minval(temp);print*,'maximum Temp:',maxval(temp)
-        case('S')
-            allocate(sal(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-            status = nf90_get_var(ncid, varid, sal)
-            print*,'minimum S:',minval(sal);print*,'maximum S:',maxval(sal)
-        case('Eta')
-            allocate(eta(dimlens(1), dimlens(2), dimlens(3)))
-            status = nf90_get_var(ncid, varid, eta)
-            print*,'minimum Eta:',minval(eta);print*,'maximum Eta:',maxval(eta)
-        end select
-        deallocate(dimids, dimlens)
-
-
-
-        print *, "------------------------"
-    end do
-
-    ! Close the file
-    status = nf90_close(ncid)
-    if (status /= nf90_noerr) call handle_err(status)
-
-! data obtainment ends here
     call plots2(psfile=psfile, oopt='otops', h='x,y plane, Temp and Sal')
     call plot(0.8,-height,-3)
     call plotsave('row1')
@@ -208,7 +135,10 @@ program plot_model
                 call memori(gridsx,0.05,10,width,0.,x = width/2.,y = 0.)
                 if(i==1)call symbolc(width/2.,height+0.5,0.6,'day'//trim(int2str((j-1)*day_inc+initial_day)))
                 ! call butler_psmask(V(:,:,d,(j-1)*day_inc+initial_day+1),width,height,-1.,0.,r = 0.4 ,g = 0.4 ,b = 0.4)
-                call butler_cont(V(:,:,d,(j-1)*day_inc+initial_day+1),width,height,0.,-0.2,0.02,thicc = 5,maskn = .true.) 
+                ! call butler_cont(V(:,:,d,(j-1)*day_inc+initial_day+1),width,height,0.,-0.2,0.02,thicc = 5,maskn = .true.) 
+                ! print*,(j-1)*day_inc+initial_day+1
+                ! print*,size(V(:,:,d,(j-1)*day_inc+initial_day+1))
+                call butler_vector(U(:,:,d,(j-1)*day_inc+initial_day+1),V(:,:,d,(j-1)*day_inc+initial_day+1),width,height,scalef = 1.,line_thickness = 2,thinfx = 3,thinfy = 4)
                 call plot(width+0.2,0.,-3)
             end do
             call plotback(int2str(i))

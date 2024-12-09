@@ -1397,6 +1397,7 @@ module origin
         xl = x0+real(x1-x0)/4.*3.
         yl = y0+real(y1-y0)/4.*3.
 
+        call gmark(x0,y0,sqrt((x1-x0)**2+(y1-y0)**2)/1000.,1)
         call plot(x0,y0,3)
         call plot(xl,yl,2)
         call arohd(xl,yl,x1,y1,sqrt((x1-xl)**2+(y1-yl)**2),width_local,type_local)
@@ -7024,6 +7025,27 @@ module subroutines
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
         end subroutine    
+        subroutine griddedbox(width,height,thickness,ngridsx,ngridsy,x,y,dashy)
+            implicit none
+            real,intent(in)::width,height
+            integer,intent(in)::ngridsx,ngridsy,thickness
+            integer,intent(in),optional::dashy
+            real,intent(in),optional::x,y
+            if(present(x).and.present(y))call plot(x,y,-3)
+            if(present(x).and. .not.present(y))call plot(x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,y,-3)
+            call newpen2(thickness)
+            call box(width,height,thickness)
+            if(present(dashy))then
+                call floating_lines(width,0.,ngridsy-1,thickness,y_inc = height/real(ngridsy),y = height/real(ngridsy),dashy = dashy)
+                call floating_lines(height,90.,ngridsx-1,thickness,x_inc = width/real(ngridsx),x = width/real(ngridsx),dashy = dashy)
+            else;call floating_lines(width,0.,ngridsy-1,thickness,y_inc = height/real(ngridsy),y = height/real(ngridsy),dashy = dashy)
+                call floating_lines(height,90.,ngridsx-1,thickness,x_inc = width/real(ngridsx),x = width/real(ngridsx))
+            end if
+            if(present(x).and.present(y))call plot(-x,-y,-3)
+            if(present(x).and. .not.present(y))call plot(-x,0.,-3)
+            if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        end subroutine
         subroutine floating_numbers(ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,rangle,float_quantity,x,y)
             real,intent(in)::symbol_size,x_inc,y_inc,rangle,ini_num,num_inc
             real,intent(in),optional::x,y
@@ -7309,7 +7331,7 @@ module subroutines
                 if(angle == 0) then
                     do n = 0, iterations
                         if(mod(n,symbol_freq)==0) then
-                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.4*symbol_size,2)
+                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.3*symbol_size,2)
                             call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                         else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.2*symbol_size,2)
                         end if
@@ -7317,7 +7339,7 @@ module subroutines
                 else if(angle == 90) then
                     do n = 0, iterations
                         if(mod(n,symbol_freq)==0) then
-                            call plot(0.,real(n)*memori_diff,3);call plot(0.4*symbol_size,real(n)*memori_diff,2)
+                            call plot(0.,real(n)*memori_diff,3);call plot(0.3*symbol_size,real(n)*memori_diff,2)
                             call number(0.5*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                         else;call plot(0.,real(n)*memori_diff,3);call plot(0.2*symbol_size,real(n)*memori_diff,2)
                         end if
@@ -7325,8 +7347,8 @@ module subroutines
                 else if (angle == -90) then
                     do n = 0, iterations
                         if(mod(n,symbol_freq)==0) then
-                            call plot(0.,real(n)*memori_diff,3);call plot(-0.4*symbol_size,real(n)*memori_diff,2)
-                            call numberr(-0.4*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+                            call plot(0.,real(n)*memori_diff,3);call plot(-0.3*symbol_size,real(n)*memori_diff,2)
+                            call numberr(-0.6*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
                         else;call plot(0.,real(n)*memori_diff,3);call plot(-0.2*symbol_size,real(n)*memori_diff,2)
                         end if
                     end do
@@ -7479,7 +7501,7 @@ module subroutines
                     if (mod(n,12)/=0) then;m = mod(n,12)
                     else if(mod(n,12)==0) then;m = 12
                     else;end if
-                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.4*symbol_size,2)
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.3*symbol_size,2)
                     ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
                     printm = m
                     if(present(num_freq))then
@@ -7498,7 +7520,7 @@ module subroutines
                     if (mod(n,12)/=0) then;m = mod(n,12)
                     else if(mod(n,12)==0) then;m = 12
                     else;end if
-                    call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.4*symbol_size,gappy+real(n-1)*dx,2)
+                    call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.3*symbol_size,gappy+real(n-1)*dx,2)
                     ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
                     printm = m
                     if(present(num_freq))then
@@ -8837,14 +8859,18 @@ module subroutines
             end if
             write(16,*)"% end butler_psmask"
         end subroutine
+        ! recognizes x_2D as an array of values in the x axis,y_2D as values in the y axis in a xy plane. or any cartesian plane.
         ! as of now, mask applies to both x and y arrays
-        subroutine butler_vector(x_2D,y_2D,width,height,scalef,maskini,maskfin,arrowwidth,line_thickness,arrowtype,gap)
+        ! nonzero bound values are plotted regardless of the thinning factors
+        subroutine butler_vector(x_2D,y_2D,width,height,scalef,thinfx,thinfy,maskini,maskfin,arrowwidth,line_thickness,arrowtype,gap)
             implicit none
             real,intent(in)::x_2D(:,:),y_2D(:,:),width,height
+            real,dimension(:,:),allocatable::Vscaler
             real,intent(in),optional::maskini,maskfin,arrowwidth,scalef
-            integer,intent(in),optional::gap,arrowtype,line_thickness
+            integer,intent(in),optional::gap,arrowtype,line_thickness,thinfx,thinfy
             real::dx,dy,arrowwidth_local,scalef_local,x0,y0,x1,y1
-            integer::dim1,dim2,x,y,arrowtype_local
+            integer::dim1,dim2,i,j,arrowtype_local,thinf_local_x,thinf_local_y,qx,rx,qy,ry,l,m,n0lbx=0,n0ubx=0,n0lby=0,n0uby=0
+            integer,dimension(:),allocatable::leapx,leapy
 
             write(ounit,*)'%begin butler_vector'
             call box(width,height,3)
@@ -8853,42 +8879,249 @@ module subroutines
             if(size(x_2D,2)/=size(y_2D,2))then;print*,'Array size do not match in the 2nd dimension (butler_vector)';stop;endif
 
             dim1 = size(x_2D,1);dim2 = size(x_2D,2)
+            allocate(Vscaler(dim1,dim2))
+            Vscaler = sqrt(x_2D**2. + y_2D**2.)
+
             if(.not.present(gap))then
-                dx = width/real(dim1-1);dy = height/real(dim2-1);call plot(-dx/2.,-dy/2.,-3) 
+                dx = width/real(dim1-1);dy = height/real(dim2-1)
             else;dx = width/real(dim1);dy = height/real(dim2)
             end if
+            
+            n0lbx = 0;n0ubx = 0;n0lby = 0;n0uby = 0
+
+            if(all(Vscaler(:,:)==0.))then;print*,'zero vector matrix (butler_vector)';return;endif
+            do i = 1, dim1
+                if(any(Vscaler(i,:)/=0.))then;n0lbx = i;exit;endif ! find the first coloumn with nonzero values
+            end do
+            if(any(Vscaler(dim1,:)/=0.))then 
+                n0ubx = dim1
+            else
+                do i = n0lbx+1,dim1
+                    if(all(Vscaler(i,:)==0.))then
+                        if(any(Vscaler(i:dim1,:)/=0.))then;cycle ! find the last coloumn with nonzero values
+                        else;n0ubx = i-1;exit
+                        end if
+                    endif
+                end do
+            end if
+            do i = 1, dim2
+                if(any(Vscaler(:,i)/=0.))then;n0lby = i;exit;endif ! find the first row with nonzero values
+            end do
+            if(any(Vscaler(:,dim2)/=0.))then 
+                n0uby = dim2
+            else
+                do i = n0lby+1,dim2
+                    if(all(Vscaler(:,i)==0.))then
+                        if(any(Vscaler(:,i:dim2)/=0.))then;cycle ! find the last row with nonzero values
+                        else;n0uby = i-1;exit
+                        end if
+                    endif
+                end do
+            end if
+            ! print*,n0lbx,n0ubx,n0lby,n0uby
 
             if(present(scalef))then;scalef_local = scalef;else;scalef_local = 1.;end if
+            if(present(thinfx))then;thinf_local_x = thinfx;else;thinf_local_x = 1;end if
+            if(present(thinfy))then;thinf_local_y = thinfy;else;thinf_local_y = 1;end if
+            
+            qx = int((n0ubx-n0lbx)/thinf_local_x)
+            rx = mod((n0ubx-n0lbx),thinf_local_x)
+            qy = int((n0uby-n0lby)/thinf_local_y)
+            ry = mod((n0uby-n0lby),thinf_local_y)
+            allocate(leapx(qx),leapy(qy))
+            leapx(:) = thinf_local_x
+            leapy(:) = thinf_local_y
+            if(rx/=0)then;leapx(1:rx) = leapx(1:rx) + 1;endif
+            if(ry/=0)then;leapy(1:ry) = leapy(1:ry) + 1;endif
 
-            ! if(present(line_thickness))then;call newpen2(line_thickness);else;call newpen2(1);end if
-            do y = 1, dim2
-                do x = 1, dim1
-                    if(.not.present(gap))then
-                        x0 = real(x-1)*dx;y0 = real(y-1)*dy
-                    else;x0 = real(x-1)*dx + dx/2.;y0 = real(y-1)*dy + dy/2.
-                    endif
-                    x1 = x0 + x_2D(x,y)*scalef;y1 = y0 + y_2D(x,y)*scalef
-                    if(present(arrowwidth))then
-                        arrowwidth_local = arrowwidth
-                    else;arrowwidth_local = sqrt((x1-x0)**2+(y1-y0)**2)/10.
-                    end if
-                    if(present(arrowtype))then;arrowtype_local = arrowtype;else;arrowtype_local = 4;end if
-
-                    if(present(maskini).and.present(maskfin))then
-                        if(maskini<=x_2D(x,y).and.x_2D(x,y)<=maskfin.and.maskini<=y_2D(x,y).and.y_2D(x,y)<=maskfin)then
-                            call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
-                        else;cycle ! skip the vector
-                        end if
-                    else
-                        call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
-                    end if
+            l = n0lbx;m = n0lby
+            do i = 1, size(leapx)+1
+                do j = 1, size(leapy)+1
+                    call process(l,m)
+                    if(j/=size(leapy)+1)m = m + leapy(j)
                 end do
+                if(i/=size(leapx)+1)l = l + leapx(i)
+                m = 1
             end do
-
-            if(.not.present(gap))call plot(dx/2.,dy/2.,-3)
+            deallocate(leapx,leapy,Vscaler)
             write(ounit,*)'%end butler_vector'
             return
+            contains
+            subroutine process(x,y)
+                integer,intent(in)::x,y
+                if(.not.present(gap))then
+                    x0 = real(x-1)*dx;y0 = real(y-1)*dy
+                else;x0 = real(x-1)*dx + dx/2.;y0 = real(y-1)*dy + dy/2.
+                endif
+                ! if(x_2D(x,y)==0..and.y_2D(x,y)==0.)then;print*,'zero vector (butler_vector)';endif
+                x1 = x0 + x_2D(x,y)*scalef_local
+                y1 = y0 + y_2D(x,y)*scalef_local
+                ! if(i==1.and.j==1)then;print*,'x0,y0,x1,y1 =',x0,y0,x1,y1,'x_2D,y_2D =',x_2D(i,j),y_2D(i,j);endif
+                if(present(arrowwidth))then
+                    arrowwidth_local = arrowwidth
+                else;arrowwidth_local = sqrt((x1-x0)**2.+(y1-y0)**2.)/10.
+                end if
+                if(present(arrowtype))then;arrowtype_local = arrowtype;else;arrowtype_local = 4;end if
+                if(present(maskini).and.present(maskfin))then
+                    if(maskini<=sqrt((x1-x0)**2+(y1-y0)**2).and.sqrt((x1-x0)**2+(y1-y0)**2)<=maskfin)then
+                        call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
+                    end if
+                else
+                    call arrow(x0,y0,x1,y1,arrowwidth_local,line_thickness,arrowtype_local)
+                end if
+            end subroutine process
+        end subroutine
+        subroutine butler_linegraph(array_1D,width,height,memi,memf,rmask,memiter,memsymfreq,memsymsize,memflqt,memloc,memlabel,error_1D,maskbyc,dots)
+            implicit none
+            real,intent(in)::array_1D(:),width,height,memi,memf
+            real,intent(in),optional::error_1D(:),memsymsize,rmask
+            integer,intent(in),optional::memiter,memsymfreq,memflqt
+            character(len=*),intent(in),optional::memloc,memlabel
+            logical,intent(in),optional::maskbyc,dots
+            real,dimension(:),allocatable::ploty,plotysem,betmlkx,betmlky
+            real::dx,memsymsize_local,rmask_local,a,b,red,green,blue
+            integer::memiter_local,memsymfreq_local,memflqt_local,iangle,i
+            logical::maskbyc_local,dots_local
 
+                write(ounit,*)'%begin butler_linegraph'
+                if(present(error_1D))then
+                    if(size(array_1D,1)/=size(error_1D,1))then
+                        print*,'Array sizes do not match (butler_linegraph)';stop
+                    else
+                        allocate(plotysem(size(array_1D)))
+                    endif
+                end if
+                allocate(ploty(size(array_1D)))
+                red = 0.6 ; green = 0.6 ; blue = 0.6
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                        ! creating local parameters
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if(present(memsymsize))then 
+                    memsymsize_local = memsymsize
+                else;memsymsize_local = height/10.
+                end if
+                if(present(memiter))then 
+                    memiter_local = memiter
+                else
+                    do i = 1, 10
+                        if(mod(memf-memi,1./(10.**real(i-1)))==0.)then 
+                            memiter_local = int((memf-memi)/(10.**real(i-1)))
+                            exit
+                        end if
+                    end do
+                end if
+                if(present(memsymfreq))then 
+                    memsymfreq_local = memsymfreq
+                else;memsymfreq_local = 1
+                end if
+                if(present(memflqt))then 
+                    memflqt_local = memflqt
+                else;memflqt_local = 1
+                end if  
+                iangle = -90 ! left by default
+                if(present(memloc))then 
+                    if(memloc=='right'.or.memloc=='Right'.or.memloc=='RIGHT')then 
+                        iangle = 90
+                    end if
+                end if
+                if(present(rmask))then 
+                    rmask_local = rmask
+                else;rmask_local = 0.
+                end if
+                if(present(maskbyc))then 
+                    maskbyc_local = maskbyc
+                else;maskbyc_local = .false.
+                end if
+                if(present(dots))then 
+                    dots_local = dots
+                else;dots_local = .false.
+                end if
+                ! print*,'parameter values =',memi,memf,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle,rmask_local,maskbyc_local,dots_local
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                 ! creating the box and the center line
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                call box(width,height,3)
+                call rgbk(0.5,0.5,0.5);call plot(0.,height/2.,3);call plot(width,height/2.,2);call rgbk(0.,0.,0.)
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                    ! creating num_memori and unit label
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                call num_memori(memi,memf,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle)
+                if(present(memlabel))then 
+                    call symbolr(-(memsymsize_local*3.),height/2.,memsymsize_local,'['//trim(adjustl(memlabel))//']')
+                end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                    ! getting dx and y values for array_1D
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                dx = width/real(size(array_1D,1))
+                do i = 1, size(array_1D)
+                    call gmark_ratio(array_1D(i),memi,memf,height,ploty(i)) ! getting y values for array_1D
+                    if(present(error_1D))then 
+                        plotysem(i) = error_1D(i)*height/(memf-memi) ! for error bar values if there are any
+                    end if
+                end do
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                    ! painting areas below y center if prompted
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if(maskbyc_local) then ! mask below y center
+                    do i = 1, size(array_1D)
+                        if(i>1)then                                             ! painting areas below center 
+                            if(ploty(i-1)>height/2. .and. ploty(i)>height/2.)then ! do nothing
+                                ! print*,'do nothing, i=',i
+                            else if(ploty(i-1)<height/2. .and. ploty(i)<height/2.)then ! paint the trapezoid area below y center
+                                allocate(betmlkx(4));allocate(betmlky(4))
+                                betmlkx(1) = dx*real(i-2)+dx/2.;betmlky(1) = height/2.
+                                betmlkx(2) = dx*real(i-2)+dx/2.;betmlky(2) = ploty(i-1)
+                                betmlkx(3) = dx*real(i-1)+dx/2.;betmlky(3) = ploty(i)
+                                betmlkx(4) = dx*real(i-1)+dx/2.;betmlky(4) = height/2.
+                                call betmlk(betmlkx,betmlky,4,4,red,green,blue)
+                                deallocate(betmlkx,betmlky)
+                            else if(ploty(i-1)<height/2. .and. ploty(i)>height/2.)then ! paint the triangle area below y center
+                                a = (ploty(i)-ploty(i-1))/dx   ! a = (y2-y1)/(x2-x1) = slope
+                                b = ploty(i-1) - a*(dx*real(i-2)+dx/2.)  ! b = y1 - (y2-y1)*x1/(x2-x1) = y1 - slope*x1
+                                allocate(betmlkx(3));allocate(betmlky(3))
+                                betmlkx(1) = dx*real(i-2)+dx/2.;betmlky(1) = height/2.
+                                betmlkx(2) = (height/2.-b)/a;betmlky(2) = height/2. ! (yc-b)/a = x
+                                betmlkx(3) = dx*real(i-2)+dx/2.;betmlky(3) = ploty(i-1)
+                                call betmlk(betmlkx,betmlky,3,3,red,green,blue)
+                                deallocate(betmlkx,betmlky)
+                            else if(ploty(i-1)>height/2. .and. ploty(i)<height/2.)then 
+                                a = (ploty(i)-ploty(i-1))/dx
+                                b = ploty(i-1) - a*(dx*real(i-2)+dx/2.)
+                                allocate(betmlkx(3));allocate(betmlky(3))
+                                betmlkx(1) = (height/2.-b)/a;betmlky(1) = height/2.
+                                betmlkx(2) = dx*real(i-1)+dx/2.;betmlky(2) = height/2.
+                                betmlkx(3) = dx*real(i-1)+dx/2.;betmlky(3) = ploty(i)
+                                call betmlk(betmlkx,betmlky,3,3,red,green,blue)
+                                deallocate(betmlkx,betmlky)
+                            end if
+                        end if
+                    end do
+                end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                            ! plotting values 
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                do i = 1, size(array_1D)
+                    if(array_1D(i) == rmask_local)cycle 
+
+                    !!!!! EVERYTHING BELOW THIS LINE WILL NOT BE EXECUTED IF THE CURRENT VALUE == rmask_local!!!!!
+
+                    if(dots_local)call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,1) ! plotting the dots if prompted
+
+                    if(i>1)then                                         ! drawing lines between the dots
+                        if(array_1D(i-1) /= rmask_local)then 
+                            call plot(dx*real(i-2)+dx/2.,ploty(i-1),3);call plot(dx*real(i-1)+dx/2.,ploty(i),2)
+                        end if
+                    end if
+
+                    if(present(error_1D))then                           ! drawing error bars
+                        call plot(dx*real(i-1)+dx/2.,ploty(i)-plotysem(i),3);call plot(dx*real(i-1)+dx/2.,ploty(i)+plotysem(i),2)
+                    end if
+                end do
+
+                deallocate(ploty)
+                if(present(error_1D))deallocate(plotysem)
+                return
+            
         end subroutine
     ! END PS bois
     ! RANDOM
@@ -9045,81 +9278,158 @@ module MITgcm
 
         deallocate(DATA_local,leapx,leapz)
     end subroutine
-    ! subroutine nc2array()
-    !     use netcdf
-    !     ! data obtainment
-    !     ! Open the NetCDF file
-    !     status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
-    !     if (status /= nf90_noerr) call handle_err(status)
+    subroutine handle_err(status)
+        use netcdf
+        integer, intent(in) :: status
+        if (status /= nf90_noerr) then
+            print *, trim(nf90_strerror(status))
+            stop "Stopped"
+        end if
+    end subroutine handle_err
+    ! Uc and Vc are the velocities at the center of the grid cells, averaged from velocity values on each side of the grids.
+    ! Uc and Vc have the same size; (ngrids_x,ngrids_y,ngrids_z,timesteps)
+    subroutine state2mat(ncfile,U,Uc,V,Vc,W,T,S,Eta,info)
+        use netcdf
+        implicit none
+        character(len=*),intent(in) :: ncfile
+        integer :: ncid, status
+        integer :: nvars, ndims, ngatts, unlimdimid
+        integer :: varid
+        character(len=nf90_max_name) :: varname
+        integer, allocatable :: dimids(:), dimlens(:)
+        real,dimension(:,:,:,:),allocatable,intent(out),optional::U,V,W,T,S,Uc,Vc
+        real,dimension(:,:,:,:),allocatable::U_local,V_local
+        real,dimension(:,:,:),allocatable,intent(out),optional::eta
+        logical,intent(in),optional::info
+        logical::info_local = .false.
+        integer :: i,j
+        if(present(info))info_local = info
+        ! data obtainment
+        ! Open the NetCDF file
+        status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
+        if (status /= nf90_noerr) call handle_err(status)
 
-    !     ! Get information about the file
-    !     status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
-    !     if (status /= nf90_noerr) call handle_err(status)
+        ! Get information about the file
+        status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
+        if (status /= nf90_noerr) call handle_err(status)
 
-    !     print *, "Number of variables:", nvars
+        if(info_local)print *, "Number of variables:", nvars
 
-    !     ! Iterate through all variables to get basic idea of the file
-    !     do varid = 1, nvars
-    !         ! Get variable name and number of dimensions
-    !         status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
-    !         if (status /= nf90_noerr) call handle_err(status)
+        ! Iterate through all variables to get basic idea of the file
+        do varid = 1, nvars
+            ! Get variable name and number of dimensions
+            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
+            if (status /= nf90_noerr) call handle_err(status)
 
-    !         print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+            if(info_local)print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+            if(ndims >=100)then;print*,'ndims >= 100';stop;endif
 
-    !         ! Allocate arrays for dimension IDs and lengths
-    !         allocate(dimids(ndims), dimlens(ndims))
+            ! Allocate arrays for dimension IDs and lengths
+            allocate(dimids(ndims), dimlens(ndims))
 
-    !         ! Get dimension IDs
-    !         status = nf90_inquire_variable(ncid, varid, dimids=dimids)
-    !         if (status /= nf90_noerr) call handle_err(status)
+            ! Get dimension IDs
+            status = nf90_inquire_variable(ncid, varid, dimids=dimids)
+            if (status /= nf90_noerr) call handle_err(status)
 
-    !         ! Get dimension lengths
-    !         do i = 1, ndims
-    !             status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
-    !             if (status /= nf90_noerr) call handle_err(status)
-    !             print *, "  Dimension ", i, " length: ", dimlens(i)
-    !         end do
+            ! Get dimension lengths
+            do i = 1, ndims
+                status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
+                if (status /= nf90_noerr) call handle_err(status)
+                if(info_local)print *, "  Dimension ", i, " length: ", dimlens(i)
+            end do
 
-    !         ! Allocate arrays based on variable name and then read data
-    !         select case(trim(varname))
-    !         case('U')
-    !             allocate(U(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-    !             status = nf90_get_var(ncid, varid, U)
-    !             print*,'minimum U:',minval(U);print*,'maximum U:',maxval(U)
-    !         case('V')
-    !             allocate(V(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-    !             status = nf90_get_var(ncid, varid, V)
-    !             print*,'minimum V:',minval(V);print*,'maximum V:',maxval(V)
-    !         case('W')
-    !             allocate(W(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-    !             status = nf90_get_var(ncid, varid, W)
-    !             print*,'minimum W:',minval(W);print*,'maximum W:',maxval(W)
-    !         case('Temp')
-    !             allocate(temp(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-    !             status = nf90_get_var(ncid, varid, temp)
-    !             print*,'minimum Temp:',minval(temp);print*,'maximum Temp:',maxval(temp)
-    !         case('S')
-    !             allocate(sal(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
-    !             status = nf90_get_var(ncid, varid, sal)
-    !             print*,'minimum S:',minval(sal);print*,'maximum S:',maxval(sal)
-    !         case('Eta')
-    !             allocate(eta(dimlens(1), dimlens(2), dimlens(3)))
-    !             status = nf90_get_var(ncid, varid, eta)
-    !             print*,'minimum Eta:',minval(eta);print*,'maximum Eta:',maxval(eta)
-    !         end select
-    !         deallocate(dimids, dimlens)
+            ! Allocate arrays based on variable name and then read data
+            select case(trim(varname))
+            case('U')
+                allocate(U_local(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+                status = nf90_get_var(ncid, varid, U_local)
+                if(info_local)then
+                    print*,'minimum U:',minval(U_local);print*,'maximum U:',maxval(U_local)
+                end if
+            case('V')
+                allocate(V_local(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+                status = nf90_get_var(ncid, varid, V_local)
+                if(info_local)then
+                    print*,'minimum V:',minval(V_local);print*,'maximum V:',maxval(V_local)
+                end if
+            case('W')
+                if(present(W))then
+                    allocate(W(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+                    status = nf90_get_var(ncid, varid, W)
+                    if(info_local)then
+                        print*,'minimum W:',minval(W);print*,'maximum W:',maxval(W)
+                    end if
+                end if
+            case('Temp')
+                if(present(T))then
+                    allocate(T(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+                    status = nf90_get_var(ncid, varid, T)
+                    if(info_local)then
+                        print*,'minimum Temp:',minval(T);print*,'maximum Temp:',maxval(T)
+                    end if
+                end if
+            case('S')
+                if(present(S))then
+                    allocate(S(dimlens(1), dimlens(2), dimlens(3), dimlens(4)))
+                    status = nf90_get_var(ncid, varid, S)
+                    if(info_local)then
+                        print*,'minimum S:',minval(S);print*,'maximum S:',maxval(S)
+                    end if
+                end if
+            case('Eta')
+                if(present(Eta))then
+                    allocate(Eta(dimlens(1), dimlens(2), dimlens(3)))
+                    status = nf90_get_var(ncid, varid, Eta)
+                    if(info_local)then
+                        print*,'minimum Eta:',minval(Eta);print*,'maximum Eta:',maxval(Eta)
+                    end if
+                end if
+            end select
+            deallocate(dimids, dimlens)
 
 
 
-    !         print *, "------------------------"
-    !     end do
+            if(info_local)print *, "------------------------"
+        end do
 
-    !     ! Close the file
-    !     status = nf90_close(ncid)
-    !     if (status /= nf90_noerr) call handle_err(status)
+        if(present(U))then 
+            allocate(U(size(U_local,1),size(U_local,2),size(U_local,3),size(U_local,4)))
+            U = U_local
+        end if
+        if(present(V))then 
+            allocate(V(size(V_local,1),size(V_local,2),size(V_local,3),size(V_local,4)))
+            V = V_local
+        end if
 
-    !     ! data obtainment ends here
-    ! end subroutine
+        if(present(Uc))then 
+            allocate(Uc(size(U_local,1)-1,size(U_local,2),size(U_local,3),size(U_local,4)))
+            do i = 1, size(U_local,1)-1
+                do j = 1, size(U_local,2)
+                    Uc(i,j,:,:) = (U_local(i,j,:,:)+U_local(i+1,j,:,:))/2.
+                end do
+            end do
+            if(info_local)print*,'Giving Grid Averaged U: Uc'
+            if(info_local)print*,'size of Uc:',size(Uc,1),size(Uc,2),size(Uc,3),size(Uc,4)
+        endif
+        if(present(Vc))then 
+            allocate(Vc(size(V_local,1),size(V_local,2)-1,size(V_local,3),size(V_local,4)))
+            do i = 1, size(V_local,1)
+                do j = 1, size(V_local,2)-1
+                    Vc(i,j,:,:) = (V_local(i,j,:,:)+V_local(i,j+1,:,:))/2.
+                end do
+            end do
+            if(info_local)print*,'Giving Grid Averaged V: Vc'
+            if(info_local)print*,'size of Vc:',size(Vc,1),size(Vc,2),size(Vc,3),size(Vc,4)
+        endif
+        if(info_local)print *, "------------------------"
+        ! Close the file
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        deallocate(U_local,V_local)
+        return
+        ! data obtainment ends here
+    end subroutine
 end module
 
 module constants
