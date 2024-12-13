@@ -1,6 +1,4 @@
 program hakidame
-    use always
-
     use always 
     implicit none
     real,parameter::width1 = 4.,height1 = 8.,width2 = 3.,height2 = 6.
@@ -32,9 +30,6 @@ program hakidame
     print*,minex0(D4=avsigma_c5),maxval(avsigma_c5),'avsigma_c5'
     print*,minex0(D4=avgeovel_5),maxval(avgeovel_5),'avgeovel_5'
 
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                        ! be wary of the months and the arrays
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     do m = 1,months
         ! if(m==1.or.m==7)cycle
@@ -42,17 +37,21 @@ program hakidame
         !     elseif(m==8)then;month1 = m;month2 = 6
         !     else;month1 = m;month2 = m-1
         ! end if
-        if(m==1)then;month1 = 1;month2 = 12
-        elseif(m==2)then;month1 = 2;month2 = 1
-        elseif(m==7)then;month1 = 7;month2 = 6    ! all the forgotten ones
-        elseif(m==8)then;month1 = 8;month2 = 7
-        elseif(m==10)then;month1=10;month2=8
-        elseif(m==12)then;month1 = 12;month2 = 10
+        ! if(m==1)then;month1 = 1;month2 = 12
+        ! elseif(m==2)then;month1 = 2;month2 = 1
+        ! elseif(m==7)then;month1 = 7;month2 = 6    ! all the forgotten ones
+        ! elseif(m==8)then;month1 = 8;month2 = 7
+        ! elseif(m==10)then;month1=10;month2=8
+        ! elseif(m==12)then;month1 = 12;month2 = 10
+        ! else;cycle
+        ! end if
+        if(m==8)then;month1 = 10;month2 = 8
+        elseif(m==10)then;month1 = 12;month2 = 10
         else;cycle
         end if
 
         
-    call plots(0.,0.,9,'../Plots/Favorites/t_bymonths2-2/'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
+    call plots(0.,0.,9,'../Plots/Favorites/t_bymonths2-onetailed/'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
     call plotmove(0.5,0.95);call symbolc(0.,-0.5,1.,"Welch's T Test "//trim(monthnames(month1))//' - '//trim(monthnames(month2)),0.)
 
     call plot(-width1-2.,-2.,-3)
@@ -127,7 +126,11 @@ program hakidame
 ! potemp ttest  
     do st = 1,6
         do d = 1, depth
-            testmatrix(st,d) = fwelcht(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
+            if(month1 == 10)then ! want to see red parts
+                testmatrix(st,d) = fwelcht_greater(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
+            elseif(month1 == 12) then ! want to see blue parts
+                testmatrix(st,d) = fwelcht_smaller(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
+            end if
         end do
     end do
     call symbolc(-2.2,-height2/2.,0.7,"Welch;T-Test",0.)
@@ -143,7 +146,11 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,6
         do d = 1, depth
-            testmatrix(st,d) = fwelcht(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
+            if(month1 == 10)then ! want to see blue parts
+                testmatrix(st,d) = fwelcht_smaller(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
+            elseif(month1 == 12) then ! want to see blue parts
+                testmatrix(st,d) = fwelcht_smaller(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
+            end if
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)
@@ -157,7 +164,11 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,6
         do d = 1, depth
-            testmatrix(st,d) = fwelcht(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
+            if(month1 == 10)then ! want to see blue parts
+                testmatrix(st,d) = fwelcht_smaller(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
+            elseif(month1 == 12) then ! want to see red parts
+                testmatrix(st,d) = fwelcht_greater(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
+            end if
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)
@@ -171,7 +182,11 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,5
         do d = 1, depth
-            testmatrix(st,d) = fwelcht(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
+            if(month1 == 10)then ! want to see red parts
+                testmatrix(st,d) = fwelcht_greater(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
+            elseif(month1 == 12) then ! want to see red parts
+                testmatrix(st,d) = fwelcht_greater(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
+            end if
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)

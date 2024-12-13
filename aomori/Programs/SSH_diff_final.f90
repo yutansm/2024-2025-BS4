@@ -1,14 +1,11 @@
-program SSH_final
+program hakidame
     use always
     implicit none
     real,parameter::width = 7.,height = 6.,width2 = 26.,height2 = 4.,width3 = 26.,height3 = 8.
-    real,dimension(15,12)::esa,oku,sak,tob,plotarray,esa_oku=0.,sak_tob=0.
-    real,dimension(12)::avarray,semarray
-    integer,dimension(12)::dataarray
-    real,dimension(180)::ploty=0.,ploty2=0.
-    real,dimension(:),allocatable::avesa,avoku,avsak,avtob,semesa,semoku,semsak,semtob,sdesa,sdoku,sdsak,sdtob,ymeane,ymeano,ymeans,ymeant,ymeanesa_oku,ymeansak_tob,avesa_oku,avsak_tob
-    real::dx,min,max
-    integer::k2
+    real,dimension(15,12)::esa,oku,sak,tob,esa_oku=0.,sak_tob=0.
+    real,dimension(13)::avarray,semarray
+    real,dimension(:),allocatable::avesa,avoku,avsak,avtob,semesa,semoku,semsak,semtob,sdesa,sdoku,sdsak,sdtob,ymeane,ymeano,ymeans,ymeant,ymeanesa_oku,ymeansak_tob,avesa_oku,avsak_tob,semesa_oku,semsak_tob
+    real::min,max
     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     ! data obtainment and processing
@@ -88,120 +85,75 @@ program SSH_final
         end do
     end do
 
-    call avsemdata_2D(esa_oku,'dim1',mean_1D = avesa_oku) ! 12 monthly means
-    call avsemdata_2D(sak_tob,'dim1',mean_1D = avsak_tob) ! 12 monthly means
+    call avsemdata_2D(esa_oku,'dim1',mean_1D = avesa_oku,sem_1D = semesa_oku) ! 12 monthly means
+    call avsemdata_2D(sak_tob,'dim1',mean_1D = avsak_tob,sem_1D = semsak_tob) ! 12 monthly means
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        ! end of data obtainment and processing
+                    ! end of data obtainment and processing
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                 ! plot the data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-call plots2('../Plots/Favorites/monthly_coast-offshore.ps',h = 'Coastal and Offshore Comparisons of Sea Surface Height',oopt= 'otops')
-call plot(0.5,-1.,-3);call plotsave('first')
-    ! monthly means and diffs
-    ! esashi and okushiri
-    do l = 1, 3
-        if(l==3)then;min = 30.;max=-30.
-        else;min = 100.;max = -100.
-        end if
-        ! creating box
-        if(l/=2)then
-            call box(width,-height,4);call mod12_memori(13,0.5,0,width,gap = 2,num_freq = 1,y = -height,dxval = dx)
-        end if
-        if(l==1)call num_memori(min/10.,max/10.,20,5,0.6,-1,-height,-90) ! -> converting to cm
-        if(l==3)call num_memori(min/10.,max/10.,6,1,0.6,-1,-height,-90)
-        call rgbk(0.4,0.4,0.4);call newpen2(3);call plot(0.,-height/2.,3);call plot(width,-height/2.,2);call rgbk(0.,0.,0.)
-        ! created box
-        if(l == 2)then
-            avarray = avesa;semarray = semesa
-            call symbolc(width/2.,1.,0.6,'Esa&Oku',0.);call newpen2(4)
-        else if(l == 1)then
-            avarray = avoku;semarray = semoku
-            call rgbk(0.6,0.6,0.6);call newpen2(6)
-        else if(l == 3)then
-            avarray = avesa_oku
-            call symbolc(width/2.,0.9,0.6,'Esa-Oku',0.)
-            call rgbk(0.,0.,0.);call newpen2(4)
-        end if
-        do n = 1, 13
-            if(n==13)then;m = 1;else;m = n
+    call plots2('../Plots/Favorites/monthly_coast-offshore2.ps',h = 'Title',oopt= 'otops')
+    call plot(0.7,-.5-height,-3);call plotsave('first')
+        ! monthly means and diffs
+        ! esashi and okushiri
+        do l = 1, 3
+            if(l==3)then;min = -30.;max=30.
+            else;min = -100.;max = 100.
             end if
-            if(l/=3)then
-                call gmark_ratio(avarray(m),min,max,-height,ploty(m)) !individual data points
-                ploty2(m) = semarray(m)*height/(min-max)
+            if(l/=2)then
+                call mod12_memori(13,width,gap = 2,num_freq = 1)
             end if
-            if(l == 3)then
-                call gmark_ratio(avarray(m),min,max,-height,ploty(m))
-            endif
-            if(n>1)then
-                if(n/=13)then
-                    call plot(dx/2.+dx*real(n-2),ploty(m-1),3);call plot(dx/2.+dx*real(n-1),ploty(m),2)
-                else;call plot(dx/2.+dx*real(n-2),ploty(12),3);call plot(dx/2.+dx*real(n-1),ploty(1),2)
-                end if
+            if(l == 1)then
+                avarray(1:12) = avoku;avarray(13) = avoku(1)
+                semarray(1:12) = semoku;semarray(13) = semoku(1)
+                ! call symbolc(width/2.,height+.6,0.6,'Esa&Oku',0.)
+            else if(l == 2)then
+                avarray(1:12) = avesa;avarray(13) = avesa(1)
+                semarray(1:12) = semesa;semarray(13) = semesa(1)
+            else if(l == 3)then
+                avarray(1:12) = avesa_oku;avarray(13) = avesa_oku(1)
+                semarray(1:12) = semesa_oku;semarray(13) = semesa_oku(1)
+                ! call symbolc(width/2.,height+.6,0.6,'Esa-Oku',0.)
             end if
-            if(l/=3)then
-                call plot(dx/2.+dx*real(n-1),ploty(m)-ploty2(m),3);call plot(dx/2.+dx*real(n-1),ploty(m)+ploty2(m),2) ! sem lines
-            end if
+            if(l==1)call butler_linegraph(avarray,width,height,min,max,mem=.true.,memscale = 0.1,memiter = 5,memsymsize = 0.6,memsymfreq = 1,memflqt = -1,blabel = 'Months',error_1D = semarray,rl = 0.6,gl=0.6,bl=0.6,lthick = 7)
+            if(l==2)call butler_linegraph(avarray,width,height,min,max,error_1D = semarray,lthick = 4)
+            if(l==3)call butler_linegraph(avarray,width,height,min,max,mem=.true.,memscale = 0.1,memiter = 7,memsymsize = 0.6,memsymfreq = 1,memflqt = -1,blabel = 'Months',error_1D = semarray,maskbyc = .true.,lthick = 4)
+            if(l==2)call plot(width+2.,0.,-3)
         end do
-        if(l==2)call plot(width+2.,0.,-3)
-        call rgbk(0.,0.,0.)
-    end do
-    
-    call plotback('first')
-    call plot(0.,-height-2.5,-3)
+        
+        call plotback('first')
+        call plot(0.,-height-3.,-3)
 
-    ! SAK and TOB
-    do l = 1, 3
-        if(l==3)then;min = 30.;max=-30.
-        else;min = 150.;max = -150.
-        end if
-        ! creating box
-        if(l/=2)then
-            call box(width,-height,4);call mod12_memori(13,0.5,0,width,gap = 2,num_freq = 1,y = -height,dxval = dx)
-        end if
-        if(l==1)call num_memori(min/10.,max/10.,30,5,0.6,-1,-height,-90) ! -> converting to cm
-        if(l==3)call num_memori(min/10.,max/10.,6,1,0.6,-1,-height,-90)
-        call rgbk(0.4,0.4,0.4);call newpen2(3);call plot(0.,-height/2.,3);call plot(width,-height/2.,2);call rgbk(0.,0.,0.)
-        ! created box
-        if(l == 2) then
-            avarray = avsak; semarray = semsak
-            call symbolc(width/2., .6, 0.6, 'Sak&Tob', 0.);call newpen2(4)
-        else if(l == 1) then
-            avarray = avtob; semarray = semtob
-            call rgbk(0.6, 0.6, 0.6);call newpen2(6)
-        else if(l == 3) then
-            avarray = avsak_tob
-            call symbolc(width/2., 0.9, 0.6, 'Sak;-Tob', 0.);call newpen2(4)
-        end if
-        do n = 1, 13
-            if(n == 13) then;m = 1
-            else;m = n
+        !SAK and TOB
+        do l = 1, 3
+            if(l==3)then;min = -30.;max=30.
+            else;min = -150.;max = 150.
             end if
-            if(l /= 3) then
-                call gmark_ratio(avarray(m), min, max, -height, ploty(m)) ! individual data points
-                ploty2(m) = semarray(m)*height/(min - max)
+            ! creating box
+            if(l/=2)then
+                call mod12_memori(13,width,gap = 2,num_freq = 1)
             end if
-            if(l == 3) then
-                call gmark_ratio(avarray(m), min, max, -height, ploty(m)) ! diff from yearly mean of the diffs normalized 
+            if(l == 1) then
+                avarray(1:12) = avtob; semarray(1:12) = semtob
+                avarray(13) = avtob(1); semarray(13) = semtob(1)
+                ! call symbolc(width/2., height+.6, 0.6, 'Sak&Tob', 0.)
+            else if(l == 2) then
+                avarray(1:12) = avsak; semarray(1:12) = semsak
+                avarray(13) = avsak(1); semarray(13) = semsak(1)
+            else if(l == 3) then
+                avarray(1:12) = avsak_tob; semarray(1:12) = semsak_tob
+                avarray(13) = avsak_tob(1); semarray(13) = semsak_tob(1)
+                ! call symbolc(width/2., height+0.6, 0.6, 'Sak-Tob', 0.);call newpen2(4)
             end if
-            if(n > 1) then
-                if(n /= 13) then
-                    call plot(dx/2. + dx*real(n-2), ploty(m-1), 3)
-                    call plot(dx/2. + dx*real(n-1), ploty(m), 2)
-                else
-                    call plot(dx/2. + dx*real(n-2), ploty(12), 3)
-                    call plot(dx/2. + dx*real(n-1), ploty(1), 2)
-                end if
-            end if
-            if(l /= 3) then
-                call plot(dx/2. + dx*real(n-1), ploty(m) - ploty2(m), 3) ! sem or 95 CI lines
-                call plot(dx/2. + dx*real(n-1), ploty(m) + ploty2(m), 2)
-            end if
+            if(l==1)call butler_linegraph(avarray,width,height,min,max,mem=.true.,memscale = 0.1,memiter = 7,memsymsize = 0.6,memsymfreq = 1,memflqt = -1,blabel = 'Months',error_1D = semarray,rl = 0.6,gl=0.6,bl=0.6,lthick = 7)
+            if(l==2)call butler_linegraph(avarray,width,height,min,max,error_1D = semarray,lthick = 4)
+            if(l==3)call butler_linegraph(avarray,width,height,min,max,mem=.true.,memscale = 0.1,memiter = 7,memsymsize = 0.6,memsymfreq = 1,memflqt = -1,blabel = 'Months',error_1D = semarray,maskbyc = .true.,lthick = 4)
+            
+            if(l==2)call plot(width + 2., 0., -3)
         end do
-        if(l==2)call plot(width + 2., 0., -3);call rgbk(0., 0., 0.)
-    end do
 
 ! SAK and TOB
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -209,8 +161,8 @@ call plot(0.5,-1.,-3);call plotsave('first')
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                             ! creating map
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call plot(width+2.,-height,-3)
-    call create_map(38,43,137,142,1,6,3,9.,0.6)
+    call plot(width+2.7,2.,-3)
+    call map(38,43,137,142,8.,line_opt = 1)
 
 
 call plote

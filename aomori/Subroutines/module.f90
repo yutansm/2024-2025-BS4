@@ -477,8 +477,8 @@ module functions
             sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
             df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
             ! call t95_value(t_95)
-            bottomCI = diff_mean - f_t95(int(df)) * sem
-            topCI = diff_mean + f_t95(int(df)) * sem
+            bottomCI = diff_mean - f_t95(nint(df)) * sem
+            topCI = diff_mean + f_t95(nint(df)) * sem
             ! print*, diff_mean, bottomCI, topCI, int(df)
             if (bottomCI > 0.0) then
                 result = 1 ! larger
@@ -492,6 +492,53 @@ module functions
         end if
     
     end function fwelcht
+    function fwelcht_greater(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
+        implicit none
+        real, intent(in) :: mean1, s1, mean2, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        integer :: result
+        real :: diff_mean, n1, n2, df, sem, bottomCI
+    
+        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
+            diff_mean = mean1 - mean2
+            n1 = real(dataquan1)
+            n2 = real(dataquan2)
+            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
+            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
+            bottomCI = diff_mean - f_t90(nint(df)) * sem
+            if (bottomCI > 0.0) then
+                result = 1 ! mean1 is significantly greater than mean2
+            else
+                result = 0 ! no significant difference
+            end if
+        else
+            result = 911 ! error
+        end if
+    end function fwelcht_greater
+    
+    function fwelcht_smaller(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
+        implicit none
+        real, intent(in) :: mean1, s1, mean2, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        integer :: result
+        real :: diff_mean, n1, n2, df, sem, topCI
+    
+        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
+            diff_mean = mean1 - mean2
+            n1 = real(dataquan1)
+            n2 = real(dataquan2)
+            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
+            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
+            topCI = diff_mean + f_t90(nint(df)) * sem
+            if (topCI < 0.0) then
+                result = -1 ! mean1 is significantly smaller than mean2
+            else
+                result = 0 ! no significant difference
+            end if
+        else
+            result = 911 ! error
+        end if
+    end function fwelcht_smaller
     function fwelcht90(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
         implicit none
         real, intent(in) :: mean1, s1, mean2, s2
@@ -507,8 +554,8 @@ module functions
             sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
             df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
             ! call t90_value(t_90)
-            bottomCI = diff_mean - f_t90(int(df)) * sem
-            topCI = diff_mean + f_t90(int(df)) * sem
+            bottomCI = diff_mean - f_t90(nint(df)) * sem
+            topCI = diff_mean + f_t90(nint(df)) * sem
             ! print*, diff_mean, bottomCI, topCI, int(df)
             if (bottomCI > 0.0) then
                 result = 1 ! larger
@@ -589,6 +636,31 @@ module functions
         new_filename = trim(adjustl(basename)) // '.' // trim(adjustl(new_extension))
 
     end function change_extension
+    function intdigits(number) result(number_of_digits)
+        implicit none
+        integer, intent(in) :: number
+        character(len=20) :: num_str
+        integer ::   number_of_digits
+
+        ! Convert the number to a string
+        write(num_str, '(I0)') number
+
+        ! Get the length of the string
+        number_of_digits = len_trim(num_str)
+    end function intdigits
+    function rsign(number) result(real_sign)
+        implicit none
+        real, intent(in) :: number
+        real :: real_sign
+
+        if (number > 0.0) then
+            real_sign = 1.
+        elseif (number < 0.0) then
+            real_sign = -1.
+        else
+            real_sign = 0.
+        end if
+    end function rsign
 
 
 end module functions
@@ -810,10 +882,12 @@ module origin
 
         return
     end
-    subroutine plots2(psfile,mode,h,oopt)
-        character(len=*),intent(in),optional:: psfile,mode,h,oopt
+    ! index nnfile does not need an extension
+    subroutine plots2(psfile,nnfile,mode,h,oopt,x,y)
+        character(len=*),intent(in),optional:: psfile,mode,h,oopt,nnfile
         integer::intmode
         character(len=3)::countstr
+        real,intent(in),optional:: x,y
 
         plots2count = plots2count + 1
         ! ounit = ounit - 1
@@ -828,10 +902,13 @@ module origin
         else
             intmode = 13
         end if
-        if(present(psfile))then
+        if(present(psfile).and..not.present(nnfile))then
             call plots(0.,0.,intmode,psfile)
-        else;
+        elseif(present(nnfile).and..not.present(psfile))then 
+            call plots(0.,0.,intmode,'../nonames/'//trim(nnfile)//'.ps')
+        elseif(.not.present(psfile).and..not.present(nnfile))then
             call plots(0.,0.,intmode,'../nonames/'//trim(countstr)//'.ps')
+        else;print*,'you cannot specify both psfile and nnfile';stop
         end if
         if(present(h))then
             call header(h)
@@ -847,6 +924,8 @@ module origin
                 call otops;topstat = .true.;print*,'otops is default'
             end if
         end if
+        if(present(x))call plot(x,0.,-3)
+        if(present(y))call plot(0.,y,-3)
         return
     end 
     subroutine newpage(h,x,y)
@@ -1224,6 +1303,11 @@ module origin
         write(ounit,*) "% begin newpen2 " ,ip
         write(ounit,*) "sn"
         if (ip.ge. 0) write(ounit,*) "[] 0 sd"
+        if (ip.eq. 12) write(ounit,*) ' 0.20  sl '
+        if (ip.eq. 11) write(ounit,*) ' 0.18  sl '
+        if (ip.eq. 10) write(ounit,*) ' 0.16  sl '
+        if (ip.eq. 9) write(ounit,*) ' 0.14  sl '
+        if (ip.eq. 8) write(ounit,*) ' 0.12  sl '
         if (ip.eq. 7) write(ounit,*) ' 0.10  sl '
         if (ip.eq. 6) write(ounit,*) ' 0.08  sl '
         if (ip.eq. 5) write(ounit,*) ' 0.06  sl '
@@ -1919,14 +2003,10 @@ module origin
         ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             return
     end
+    ! draws dotted line (skips every other point)
     subroutine pscont4(dx,dy,a,ib,ips,ipe,jps,jpe &
         ,mx,my,icnu,contst,contint)
-        dimension conta(1000),x(5),y(5)
-        real::a(:,:)
-        integer::ib(:,:)
-        
-        mx = size(a,1); my = size(a,2)
-        ! print*, mx, my,'yo'
+        dimension conta(1000),a(mx,my),ib(mx,my),x(5),y(5)
         ! real,dimension
         !-------------------schematic of contour-----------------------
         !---> x direction is (i)
@@ -2140,11 +2220,12 @@ module origin
         goto 237
         end if
         ! c
-        236   call plot(x(1),y(1),3)
+        236  if(mod(j,2).eq.0) then
+        call plot(x(1),y(1),3)
         call plot(x(2),y(2),2)
         call plot(x(3),y(3),3)
         call plot(x(4),y(4),2)
-
+        end if
 
 
         !       write(*,*) 1,i,j,x(1),y(1)
@@ -2155,11 +2236,12 @@ module origin
 
         go to 250
 
-        237   call plot(x(1),y(1),3)
+        237 if(mod(j,2).eq.0) then
+        call plot(x(1),y(1),3)
         call plot(x(4),y(4),2)
         call plot(x(2),y(2),3)
         call plot(x(3),y(3),2)
-
+        end if
         !       write(*,*) 2,i,j,x(1),y(1)
         !       write(*,*) 2,i,j,x(2),y(2)
         !       write(*,*) 2,i,j,x(3),y(3)
@@ -2183,9 +2265,10 @@ module origin
         go to 238
         end if
 
+        if(mod(j,2).eq.0) then
         call plot(x4,y4,3)
         call plot(x5,y5,2)
-
+        end if
         !        write(*,*) 3,i,j,x4,y4
         !        write(*,*) 3,i,j,x5,y5
 
@@ -2221,6 +2304,609 @@ module origin
         ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         return
     end
+    ! draws dotted line (skips point every 3 times)
+    subroutine pscont5(dx,dy,a,ib,ips,ipe,jps,jpe &
+        ,mx,my,icnu,contst,contint)
+        dimension conta(1000),a(mx,my),ib(mx,my),x(5),y(5)
+        ! real,dimension
+        !-------------------schematic of contour-----------------------
+        !---> x direction is (i)
+        ! c   |  ---      a(i,j)-----x(1),y(1)-----a(i+1,j)
+        ! c   |   |         |                         |
+        ! c   |   |         |                         |
+        ! c   |   |         |                         |
+        ! c   y   dy    x(2),y(2)                 x(4),y(4)
+        ! c       |         |                         |
+        ! c   i   |         |                         |
+        ! c   s   |         |                         |
+        ! c      ---     a(i,j+1)----x(3),y(3)-----a(i+1,j+1)
+        ! c  (j)            |<-----------dx---------->|
+        ! c
+        ! c       | 
+        ! c       |<-yycop
+        ! c       |____xxcop_
+        ! c
+        ! c********correct of x and y axis**********
+        !-----------------------
+        pxm=-dx*float(ips-1)
+        pym=-dy*float(jps-1)
+        !-----------------------
+        xxcop= 0.5*dx + pxm
+        yycop= 0.5*dy + pym
+        ! c***********************
+        !------ The positions of contour line are 1~4x,y 
+        ! c            The contour lines are drawn by these position
+        !---------------------------------------
+        !------setting the value of contour line
+        do 200 i=1,icnu
+        conta(i)=contst+float(i-1)*contint
+        200  continue
+
+        x5=0.
+        y5=0.
+        x4=0.
+        y4=0.
+        ! c
+        xdx1=0.
+        xdx2=0.
+        xdx3=0.
+        xdx4=0.
+        ydy1=0.
+        ydy2=0.
+        ydy3=0.
+        ydy4=0.
+        !---
+        do kk=1,4
+        x(kk)=0.
+        y(kk)=0.
+        enddo
+        ! c<<<<<<<<<<<<<<<<<<<<<<<<start>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !------------cont.        
+        do 300 k=1,icnu
+        !------------y axis        
+        do 280 j=jps,jpe-1
+        !------------x axis        
+        do 270 i=ips,ipe-1
+        if ((ib(i,j).eq.0).or.(ib(i+1,j).eq.0) &
+            .or.(ib(i,j+1).eq.0).or.(ib(i+1,j+1).eq.0)) &
+        go to 270
+        ! !------------compare value of conta. to value of a(i,j)
+        if ((a(i,j).eq.conta(k)).and.(a(i+1,j).eq.conta(k)) &
+        .and.(a(i,j+1).eq.conta(k)).and.(a(i+1,j+1).eq.conta(k))) then
+        go to 270
+        end if
+        if ((a(i,j).lt.conta(k)).and.(a(i+1,j).lt.conta(k)) &
+        .and.(a(i,j+1).lt.conta(k)).and.(a(i+1,j+1).lt.conta(k))) then
+
+        go to 270
+        end if
+        ! c
+        if (a(i,j).eq.conta(k)) then
+        a( i , j )=a( i , j )+0.001*contint
+        end if
+        ! c
+        if (a(i+1,j).eq.conta(k)) then
+        a(i+1, j )=a(i+1, j )+0.001*contint
+        end if
+        ! c
+        if (a(i,j+1).eq.conta(k)) then
+        a( i ,j+1)=a( i ,j+1)+0.001*contint
+        end if
+        if (a(i+1,j+1).eq.conta(k)) then
+        a(i+1,j+1)=a(i+1,j+1)+0.001*contint
+        end if
+        ! c
+        ! c==========search position (1)============
+        dex1=a(i,j)-conta(k)
+        dex2=a(i+1,j)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 211
+        else
+        go to 212
+        end if
+        !-----------
+        211     dex4=a(i,j)-a(i+1,j)
+        if (dex4.eq.0.) then
+        go to 212
+        end if
+
+        ! !----------judgment of land and sea
+        jnd1=ib(i,j)*ib(i+1,j)
+        if (jnd1 .eq. 0) then
+        go to 212
+        end if
+
+        ! c*********position (1)
+        x(1)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+        y(1)=dy*float((j-1))+yycop
+
+        !         write(*,*) 'x(1),y(1)',x(1),y(1)
+        ! c==========search position (2)================
+        212     dex1=a(i,j)-conta(k)
+        dex2=a(i,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 213
+        else
+        go to 214
+        end if
+        !-----------
+        213     dex4=a(i,j)-a(i,j+1)
+        if (dex4.eq.0.) then
+        go to 214
+        else
+        end if
+
+        ! !----------judgment of land and sea
+        jnd2=ib(i,j)*ib(i,j+1)
+        if (jnd2 .eq. 0) then
+        go to 214
+        end if
+        ! c
+        ! c**********position (2)
+        x(2)=dx*float(i-1)+xxcop
+        y(2)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+        +yycop 
+
+        ! !         write(*,*) 'x(2),y(2)',x(2),y(2)
+        ! c==========search position (3)================
+        214    dex1=a(i,j+1)-conta(k)
+        dex2=a(i+1,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 215
+        else
+        go to 216
+        end if
+        !-----------
+        215    dex4=a(i,j+1)-a(i+1,j+1)
+        if (dex4.eq.0.) then
+        go to 216
+        end if
+        ! c
+        ! !----------judgment of land and sea
+        jnd3=ib(i,j+1)*ib(i+1,j+1)
+        if (jnd3 .eq. 0) then
+        go to 216
+        end if
+        ! c
+        ! c*********position (3)
+        x(3)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+        y(3)=dy*float((j))+yycop
+
+        !         write(*,*) 'x(3),y(3)',x(3),y(3)
+        ! c==========search position (4)================
+        216     dex1=a(i+1,j)-conta(k)
+        dex2=a(i+1,j+1)-conta(k)
+        dex3=dex1*dex2
+        if (dex3.le.0.) then
+        go to 217
+        else
+        go to 240
+        end if
+        !-----------
+        217     dex4=a(i+1,j)-a(i+1,j+1)
+        if (dex4.eq.0.) then
+        go to 230
+        end if
+        ! c
+        ! !----------judgment of land and sea
+        jnd4=ib(i+1,j)*ib(i+1,j+1)
+        if (jnd4 .eq. 0) then
+        go to 240
+        end if
+        ! c
+        ! c**********position (4)
+        x(4)=dx*float(i)+xxcop
+        y(4)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+        +yycop
+        !         write(*,*) 'x(4),y(4)',x(4),y(4)
+        ! c#########################################################
+        ! c===========drawing contour line==========================
+        ! !-----------case of four positions 
+        230    if ((x(1).ne.0.).and.(x(2).ne.0.).and.(x(3).ne.0.).and. &
+        (x(4).ne.0.)) then
+
+        go to 235
+        else
+        go to 240
+        end if
+        ! c
+        235     xlong1=(x(1)-x(2))**2+(y(1)-y(2))**2
+        xlong2=(x(1)-x(4))**2+(y(1)-y(4))**2
+        if (xlong1.le.xlong2) then
+        go to 236
+        else
+        goto 237
+        end if
+        ! c
+        236  if(mod(j,3).eq.0) then
+        call plot(x(1),y(1),3)
+        call plot(x(2),y(2),2)
+        call plot(x(3),y(3),3)
+        call plot(x(4),y(4),2)
+        end if
+
+
+        !       write(*,*) 1,i,j,x(1),y(1)
+        !       write(*,*) 1,i,j,x(2),y(2)
+        !       write(*,*) 1,i,j,x(3),y(3)
+        !       write(*,*) 1,i,j,x(4),y(4)
+        ! C       stop 
+
+        go to 250
+
+        237 if(mod(j,3).eq.0) then
+        call plot(x(1),y(1),3)
+        call plot(x(4),y(4),2)
+        call plot(x(2),y(2),3)
+        call plot(x(3),y(3),2)
+        end if
+        !       write(*,*) 2,i,j,x(1),y(1)
+        !       write(*,*) 2,i,j,x(2),y(2)
+        !       write(*,*) 2,i,j,x(3),y(3)
+        !       write(*,*) 2,i,j,x(4),y(4)
+        ! C       stop 
+
+        go to 250
+        ! c
+        ! !-----------else case /  
+        240   do 245 kk=1,4
+        !        if(kk.eq.1) write(*,*)0,(x(jm),y(jm),jm=1,4) 
+        if (x(kk).eq.0.) then
+        !               write(*,*) 'x(kk)',kk,x(kk)
+        go to 245
+        end if
+        x4=x(kk)
+        y4=y(kk)
+        !       write(*,*) 'U',kk,x4,y4
+
+        if (x5.eq.0.) then
+        go to 238
+        end if
+
+        if(mod(j,3).eq.0) then
+        call plot(x4,y4,3)
+        call plot(x5,y5,2)
+        end if
+        !        write(*,*) 3,i,j,x4,y4
+        !        write(*,*) 3,i,j,x5,y5
+
+
+        238          x5=x4
+        y5=y4
+        !       write(*,*) 'L',kk,x4,y4,x5,y5
+        x(kk)=0.
+        245    continue
+        250     x5=0.
+        y5=0.
+        x4=0.
+        y4=0.
+
+        xdx1=0.
+        xdx2=0.
+        xdx3=0.
+        xdx4=0.
+        ydy1=0.
+        ydy2=0.
+        ydy3=0.
+        ydy4=0.
+        !---
+        do 260 kk=1,4
+        x(kk)=0.
+        y(kk)=0.
+        260    continue
+        !---
+
+        270    continue
+        280    continue
+        300    continue
+        ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        return
+    end
+    ! subroutine pscont4(dx,dy,a,ib,ips,ipe,jps,jpe &
+    !     ,mx,my,icnu,contst,contint)
+    !     dimension conta(1000),x(5),y(5)
+    !     real::a(:,:)
+    !     integer::ib(:,:)
+        
+    !     mx = size(a,1); my = size(a,2)
+    !     ! print*, mx, my,'yo'
+    !     ! real,dimension
+    !     !-------------------schematic of contour-----------------------
+    !     !---> x direction is (i)
+    !     ! c   |  ---      a(i,j)-----x(1),y(1)-----a(i+1,j)
+    !     ! c   |   |         |                         |
+    !     ! c   |   |         |                         |
+    !     ! c   |   |         |                         |
+    !     ! c   y   dy    x(2),y(2)                 x(4),y(4)
+    !     ! c       |         |                         |
+    !     ! c   i   |         |                         |
+    !     ! c   s   |         |                         |
+    !     ! c      ---     a(i,j+1)----x(3),y(3)-----a(i+1,j+1)
+    !     ! c  (j)            |<-----------dx---------->|
+    !     ! c
+    !     ! c       | 
+    !     ! c       |<-yycop
+    !     ! c       |____xxcop_
+    !     ! c
+    !     ! c********correct of x and y axis**********
+    !     !-----------------------
+    !     pxm=-dx*float(ips-1)
+    !     pym=-dy*float(jps-1)
+    !     !-----------------------
+    !     xxcop= 0.5*dx + pxm
+    !     yycop= 0.5*dy + pym
+    !     ! c***********************
+    !     !------ The positions of contour line are 1~4x,y 
+    !     ! c            The contour lines are drawn by these position
+    !     !---------------------------------------
+    !     !------setting the value of contour line
+    !     do 200 i=1,icnu
+    !     conta(i)=contst+float(i-1)*contint
+    !     200  continue
+
+    !     x5=0.
+    !     y5=0.
+    !     x4=0.
+    !     y4=0.
+    !     ! c
+    !     xdx1=0.
+    !     xdx2=0.
+    !     xdx3=0.
+    !     xdx4=0.
+    !     ydy1=0.
+    !     ydy2=0.
+    !     ydy3=0.
+    !     ydy4=0.
+    !     !---
+    !     do kk=1,4
+    !     x(kk)=0.
+    !     y(kk)=0.
+    !     enddo
+    !     ! c<<<<<<<<<<<<<<<<<<<<<<<<start>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    !     !------------cont.        
+    !     do 300 k=1,icnu
+    !     !------------y axis        
+    !     do 280 j=jps,jpe-1
+    !     !------------x axis        
+    !     do 270 i=ips,ipe-1
+    !     if ((ib(i,j).eq.0).or.(ib(i+1,j).eq.0) &
+    !         .or.(ib(i,j+1).eq.0).or.(ib(i+1,j+1).eq.0)) &
+    !     go to 270
+    !     ! !------------compare value of conta. to value of a(i,j)
+    !     if ((a(i,j).eq.conta(k)).and.(a(i+1,j).eq.conta(k)) &
+    !     .and.(a(i,j+1).eq.conta(k)).and.(a(i+1,j+1).eq.conta(k))) then
+    !     go to 270
+    !     end if
+    !     if ((a(i,j).lt.conta(k)).and.(a(i+1,j).lt.conta(k)) &
+    !     .and.(a(i,j+1).lt.conta(k)).and.(a(i+1,j+1).lt.conta(k))) then
+
+    !     go to 270
+    !     end if
+    !     ! c
+    !     if (a(i,j).eq.conta(k)) then
+    !     a( i , j )=a( i , j )+0.001*contint
+    !     end if
+    !     ! c
+    !     if (a(i+1,j).eq.conta(k)) then
+    !     a(i+1, j )=a(i+1, j )+0.001*contint
+    !     end if
+    !     ! c
+    !     if (a(i,j+1).eq.conta(k)) then
+    !     a( i ,j+1)=a( i ,j+1)+0.001*contint
+    !     end if
+    !     if (a(i+1,j+1).eq.conta(k)) then
+    !     a(i+1,j+1)=a(i+1,j+1)+0.001*contint
+    !     end if
+    !     ! c
+    !     ! c==========search position (1)============
+    !     dex1=a(i,j)-conta(k)
+    !     dex2=a(i+1,j)-conta(k)
+    !     dex3=dex1*dex2
+    !     if (dex3.le.0.) then
+    !     go to 211
+    !     else
+    !     go to 212
+    !     end if
+    !     !-----------
+    !     211     dex4=a(i,j)-a(i+1,j)
+    !     if (dex4.eq.0.) then
+    !     go to 212
+    !     end if
+
+    !     ! !----------judgment of land and sea
+    !     jnd1=ib(i,j)*ib(i+1,j)
+    !     if (jnd1 .eq. 0) then
+    !     go to 212
+    !     end if
+
+    !     ! c*********position (1)
+    !     x(1)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+    !     y(1)=dy*float((j-1))+yycop
+
+    !     !         write(*,*) 'x(1),y(1)',x(1),y(1)
+    !     ! c==========search position (2)================
+    !     212     dex1=a(i,j)-conta(k)
+    !     dex2=a(i,j+1)-conta(k)
+    !     dex3=dex1*dex2
+    !     if (dex3.le.0.) then
+    !     go to 213
+    !     else
+    !     go to 214
+    !     end if
+    !     !-----------
+    !     213     dex4=a(i,j)-a(i,j+1)
+    !     if (dex4.eq.0.) then
+    !     go to 214
+    !     else
+    !     end if
+
+    !     ! !----------judgment of land and sea
+    !     jnd2=ib(i,j)*ib(i,j+1)
+    !     if (jnd2 .eq. 0) then
+    !     go to 214
+    !     end if
+    !     ! c
+    !     ! c**********position (2)
+    !     x(2)=dx*float(i-1)+xxcop
+    !     y(2)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+    !     +yycop 
+
+    !     ! !         write(*,*) 'x(2),y(2)',x(2),y(2)
+    !     ! c==========search position (3)================
+    !     214    dex1=a(i,j+1)-conta(k)
+    !     dex2=a(i+1,j+1)-conta(k)
+    !     dex3=dex1*dex2
+    !     if (dex3.le.0.) then
+    !     go to 215
+    !     else
+    !     go to 216
+    !     end if
+    !     !-----------
+    !     215    dex4=a(i,j+1)-a(i+1,j+1)
+    !     if (dex4.eq.0.) then
+    !     go to 216
+    !     end if
+    !     ! c
+    !     ! !----------judgment of land and sea
+    !     jnd3=ib(i,j+1)*ib(i+1,j+1)
+    !     if (jnd3 .eq. 0) then
+    !     go to 216
+    !     end if
+    !     ! c
+    !     ! c*********position (3)
+    !     x(3)=dx*float(i-1)+abs(dex1)*dx/abs(dex4)+xxcop
+    !     y(3)=dy*float((j))+yycop
+
+    !     !         write(*,*) 'x(3),y(3)',x(3),y(3)
+    !     ! c==========search position (4)================
+    !     216     dex1=a(i+1,j)-conta(k)
+    !     dex2=a(i+1,j+1)-conta(k)
+    !     dex3=dex1*dex2
+    !     if (dex3.le.0.) then
+    !     go to 217
+    !     else
+    !     go to 240
+    !     end if
+    !     !-----------
+    !     217     dex4=a(i+1,j)-a(i+1,j+1)
+    !     if (dex4.eq.0.) then
+    !     go to 230
+    !     end if
+    !     ! c
+    !     ! !----------judgment of land and sea
+    !     jnd4=ib(i+1,j)*ib(i+1,j+1)
+    !     if (jnd4 .eq. 0) then
+    !     go to 240
+    !     end if
+    !     ! c
+    !     ! c**********position (4)
+    !     x(4)=dx*float(i)+xxcop
+    !     y(4)=dy*float(j-1)+abs(dex1)*dy/abs(dex4) &
+    !     +yycop
+    !     !         write(*,*) 'x(4),y(4)',x(4),y(4)
+    !     ! c#########################################################
+    !     ! c===========drawing contour line==========================
+    !     ! !-----------case of four positions 
+    !     230    if ((x(1).ne.0.).and.(x(2).ne.0.).and.(x(3).ne.0.).and. &
+    !     (x(4).ne.0.)) then
+
+    !     go to 235
+    !     else
+    !     go to 240
+    !     end if
+    !     ! c
+    !     235     xlong1=(x(1)-x(2))**2+(y(1)-y(2))**2
+    !     xlong2=(x(1)-x(4))**2+(y(1)-y(4))**2
+    !     if (xlong1.le.xlong2) then
+    !     go to 236
+    !     else
+    !     goto 237
+    !     end if
+    !     ! c
+    !     236   call plot(x(1),y(1),3)
+    !     call plot(x(2),y(2),2)
+    !     call plot(x(3),y(3),3)
+    !     call plot(x(4),y(4),2)
+
+
+
+    !     !       write(*,*) 1,i,j,x(1),y(1)
+    !     !       write(*,*) 1,i,j,x(2),y(2)
+    !     !       write(*,*) 1,i,j,x(3),y(3)
+    !     !       write(*,*) 1,i,j,x(4),y(4)
+    !     ! C       stop 
+
+    !     go to 250
+
+    !     237   call plot(x(1),y(1),3)
+    !     call plot(x(4),y(4),2)
+    !     call plot(x(2),y(2),3)
+    !     call plot(x(3),y(3),2)
+
+    !     !       write(*,*) 2,i,j,x(1),y(1)
+    !     !       write(*,*) 2,i,j,x(2),y(2)
+    !     !       write(*,*) 2,i,j,x(3),y(3)
+    !     !       write(*,*) 2,i,j,x(4),y(4)
+    !     ! C       stop 
+
+    !     go to 250
+    !     ! c
+    !     ! !-----------else case /  
+    !     240   do 245 kk=1,4
+    !     !        if(kk.eq.1) write(*,*)0,(x(jm),y(jm),jm=1,4) 
+    !     if (x(kk).eq.0.) then
+    !     !               write(*,*) 'x(kk)',kk,x(kk)
+    !     go to 245
+    !     end if
+    !     x4=x(kk)
+    !     y4=y(kk)
+    !     !       write(*,*) 'U',kk,x4,y4
+
+    !     if (x5.eq.0.) then
+    !     go to 238
+    !     end if
+
+    !     call plot(x4,y4,3)
+    !     call plot(x5,y5,2)
+
+    !     !        write(*,*) 3,i,j,x4,y4
+    !     !        write(*,*) 3,i,j,x5,y5
+
+
+    !     238          x5=x4
+    !     y5=y4
+    !     !       write(*,*) 'L',kk,x4,y4,x5,y5
+    !     x(kk)=0.
+    !     245    continue
+    !     250     x5=0.
+    !     y5=0.
+    !     x4=0.
+    !     y4=0.
+
+    !     xdx1=0.
+    !     xdx2=0.
+    !     xdx3=0.
+    !     xdx4=0.
+    !     ydy1=0.
+    !     ydy2=0.
+    !     ydy3=0.
+    !     ydy4=0.
+    !     !---
+    !     do 260 kk=1,4
+    !     x(kk)=0.
+    !     y(kk)=0.
+    !     260    continue
+    !     !---
+
+    !     270    continue
+    !     280    continue
+    !     300    continue
+    !     ! c<<<<<<<<<<<<<<<<<<<<<<<<end>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    !     return
+    ! end
     subroutine pscolorK(px,py,ss,is,ist,ied,jst,jed,ix,iy,cst,ced,rr,gg,bb)
         ! ***********************************************************************
         ! *     cst <==> ced   : Range of painting 
@@ -5719,145 +6405,6 @@ module oldsubs
             call numberc(-memori_size*4.,-dy*real(increment)*real(y_memori),memori_size*3.,real(y_memori*increment),0.,-1)
         end do
     end subroutine
-    ! creating map   line_opt == 1 means NLine, line_opt == 2 means SLine, line_opt == 3 means both
-    subroutine create_map(ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,line_opt,width,symbol_size)
-        implicit none
-        integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long,ini_st,fin_st,line_opt
-        real,intent(in):: width,symbol_size
-        intrinsic sin,cos,tan,asin,acos
-        integer,parameter::imax = 2080,jmax = 2640,station_x = 9, station_y = 2
-        real,dimension(:,:),allocatable::dep
-        integer,dimension(:,:),allocatable::dep_0
-        integer::i,j,is,ie,js,je,n,line_num
-        real::dx,dy,height,ratio,pi,xco,NLineYco,SLineYco
-        character::line_name*10,filename*999
-        real,dimension(station_y,station_x)::lon
-
-        allocate(dep(imax,jmax));allocate(dep_0(imax,jmax))
-        dep = 0.;dep_0 = 0
-        open(21,file='../Data/japan1km122-148_24-46.bin',form='unformatted',status='old')
-        do j=jmax,1,-1
-            if(j>jmax) then; exit;end if
-            read(21)(dep(i,j),i=1,min(imax,2080))
-        end do
-        close(21)
-
-        ! dep(1:imax,1:jmax) = -dep(1:imax,1:jmax)
-        ! masking nothing, depth is a positive value
-        do i=1,imax
-            do j=1,jmax
-                dep_0(i,j)=1
-            end do
-        end do
-
-        if (ini_lat<24 .or. ini_lat>46 .or. fin_lat<24 .or. fin_lat>46 .or. ini_long<122 .or. ini_long>148 .or. fin_long<122 .or. fin_long>148 .or.ini_lat>fin_lat .or. ini_long>fin_long) then
-            print*, 'Your map coordinates must be within 24-46N and 122-148E'
-        else
-            js = (ini_lat-24)*120+1
-            je = (fin_lat-24)*120
-            is = (ini_long-122)*80+1
-            ie = (fin_long-122)*80
-            pi = 2.*asin(1.)
-            ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
-            height = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
-            dx = width/real(ie-is)
-            dy = height/real(je-js)
-
-            ! call plot(x,y,-3)
-            if (symbol_size<=0.2) then;call newpen2(2);else if(symbol_size>=0.2 .and. symbol_size<=0.4) then;call newpen2(3);else;call newpen2(4);end if
-            call rgbk(0.,0.,0.)
-            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
-            call rgbk(.85,.85,1.)
-            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,100.,0.)
-            call rgbk(0.5,0.5,1.)
-            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,200.,0.)
-            call rgbk(0.2,0.2,1.)
-            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,400.,0.)
-            call rgbk(0.,0.,.7)
-            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,1000.,0.)
-        end if
-        call rgbk(0.,0.,0.)
-        call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
-        do n = 0,fin_long-ini_long
-            call plot(dx*80.*real(n),0.,3);call plot(dx*80.*real(n),-symbol_size*0.5,2);call numberc(dx*80.*real(n),-symbol_size*1.4,symbol_size,real(n+ini_long),0.,-1)
-            if(n/=fin_long-ini_long) then
-                do i = 1, 9
-                    call plot(dx*80.*(real(n)+real(i)/10.),0.,3);call plot(dx*80.*(real(n)+real(i)/10.),-symbol_size*0.25,2)
-                end do
-            end if
-        end do
-        do n = 0,fin_lat-ini_lat
-            call plot(0.,dy*120.*real(n),3);call plot(-symbol_size*0.5,dy*120.*real(n),2);call numberc(-symbol_size*1.2,dy*120.*real(n)-symbol_size*0.3,symbol_size,real(n+ini_lat),0.,-1)
-            if(n/=fin_lat - ini_lat) then
-                do i = 1,9
-                    call plot(0.,dy*120.*(real(n)+real(i)/10.),3);call plot(-symbol_size*0.25,dy*120.*(real(n)+real(i)/10.),2)
-                end do
-            end if
-        end do
-        ! call symbolc(width/2.,-symbol_size*2.5,symbol_size*0.8,'Long (E)',0.,len('Long (e)'))
-        ! call symbolc(-symbol_size*2.5,height/2.,symbol_size*0.8,'Lat (N)',90.,len('Lat (n)'))
-        if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
-            do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
-                filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
-                open(32,file=filename,status = 'old',action = 'read')
-                read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
-                close(32)
-                NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
-                if(line_opt/=2)then
-                    call plot(dx*(137.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
-                end if
-                if(line_opt/=1)then
-                    call plot(dx*(137.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
-                end if
-                do n = ini_st,fin_st; xco = dx*(lon(line_num,10-n)-real(ini_long))*80.
-                    if (line_num ==1 .and. line_opt/=2) then
-                        if(n==1.or.n==2.or.n==3)then;call gmark(xco,NLineYco,symbol_size*0.3,1);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==4.or.n==5.or.n==6)then;call gmark(xco,NLineYco,symbol_size*0.3,1);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
-                        else if(n==7.or.n==8.or.n==9)then;call gmark(xco,NLineYco,symbol_size*0.3,8);call numberc(xco,NLineYco+symbol_size*0.25,symbol_size*0.8,real(n),0.,-1)
-                        else;end if
-                    ! else if(line_num ==2 .and. line_opt /= 1) then
-                    !     if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,symbol_size*0.4,1);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                    !     else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,symbol_size*0.4,6);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                    !     else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,symbol_size*0.4,8);call numberc(xco,SLineYco-symbol_size*1.2,symbol_size*0.8,real(n),0.,-1)
-                    !     else;end if
-                    else;end if
-                end do
-            end do
-            if(line_opt ==1 ) then
-                call symbolr(dx*(lon(1,4)-real(ini_long))*80.-symbol_size/2.,NLineYco+symbol_size/4.,symbol_size,'N-Line',0.,6)
-            else if(line_opt==2) then
-                call symbolr(dx*(lon(2,4)-real(ini_long))*80.-symbol_size/2.,SLineYco+symbol_size/4.,symbol_size,'S-Line',0.,6)
-            else;call symbolr(dx*(lon(1,4)-real(ini_long))*80.-symbol_size/2.,NLineYco+symbol_size/4.,symbol_size,'N-Line',0.,6)
-                call symbolr(dx*(lon(2,4)-real(ini_long))*80.-symbol_size/2.,SLineYco+symbol_size/4.,symbol_size,'S-Line',0.,6)
-            end if
-        else
-            print*,'stations are just outside of your map, like a perfect flower that is just beyond your reach...(mj)'
-        end if
-        ! ESA
-        if(ini_lat<41.and.fin_lat>41.and.ini_long<140.and.fin_long>140)then
-            call gmark(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
-            call symbol(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.+symbol_size/3.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size*0.8,'ESA',0.)
-        end if
-        ! OKU esa and oku 61km apart
-        if(ini_lat<42.and.fin_lat>42.and.ini_long<139.and.fin_long>139)then
-            call gmark(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
-            call symbolr(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.-symbol_size/3.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size*0.8,'OKU',0.)
-        end if
-        ! SAK
-        if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
-            call gmark(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
-            call symbol(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.+symbol_size/3.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size*0.8,'SAK',0.)
-        end if
-        ! TOB sak and tob 38km apart
-        if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
-            call gmark(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size*0.4,1)
-            call symbolr(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.-symbol_size/3.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size*0.8,'TOB',0.)
-        end if
-        deallocate(dep);deallocate(dep_0)
-
-        ! call plot(-x,-y,-3)
-            
-    end subroutine
     ! only creates a frame unfortunately
     subroutine TS_diagram(temp_min,temp_max,sal_min,sal_max,sal_memoriterations,sal_symbolfreq,symbol_size,width,height)
         implicit none
@@ -7015,11 +7562,11 @@ module subroutines
             implicit none
             real,intent(in)::width,height
             real,intent(in),optional::x,y
-            integer,intent(in)::thickness
+            integer,intent(in),optional::thickness
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
-            call newpen2(thickness)
+            if(present(thickness))call newpen2(thickness)
             call plot(0.,0.,3);call plot(width,0.,2);call plot(width,height,2);call plot(0.,height,2);call plot(0.,0.,2)
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
@@ -7045,6 +7592,170 @@ module subroutines
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+        end subroutine
+        ! creating map   line_opt == 1 means NLine, line_opt == 2 means SLine, line_opt == 3 means both
+        subroutine map(ini_lat,fin_lat,ini_long,fin_long,width,ini_st,fin_st,line_opt,symbol_size,description)
+            implicit none
+            integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long
+            integer,intent(in),optional::ini_st,fin_st,line_opt
+            real,intent(in):: width
+            real,intent(in),optional::symbol_size
+            logical,intent(in),optional::description
+            intrinsic sin,cos,tan,asin,acos
+            integer,parameter::imax = 2080,jmax = 2640,station_x = 9, station_y = 2
+            real,dimension(:,:),allocatable::dep,butler_array
+            integer,dimension(:,:),allocatable::dep_0
+            integer::i,j,is,ie,js,je,n,line_num,ini_st_local,fin_st_local,line_opt_local   
+            real::dx,dy,height,ratio,pi,xco,NLineYco,SLineYco,symbol_size_local
+            character::line_name*10,filename*999
+            real,dimension(station_y,station_x)::lon
+            logical::dstat = .false.
+
+            allocate(dep(imax,jmax));allocate(dep_0(imax,jmax))
+            dep = 0.;dep_0 = 1
+            open(21,file='../Data/japan1km122-148_24-46.bin',form='unformatted',status='old')
+            do j = jmax,1,-1  ! reading in reverse so i can draw map from bottom left
+                read(21)dep(:,j)
+            end do
+            close(21)
+            dep = -dep
+            ! maxval(dep) == -9784 minval(dep) == 3660 (fuji); Note that the data is in meters and z axis is positive upwards
+            if(present(ini_st))then;ini_st_local = ini_st;else;ini_st_local = 1;end if
+            if(present(fin_st))then;fin_st_local = fin_st;else;fin_st_local = 6;end if
+            if(present(line_opt))then;line_opt_local = line_opt;else;line_opt_local = 3;end if
+            if(present(symbol_size))then;symbol_size_local = symbol_size;else;symbol_size_local = width/11.;end if
+            if(present(description))then 
+                if(description)dstat = .true.
+            end if
+            if (ini_lat<24 .or. ini_lat>46 .or. fin_lat<24 .or. fin_lat>46 .or. ini_long<122 .or. ini_long>148 .or. fin_long<122 .or. fin_long>148 .or.ini_lat>fin_lat .or. ini_long>fin_long) then
+                print*, 'Your map coordinates must be within 24-46N and 122-148E'
+            else
+                js = (ini_lat-24)*120+1
+                je = (fin_lat-24)*120
+                is = (ini_long-122)*80+1
+                ie = (fin_long-122)*80
+                pi = 2.*asin(1.)
+                ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
+                height = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
+                dx = width/real(ie-is)
+                dy = height/real(je-js)
+                allocate(butler_array(ie-is+1,je-js+1))
+                butler_array = dep(is:ie,js:je)
+                call butler_psmask(butler_array,width,height,0.,3700.,r=0.8,g=.9,b=0.1)  ! land
+                call butler_psmask(butler_array,width,height,-200.,0.,r = 0.8,g=0.9,b = 1.) ! <=200m
+                call butler_psmask(butler_array,width,height,-1000.,-200.,r = 0.65,g=0.75,b=1.) ! 200-1000m
+                call butler_psmask(butler_array,width,height,-2000.,-1000.,r = 0.5,g=0.6,b=1.) ! 1000-2000m
+                call butler_psmask(butler_array,width,height,-3000.,-2000.,r = 0.35,g=0.45,b=.9) ! 2000-3000m
+                call butler_psmask(butler_array,width,height,-10000.,-3000.,r = 0.2,g=0.3,b=.8) ! >3000m
+                print*,'Deepest Point of Your Map Domain is;',maxval(butler_array)
+                print*,'Heighest Point of Your Map Domain is;',minval(butler_array)
+                if (symbol_size_local<=0.2) then;call newpen2(1);else if(symbol_size_local>=0.2 .and. symbol_size_local<=0.4) then;call newpen2(2);else;call newpen2(3);end if
+                call rgbk(0.,0.,0.) 
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-200.,0.) 
+                ! if (symbol_size_local<=0.2) then;call newpen2(2);else if(symbol_size_local>=0.2 .and. symbol_size_local<=0.4) then;call newpen2(3);else;call newpen2(4);end if
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-1000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-2000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-3000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-10000.,0.) ! solid
+            end if
+            call rgbk(0.,0.,0.)
+            call box(width,height)
+            call num_memori(real(ini_lat),real(fin_lat),(fin_lat-ini_lat)*10+1,10,symbol_size_local,-1,height,-90)
+            call num_memori(real(ini_long),real(fin_long),(fin_long-ini_long)*10+1,10,symbol_size_local,-1,width,0)
+            
+            call symbolc(width/2.,-symbol_size_local*2.6,symbol_size_local*0.8,'Longitude (deg.E)')
+            call symbolc(-symbol_size_local*2.5,height/2.,symbol_size_local*0.8,'Latitude (deg.N)',90.)
+            if(ini_long<=137 .and.fin_long>=140 .and. ini_lat<=40 .and. fin_lat>=41) then
+                do line_num = 1,station_y;if(line_num == 1) then; line_name = 'N-Line';else;line_name = 'S-Line';end if
+                    filename = '../Data/Coordinates/'//trim(line_name)//'/lon.csv'
+                    open(32,file=filename,status = 'old',action = 'read')
+                    read(32,'(9(f9.4))')(lon(line_num,i),i = 1,station_x)
+                    close(32)
+                    NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
+                    if(line_opt_local/=2)then
+                        call plot(dx*(lon(1,10-fin_st_local)-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
+                    end if
+                    if(line_opt_local/=1)then
+                        call plot(dx*(lon(2,10-fin_st_local)-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
+                    end if
+                    do n = ini_st_local,fin_st_local; xco = dx*(lon(line_num,10-n)-real(ini_long))*80.
+                        if (line_num ==1 .and. line_opt_local/=2) then
+                            if(n==1.or.n==2.or.n==3)then
+                                call rgbk(1.,1.,1.);call gmark(xco,NLineYco,symbol_size_local*0.4,1)
+                                call rgbk(0.,0.,0.);call gmark(xco,NLineYco,symbol_size_local*0.3,1)
+                                if(dstat)call numberc(xco,NLineYco+symbol_size_local*0.25,symbol_size_local*0.8,real(n),0.,-1)
+                            else if(n==4.or.n==5.or.n==6)then
+                                call rgbk(1.,1.,1.);call gmark(xco,NLineYco,symbol_size_local*0.4,1)
+                                call rgbk(0.,0.,0.);call gmark(xco,NLineYco,symbol_size_local*0.3,1)
+                                if(dstat)call numberc(xco,NLineYco+symbol_size_local*0.25,symbol_size_local*0.8,real(n),0.,-1)
+                            else if(n==7.or.n==8.or.n==9)then
+                                call rgbk(1.,1.,1.);call gmark(xco,NLineYco,symbol_size_local*0.4,1)  ! separating stations by 3 in case i want to change the shapes
+                                call rgbk(0.,0.,0.);call gmark(xco,NLineYco,symbol_size_local*0.3,1)
+                                if(dstat)call numberc(xco,NLineYco+symbol_size_local*0.25,symbol_size_local*0.8,real(n),0.,-1)
+                            else;end if
+                        ! else if(line_num ==2 .and. line_opt_local /= 1) then
+                        !     if(n==1.or.n==2.or.n==3)then;call gmark(xco,SLineYco,symbol_size_local*0.4,1);call numberc(xco,SLineYco-symbol_size_local*1.2,symbol_size_local*0.8,real(n),0.,-1)
+                        !     else if(n==4.or.n==5.or.n==6)then;call gmark(xco,SLineYco,symbol_size_local*0.4,6);call numberc(xco,SLineYco-symbol_size_local*1.2,symbol_size_local*0.8,real(n),0.,-1)
+                        !     else if(n==7.or.n==8.or.n==9)then;call gmark(xco,SLineYco,symbol_size_local*0.4,8);call numberc(xco,SLineYco-symbol_size_local*1.2,symbol_size_local*0.8,real(n),0.,-1)
+                        !     else;end if
+                        else;end if
+                    end do
+                end do
+                if(line_opt_local ==1 ) then
+                    if(dstat)call symbolr(dx*(lon(1,6)-real(ini_long))*80.-symbol_size_local/2.,NLineYco+symbol_size_local*1.1,symbol_size_local,'N-Line',0.,6)
+                else if(line_opt_local==2) then
+                    if(dstat)call symbolr(dx*(lon(2,6)-real(ini_long))*80.-symbol_size_local/2.,SLineYco-symbol_size_local*1.2,symbol_size_local,'S-Line',0.,6)
+                else
+                    if(dstat) then
+                        call symbolr(dx*(lon(1,6)-real(ini_long))*80.-symbol_size_local/2.,NLineYco+symbol_size_local*1.1,symbol_size_local,'N-Line',0.,6)
+                        call symbolr(dx*(lon(2,6)-real(ini_long))*80.-symbol_size_local/2.,SLineYco-symbol_size_local*1.2,symbol_size_local,'S-Line',0.,6)
+                    end if
+                end if
+            else
+                print*,'stations are just outside of your map, like a perfect flower that is just beyond your reach...(mj)'
+            end if
+            ! ESA
+            if(ini_lat<41.and.fin_lat>41.and.ini_long<140.and.fin_long>140)then
+                call rgbk(1.,1.,1.)
+                call gmark(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size_local*0.45,1)
+                call rgbk(0.,0.,0.)
+                call gmark(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size_local*0.3,4)
+                if(dstat)call symbol(dx*(140.+(8./60.)+(33./3600.)-real(ini_long))*80.+symbol_size_local/3.,dy*(41.+(53./60.)+(59./3600.)-real(ini_lat))*120.,symbol_size_local*0.8,'ESA',0.)
+            end if
+            ! OKU esa and oku 61km apart
+            if(ini_lat<42.and.fin_lat>42.and.ini_long<139.and.fin_long>139)then
+                call rgbk(1.,1.,1.)
+                call gmark(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size_local*0.45,1)
+                call rgbk(0.,0.,0.)
+                call gmark(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size_local*0.3,4)
+                if(dstat)call symbolr(dx*(139.+(29./60.)+(22./3600.)-real(ini_long))*80.-symbol_size_local/3.,dy*(42.+(4./60.)+(43./3600.)-real(ini_lat))*120.,symbol_size_local*0.8,'OKU',0.)
+            end if
+            ! SAK
+            if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
+                call rgbk(1.,1.,1.)
+                call gmark(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size_local*0.45,1)
+                call rgbk(0.,0.,0.)
+                call gmark(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size_local*0.3,4)
+                if(dstat)call symbol(dx*(139.+(49./60.)+(25./3600.)-real(ini_long))*80.+symbol_size_local/3.,dy*(38.+(55./60.)+(3./3600.)-real(ini_lat))*120.,symbol_size_local*0.8,'SAK',0.)
+            end if
+            ! TOB sak and tob 38km apart
+            if(ini_lat<39.and.fin_lat>39.and.ini_long<139.and.fin_long>139)then
+                call rgbk(1.,1.,1.)
+                call gmark(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size_local*0.45,1)
+                call rgbk(0.,0.,0.)
+                call gmark(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size_local*0.3,4)
+                if(dstat)call symbolr(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.-symbol_size_local/3.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size_local*0.8,'TOB',0.)
+            end if
+            if((ini_lat<41 .and. fin_lat>41 .and. ini_long<140 .and. fin_long>140))then 
+                call rgbk(1.,1.,1.)
+                call gmark(dx*(139.+(55./60.)+(35./3600.)-real(ini_long))*80.,dy*(40.+(38./60.)+(50./3600.)-real(ini_lat))*120.,symbol_size_local*0.45,1)
+                call rgbk(0.,0.,0.)
+                call gmark(dx*(139.+(55./60.)+(35./3600.)-real(ini_long))*80.,dy*(40.+(38./60.)+(50./3600.)-real(ini_lat))*120.,symbol_size_local*0.3,4)
+                if(dstat)call symbolr(dx*(139.+(32./60.)+(51./3600.)-real(ini_long))*80.-symbol_size_local/3.,dy*(39.+(11./60.)+(8./3600.)-real(ini_lat))*120.,symbol_size_local*0.8,'TOB',0.)
+            end if
+            deallocate(dep,dep_0,butler_array)
+                
         end subroutine
         subroutine floating_numbers(ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,rangle,float_quantity,x,y)
             real,intent(in)::symbol_size,x_inc,y_inc,rangle,ini_num,num_inc
@@ -7263,24 +7974,28 @@ module subroutines
             
         end subroutine
         ! MEMORI
-        subroutine memori(iterations,memori_size,bimemori_freq,length,rangle,x,y,gap)
+        subroutine memori(iterations,memori_size,bimemori_freq,length,rangle,x,y,gap,lthick)
             implicit none
-            real,intent(in)::memori_size,length,rangle
+            real,intent(in)::memori_size,length
             integer,intent(in)::iterations,bimemori_freq
-            integer,intent(in),optional::gap
-            real,intent(in),optional::x,y
+            integer,intent(in),optional::gap,lthick
+            real,intent(in),optional::x,y,rangle
             real::dx,gappy
             integer::n
         
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
-            write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
+            if(present(rangle))write(ounit,'(f10.4,2x,a4)' ) rangle , ' ro ' 
             call plot(-length/2.,0.,-3)
-            if(memori_size<=0.05)then;call newpen2(2)
-            else if(memori_size>0.05.and.memori_size<=0.12)then;call newpen2(3)
-            else if(memori_size>0.12.and.memori_size<=0.2)then;call newpen2(4)
-            else;call newpen2(5);end if
+            if(present(lthick))then 
+                call newpen2(lthick)
+            else
+                if(memori_size<=0.05)then;call newpen2(2)
+                else if(memori_size>0.05.and.memori_size<=0.12)then;call newpen2(3)
+                else if(memori_size>0.12.and.memori_size<=0.2)then;call newpen2(4)
+                else;call newpen2(5);end if
+            end if
             
             if(present(gap))then
                 if(gap == 2) then
@@ -7301,18 +8016,18 @@ module subroutines
                 end if
             end do
             call plot(length/2.,0.,-3)
-            write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
+            if(present(rangle))write(ounit,'(f9.4,2x,a4)' ) -rangle , ' ro ' 
 
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
 
         end subroutine
-        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,lt,gt,x,y)
+        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,x,y)
             implicit none
             real,intent(in)::ini_num,fin_num,symbol_size,length
             integer,intent(in)::iterations,symbol_freq,angle,float_quantity
-            integer,intent(in),optional::lt,gt
+            ! integer,intent(in),optional::lt,gt
             real,intent(in),optional::x,y
             real::memori_diff,num_diff
             integer::n
@@ -7325,103 +8040,106 @@ module subroutines
             else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
             else;call newpen2(5);end if
 
-            if(.not.present(lt).and..not.present(gt)) then
+            ! if(.not.present(lt).and..not.present(gt)) then
                 ! call newpen2(3)
-                memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+                if(iterations/=1)then 
+                    memori_diff = length/real(iterations-1); num_diff = (fin_num-ini_num)/real(iterations-1)
+                else;memori_diff = length; num_diff = (fin_num-ini_num)
+                end if
                 if(angle == 0) then
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then
-                            call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.3*symbol_size,2)
-                            call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        else; call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.2*symbol_size,2)
+                    do n = 1, iterations
+                        if(mod(n-1,symbol_freq)==0) then
+                            call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size,2)
+                            call numberc(real(n-1)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
+                        else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size,2)
                         end if
                     end do
                 else if(angle == 90) then
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then
-                            call plot(0.,real(n)*memori_diff,3);call plot(0.3*symbol_size,real(n)*memori_diff,2)
-                            call number(0.5*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        else;call plot(0.,real(n)*memori_diff,3);call plot(0.2*symbol_size,real(n)*memori_diff,2)
+                    do n = 1, iterations
+                        if(mod(n-1,symbol_freq)==0) then
+                            call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size,real(n-1)*memori_diff,2)
+                            call number(0.5*symbol_size,real(n-1)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
+                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size,real(n-1)*memori_diff,2)
                         end if
                     end do
                 else if (angle == -90) then
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then
-                            call plot(0.,real(n)*memori_diff,3);call plot(-0.3*symbol_size,real(n)*memori_diff,2)
-                            call numberr(-0.6*symbol_size,real(n)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        else;call plot(0.,real(n)*memori_diff,3);call plot(-0.2*symbol_size,real(n)*memori_diff,2)
+                    do n = 1, iterations
+                        if(mod(n-1,symbol_freq)==0) then
+                            call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size,real(n-1)*memori_diff,2)
+                            call numberr(-0.6*symbol_size,real(n-1)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
+                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size,real(n-1)*memori_diff,2)
                         end if
                     end do
                 else;end if
-            else;end if
+            ! else;end if
         
-            if(present(lt).and.present(gt)) then
-                ! call newpen2(3)
-                memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-                if(angle == 0) then
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-                        else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-                        end if
-                    end do
-                    call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-                    call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-                else !(angle == 90)
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
-                        else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-                        end if
-                    end do
-                    call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-                    call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-                end if
-            else;end if 
+            ! if(present(lt).and.present(gt)) then
+            !     ! call newpen2(3)
+            !     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+            !     if(angle == 0) then
+            !         do n = 0, iterations
+            !             if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !             call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
+            !             else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
+            !             end if
+            !         end do
+            !         call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+            !         call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+            !     else !(angle == 90)
+            !         do n = 0, iterations
+            !             if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !             call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
+            !             else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
+            !             end if
+            !         end do
+            !         call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+            !         call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
+            !     end if
+            ! else;end if 
         
-            if(present(gt) .and. .not.present(lt)) then
-            ! call newpen2(3)
-                memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-                if(angle == 0) then
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                        else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                        end if
-                    end do
-                    call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-                else !(angle == 90)
-                    do n = 0, iterations
-                        if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                        call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
-                        else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                        end if
-                    end do
-                    call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-                end if
-            else;end if
+            ! if(present(gt) .and. .not.present(lt)) then
+            ! ! call newpen2(3)
+            !     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+            !     if(angle == 0) then
+            !         do n = 0, iterations
+            !             if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !             call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+            !             else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+            !             end if
+            !         end do
+            !         call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
+            !     else !(angle == 90)
+            !         do n = 0, iterations
+            !             if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !             call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
+            !             else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+            !             end if
+            !         end do
+            !         call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
+            !     end if
+            ! else;end if
         
-            if(.not.present(gt) .and. present(lt)) then
-                ! call newpen2(3)
-                    memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-                    if(angle == 0) then
-                        do n = 0, iterations
-                            if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-                            else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-                            end if
-                        end do
-                        call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-                    else !(angle == 90)
-                        do n = 0, iterations
-                            if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-                            call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
-                            else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-                            end if
-                        end do
-                        call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-                    end if
-            else;end if   
+            ! if(.not.present(gt) .and. present(lt)) then
+            !     ! call newpen2(3)
+            !         memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
+            !         if(angle == 0) then
+            !             do n = 0, iterations
+            !                 if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !                 call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
+            !                 else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
+            !                 end if
+            !             end do
+            !             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
+            !         else !(angle == 90)
+            !             do n = 0, iterations
+            !                 if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
+            !                 call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
+            !                 else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
+            !                 end if
+            !             end do
+            !             call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
+            !         end if
+            ! else;end if   
 
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
@@ -7469,68 +8187,75 @@ module subroutines
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
         end subroutine
         ! gap bw memori and box. gap=0:no gap, gap=1:dx, gap=2:dx/2. get dxval if needed
-        subroutine mod12_memori(iterations,symbol_size,angle,length,gap,num_freq,num_st,x,y,dxval)
+        subroutine mod12_memori(iterations,length,symbol_size,angle,gap,num_freq,num_st,x,y,dxval)
             implicit none
-            real,intent(in)::symbol_size,length
-            real,intent(in),optional::x,y
+            real,intent(in)::length
+            real,intent(in),optional::x,y,symbol_size
             integer,intent(in),optional::num_freq,num_st
             real,intent(out),optional::dxval
-            integer,intent(in)::iterations,angle,gap
-            real::dx,gappy
-            integer::n,m,printm
+            integer,intent(in)::iterations
+            integer,intent(in),optional::angle,gap
+            real::dx,gappy,symbol_size_local
+            integer::n,m,printm,angle_local,gap_local
 
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
-            if(symbol_size<=0.2)then;call newpen2(2)
-            else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
-            else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
+            if(present(symbol_size))then 
+                symbol_size_local = symbol_size
+            else;symbol_size_local = length/15.
+            end if
+            if(symbol_size_local<=0.2)then;call newpen2(2)
+            else if(symbol_size_local>0.2.and.symbol_size_local<=0.5)then;call newpen2(3)
+            else if(symbol_size_local>0.5.and.symbol_size_local<=0.8)then;call newpen2(4)
             else;call newpen2(5);end if
+            if(present(angle))then;angle_local = angle;else;angle_local = 0;end if
+            if(present(gap))then;gap_local = gap;else;gap_local = 2;end if
 
-            if(gap == 2) then
+            if(gap_local == 2) then
                     dx = length/real(iterations);gappy = dx/2.
-                else if(gap == 1) then
+                else if(gap_local == 1) then
                     dx = length/real(iterations+1);gappy = dx
-                else if(gap == 0) then
+                else if(gap_local == 0) then
                     dx = length/real(iterations-1);gappy = 0.
             end if
             if(present(dxval)) then;dxval = dx;else;end if
-            if(angle==0) then
+            if(angle_local==0) then
                 call plot(0.,0.,3);call plot(length,0.,2)
                 do n = 1,iterations
                     if (mod(n,12)/=0) then;m = mod(n,12)
                     else if(mod(n,12)==0) then;m = 12
                     else;end if
-                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.3*symbol_size,2)
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-0.3*symbol_size_local,2)
                     ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
                     printm = m
                     if(present(num_freq))then
                         if(present(num_st))then
                             if(n>=num_st.and.mod(n,num_freq)==0.or.n==1.or.n==iterations)then
-                                call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+                                call numberc(gappy+real(n-1)*dx,-1.2*symbol_size_local,symbol_size_local,real(printm),0.,-1)
                             end if
-                        else;if(mod(n,num_freq)==0)call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+                        else;if(mod(n,num_freq)==0)call numberc(gappy+real(n-1)*dx,-1.2*symbol_size_local,symbol_size_local,real(printm),0.,-1)
                         end if
-                    else;call numberc(gappy+real(n-1)*dx,-1.2*symbol_size,symbol_size,real(printm),0.,-1)
+                    else;call numberc(gappy+real(n-1)*dx,-1.2*symbol_size_local,symbol_size_local,real(printm),0.,-1)
                     end if
                 end do
-            else if(angle == -90) then
+            else if(angle_local == -90) then
                 call plot(0.,0.,3);call plot(0.,length,2)
                 do n = 1,iterations
                     if (mod(n,12)/=0) then;m = mod(n,12)
                     else if(mod(n,12)==0) then;m = 12
                     else;end if
-                    call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.3*symbol_size,gappy+real(n-1)*dx,2)
+                    call plot(0.,gappy+real(n-1)*dx,3);call plot(-0.3*symbol_size_local,gappy+real(n-1)*dx,2)
                     ! if(inc_dec == 1) then;printm = 13-m;else;printm = m;end if
                     printm = m
                     if(present(num_freq))then
                         if(present(num_st))then
                             if(n>=num_st.and.mod(n,num_freq)==0)then
-                                call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                                call numberc(-1.*symbol_size_local,gappy+real(n-1)*dx-symbol_size_local*0.3,symbol_size_local,real(printm),0.,-1)
                             end if
-                        else;if(mod(n,num_freq)==0)call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                        else;if(mod(n,num_freq)==0)call numberc(-1.*symbol_size_local,gappy+real(n-1)*dx-symbol_size_local*0.3,symbol_size_local,real(printm),0.,-1)
                         end if
-                    else;call numberc(-1.*symbol_size,gappy+real(n-1)*dx-symbol_size*0.3,symbol_size,real(printm),0.,-1)
+                    else;call numberc(-1.*symbol_size_local,gappy+real(n-1)*dx-symbol_size_local*0.3,symbol_size_local,real(printm),0.,-1)
                     end if
                 end do
             end if
@@ -8594,7 +9319,7 @@ module subroutines
             deallocate(r1,g1,b1)
         end subroutine
         ! can draw contours on 1 column arrays * dirty due to unnecessary use of bounds
-        subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap,maskn)
+        subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap,maskn,contq)
             implicit none
             real,intent(in)::maskval,conti,continc,width,height
             real,intent(in)::array_2D(:,:)
@@ -8602,7 +9327,7 @@ module subroutines
             real,dimension(:,:),allocatable::another
             integer,dimension(:,:),allocatable::anothermask
             real,intent(in),optional::r,g,b
-            integer,intent(in),optional::thicc,gap
+            integer,intent(in),optional::thicc,gap,contq
             logical,intent(in),optional::maskn
             real::dx,dy
             integer::i,j,n,contquan,zerocolumns=0,nonzerocol=0,dim1,dim2
@@ -8651,7 +9376,11 @@ module subroutines
                 end if
             end if
 
-            contquan = int((maxval(array_2D)-conti)/continc+1)
+            if(present(contq))then 
+                contquan = contq
+            else
+                contquan = int((maxval(array_2D)-conti)/continc+1)
+            end if
             if(present(r).and.present(g).and.present(b))then;call rgbk(r,g,b);else;call rgbk(0.,0.,0.);end if
             if(dim1-zerocolumns>1)then
                 do n = 0, contquan
@@ -8668,12 +9397,18 @@ module subroutines
             else
                 if(dim1-zerocolumns==1)then
                     print*,'has only one nonzero column=',nonzerocol,'(butler_cont)'
-                    allocate(another(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
-                    allocate(anothermask(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
-                    another(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2)) = array_2D
-                    another(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = another(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
-                    anothermask(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2))=mask
-                    anothermask(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = anothermask(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
+                    ! allocate(another(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                    allocate(another(size(array_2D,1)+1,size(array_2D,2)))
+                    ! allocate(anothermask(lbound(array_2D,1):ubound(array_2D,1)+1,lbound(array_2D,2):ubound(array_2D,2)))
+                    allocate(anothermask(size(array_2D,1)+1,size(array_2D,2)))
+                    ! another(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2)) = array_2D
+                    another(1:dim1,1:dim2) = array_2D
+                    ! another(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = another(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
+                    another(nonzerocol+1,1:dim2) = another(nonzerocol,1:dim2)
+                    ! anothermask(lbound(array_2D,1):ubound(array_2D,1),lbound(array_2D,2):ubound(array_2D,2))=mask
+                    anothermask(1:dim1,1:dim2) = mask
+                    ! anothermask(nonzerocol+1,lbound(array_2D,2):ubound(array_2D,2)) = anothermask(nonzerocol,lbound(array_2D,2):ubound(array_2D,2))
+                    anothermask(nonzerocol+1,1:dim2) = anothermask(nonzerocol,1:dim2)
                     call plot(-dx/2.,0.,-3)
                     do n = 0,contquan
                         if(abs(width)<=2.5)then;call newpen2(2);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
@@ -8682,7 +9417,8 @@ module subroutines
                                 if(abs(width)<=2.5)then;call newpen2(4);elseif(abs(width)>2.5.and.abs(width)<=4.)then;call newpen2(5);else;call newpen2(6);end if
                             end if
                         end if
-                        call pscont3(dx,dy,another,anothermask,lbound(array_2D,1),ubound(array_2D,1)+1,lbound(array_2D,2),ubound(array_2D,2),dim1,dim2,1,conti+continc*real(n),0.)
+                        ! call pscont3(dx,dy,another,anothermask,lbound(array_2D,1),ubound(array_2D,1)+1,lbound(array_2D,2),ubound(array_2D,2),dim1,dim2,1,conti+continc*real(n),0.)
+                        call pscont3(dx,dy,another,anothermask,1,dim1+1,1,dim2,dim1+1,dim2,1,conti+continc*real(n),0.)
                     end do
                     deallocate(another);deallocate(anothermask)
                     call plot(dx/2.,0.,-3)
@@ -8743,9 +9479,9 @@ module subroutines
 
         end subroutine
         ! for integer arrays
-        subroutine butler_imask(array_2D,width,height,integer_in,r,g,b,gap)
+        subroutine butler_imask(array_2D,width,height,imask,r,g,b,gap)
             implicit none
-            integer,intent(in)::integer_in
+            integer,intent(in)::imask
             integer,intent(in),optional::gap
             real,intent(in),optional::r,g,b
             real,intent(in)::width,height
@@ -8755,10 +9491,11 @@ module subroutines
             integer::i,j,dim1,dim2
             
             write(16,*)"% begin butler_mask"
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
 
-            if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
-                print*,'Array size /= dim1 or dim2(butler_imask)';stop
-            end if
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2(butler_imask)';stop
+            ! end if
             call box(width,height,3)
             if(.not.present(gap))then
                 dx = width/real(dim1);dy = height/real(dim2)
@@ -8766,7 +9503,7 @@ module subroutines
             end if
             do i = 1, dim1
                 do j = 1, dim2
-                    if(array_2D(i,j)==integer_in) then;mask(i,j)=1
+                    if(array_2D(i,j)==imask) then;mask(i,j)=1
                     else;mask(i,j)=0
                     end if
 
@@ -8775,7 +9512,7 @@ module subroutines
             ! print*,mask
 
             if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
-            call betcolorI(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,integer_in,r1,g1,b1)
+            call betcolorI(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,imask,r1,g1,b1)
             if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
             write(16,*)"% end butler_mask"
 
@@ -8971,17 +9708,18 @@ module subroutines
                 end if
             end subroutine process
         end subroutine
-        subroutine butler_linegraph(array_1D,width,height,memi,memf,rmask,memiter,memsymfreq,memsymsize,memflqt,memloc,memlabel,error_1D,maskbyc,dots)
+        subroutine butler_linegraph(array_1D,width,height,memi,memf,rmask,mem,memscale,memiter,memsymfreq,memsymsize,memflqt,memloc,memlabel,blabel,tlabel,error_1D,maskbyc,dots,rl,gl,bl,lthick)
+            use functions
             implicit none
             real,intent(in)::array_1D(:),width,height,memi,memf
-            real,intent(in),optional::error_1D(:),memsymsize,rmask
-            integer,intent(in),optional::memiter,memsymfreq,memflqt
-            character(len=*),intent(in),optional::memloc,memlabel
-            logical,intent(in),optional::maskbyc,dots
+            real,intent(in),optional::error_1D(:),memsymsize,rmask,memscale,rl,gl,bl
+            integer,intent(in),optional::memiter,memsymfreq,memflqt,lthick
+            character(len=*),intent(in),optional::memloc,memlabel,blabel,tlabel
+            logical,intent(in),optional::maskbyc,dots,mem
             real,dimension(:),allocatable::ploty,plotysem,betmlkx,betmlky
-            real::dx,memsymsize_local,rmask_local,a,b,red,green,blue
-            integer::memiter_local,memsymfreq_local,memflqt_local,iangle,i
-            logical::maskbyc_local,dots_local
+            real::dx,memsymsize_local,rmask_local,a,b,red,green,blue,memscale_local
+            integer::memiter_local,memsymfreq_local,memflqt_local,iangle,i,lthick_local
+            logical::maskbyc_local,dots_local,mem_local
 
                 write(ounit,*)'%begin butler_linegraph'
                 if(present(error_1D))then
@@ -8996,16 +9734,24 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                         ! creating local parameters
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if(present(mem))then 
+                    mem_local = mem
+                else;mem_local = .false.
+                end if
+                if(present(memscale))then 
+                    memscale_local = memscale
+                else;memscale_local = 1.
+                end if
                 if(present(memsymsize))then 
                     memsymsize_local = memsymsize
-                else;memsymsize_local = height/10.
+                else;memsymsize_local = height/8.
                 end if
                 if(present(memiter))then 
                     memiter_local = memiter
                 else
                     do i = 1, 10
                         if(mod(memf-memi,1./(10.**real(i-1)))==0.)then 
-                            memiter_local = int((memf-memi)/(10.**real(i-1)))
+                            memiter_local = int((memf-memi)/(10.**real(i-1))) + 1
                             exit
                         end if
                     end do
@@ -9036,18 +9782,37 @@ module subroutines
                     dots_local = dots
                 else;dots_local = .false.
                 end if
+                if(present(lthick))then 
+                    lthick_local = lthick
+                else;
+                    if(memsymsize_local<=0.2)then;lthick_local = 2
+                    else if(memsymsize_local>0.2.and.memsymsize_local<=0.5)then;lthick_local = 3
+                    else if(memsymsize_local>0.5.and.memsymsize_local<=0.8)then;lthick_local = 4
+                    else;lthick_local = 5;end if
+                end if
                 ! print*,'parameter values =',memi,memf,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle,rmask_local,maskbyc_local,dots_local
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                  ! creating the box and the center line
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                call box(width,height,3)
-                call rgbk(0.5,0.5,0.5);call plot(0.,height/2.,3);call plot(width,height/2.,2);call rgbk(0.,0.,0.)
+                call rgbk(0.,0.,0.)
+                call box(width,height,3) 
+                if(present(maskbyc))then 
+                    call rgbk(0.5,0.5,0.5);call plot(0.,height/2.,3);call plot(width,height/2.,2);call rgbk(0.,0.,0.)
+                end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                                    ! creating num_memori and unit label
+                                                    ! creating num_memori and labels
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                call num_memori(memi,memf,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle)
+                if(mem_local)then
+                    call num_memori(memi*memscale_local,memf*memscale_local,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle)
+                end if
                 if(present(memlabel))then 
-                    call symbolr(-(memsymsize_local*3.),height/2.,memsymsize_local,'['//trim(adjustl(memlabel))//']')
+                    call symbolc(rsign(real(iangle))*(memsymsize_local+real((abs(memflqt_local))+intdigits(int(memf*memscale_local))/3.)),height/2.,memsymsize_local,trim(adjustl(memlabel)),real(-iangle))
+                end if
+                if(present(tlabel))then 
+                    call symbolc(width/2.,height+memsymsize_local/2.,memsymsize_local,trim(adjustl(tlabel)),0.)
+                end if
+                if(present(blabel))then 
+                    call symbolc(width/2.,-memsymsize_local*2.5,memsymsize_local,trim(adjustl(blabel)),0.)
                 end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                     ! getting dx and y values for array_1D
@@ -9064,7 +9829,7 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if(maskbyc_local) then ! mask below y center
                     do i = 1, size(array_1D)
-                        if(i>1)then                                             ! painting areas below center 
+                        if(i>1.and.ploty(i-1)/=0..and.ploty(i)/=0.)then                                             ! painting areas below center 
                             if(ploty(i-1)>height/2. .and. ploty(i)>height/2.)then ! do nothing
                                 ! print*,'do nothing, i=',i
                             else if(ploty(i-1)<height/2. .and. ploty(i)<height/2.)then ! paint the trapezoid area below y center
@@ -9100,6 +9865,9 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                             ! plotting values 
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                if(present(rl).and.present(gl).and.present(bl))call rgbk(rl,gl,bl)
+                call newpen2(lthick_local)
                 do i = 1, size(array_1D)
                     if(array_1D(i) == rmask_local)cycle 
 
@@ -9112,6 +9880,11 @@ module subroutines
                             call plot(dx*real(i-2)+dx/2.,ploty(i-1),3);call plot(dx*real(i-1)+dx/2.,ploty(i),2)
                         end if
                     end if
+                    if(i>1.and.array_1D(i) == (array_1D(i+1)+array_1D(i-1))/2.)then
+                        call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,4)
+                    else if(size(array_1D)>12.and.array_1D(1) == array_1D(1+12).and.array_1D(1) == (array_1D(2) + array_1D(12))/2.)then   ! mark presumably linearly interpolated values, not perfect at all
+                        call gmark(dx/2.,ploty(1),memsymsize_local/4.,4)
+                    end if
 
                     if(present(error_1D))then                           ! drawing error bars
                         call plot(dx*real(i-1)+dx/2.,ploty(i)-plotysem(i),3);call plot(dx*real(i-1)+dx/2.,ploty(i)+plotysem(i),2)
@@ -9120,6 +9893,7 @@ module subroutines
 
                 deallocate(ploty)
                 if(present(error_1D))deallocate(plotysem)
+                call rgbk(0.,0.,0.)
                 return
             
         end subroutine
@@ -9436,11 +10210,11 @@ module constants
     implicit none
     ! intrinsic::sin,cos,acos,asin,atan,atan2,exp,log,log10,sqrt,abs,mod,aimag,aint,anint,nint
     integer, parameter :: years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.,geovel_5=0.
-    real,dimension(:),allocatable::r1,g1,b1,r2,g2,b2,r3,g3,b3,r4,g4,b4,r5,g5,b5,r6,g6,b6
+    real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.
     character(len=4),dimension(12)::monthnames = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
     integer::y,m,l,st,d,i,j,k,n
-    real,parameter::pi = 3.14159265358979323846,g = 9.81
+    real,parameter::pi = 3.14159265358979323846,g = 9.81,delta_x = 2.*pi*6378.*1000.*cos(41.*pi/180.)/360.*1./3.
+    ! delta_x = 28004.0293 is in meters
     
 end module constants
 
