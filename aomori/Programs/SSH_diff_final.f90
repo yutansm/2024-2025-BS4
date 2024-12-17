@@ -12,11 +12,14 @@ program hakidame
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ! obtain SSAP calibrated data
-    call SSH_data(esa,ilabel = 4703,convert = 1, calibrate = 1)
-    call SSH_data(oku,ilabel = 1702,convert = 1, calibrate = 1)
-    call SSH_data(sak, ilabel = 4602, convert = 1, calibrate = 1)
-    call SSH_data(tob, ilabel = 1611, convert = 1, calibrate = 1)
-    esa(2,2)=-999.;esa(4,2)=-999.
+    call SSH_data(esa,ilabel = 4703,convert = .true., calibrate = .true.)
+    call SSH_data(oku,ilabel = 1702,convert = .true., calibrate = .true.)
+    call SSH_data(sak, ilabel = 4602, convert = .true., calibrate = .true.)
+    call SSH_data(tob, ilabel = 1611, convert = .true., calibrate = .true.)
+    ! print*,esa(1,2),esa(2,2),esa(3,2),esa(4,2),esa(5,2)  !   1657.00000       1923.00000 shady       1667.00000       1821.00000 shady       1668.00000    
+    ! print*,oku(1,2),oku(2,2),oku(3,2),oku(4,2),oku(5,2)  !   1099.00000       1184.00000       1123.00000       1128.00000       1209.00000  
+    ! print*,sak(1,6),sak(15,:) ! all -999.0 which is ok
+    esa(2,2)=-999.;esa(4,2)=-999.  ! delete shady data, the program below handles cases where one station has data and the other doesn't so do not worry about oku(2,2) or oku(4,2) when taking the diff
     sak(1,2)=-999.;sak(1,1)=-999.
     ! obtain yearly means
     call avsemdata_2D(esa,'dim2',mean_1D = ymeane,rmask = -999.) ! 15 yearly means
@@ -95,7 +98,7 @@ program hakidame
                                 ! plot the data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    call plots2('../Plots/Favorites/monthly_coast-offshore2.ps',h = 'Title',oopt= 'otops')
+    call plots2('../Plots/Favorites/monthly_coast-offshoretest.ps',h = 'Title',oopt= 'otops')
     call plot(0.7,-.5-height,-3);call plotsave('first')
         ! monthly means and diffs
         ! esashi and okushiri
@@ -165,5 +168,5 @@ program hakidame
     call map(38,43,137,142,8.,line_opt = 1)
 
 
-call plote
+! call plote
 end program

@@ -51,7 +51,7 @@ program hakidame
         end if
 
         
-    call plots(0.,0.,9,'../Plots/Favorites/t_bymonths2-onetailed/'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
+    call plots(0.,0.,9,'../Plots/Favorites/t_bymonths_t95-onetailed/'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
     call plotmove(0.5,0.95);call symbolc(0.,-0.5,1.,"Welch's T Test "//trim(monthnames(month1))//' - '//trim(monthnames(month2)),0.)
 
     call plot(-width1-2.,-2.,-3)
@@ -126,11 +126,7 @@ program hakidame
 ! potemp ttest  
     do st = 1,6
         do d = 1, depth
-            if(month1 == 10)then ! want to see red parts
-                testmatrix(st,d) = fwelcht_greater(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
-            elseif(month1 == 12) then ! want to see blue parts
-                testmatrix(st,d) = fwelcht_smaller(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
-            end if
+            testmatrix(st,d) = fwelcht_onetailed(avpotemp_c5(month1,1,st+3,d),sem_potemp_c5(month1,1,st+3,d),data_potemp_c5(month1,1,st+3,d),avpotemp_c5(month2,1,st+3,d),sem_potemp_c5(month2,1,st+3,d),data_potemp_c5(month2,1,st+3,d))
         end do
     end do
     call symbolc(-2.2,-height2/2.,0.7,"Welch;T-Test",0.)
@@ -146,11 +142,7 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,6
         do d = 1, depth
-            if(month1 == 10)then ! want to see blue parts
-                testmatrix(st,d) = fwelcht_smaller(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
-            elseif(month1 == 12) then ! want to see blue parts
-                testmatrix(st,d) = fwelcht_smaller(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
-            end if
+            testmatrix(st,d) = fwelcht_onetailed(avsal_c5(month1,1,st+3,d),sem_sal_c5(month1,1,st+3,d),data_sal_c5(month1,1,st+3,d),avsal_c5(month2,1,st+3,d),sem_sal_c5(month2,1,st+3,d),data_sal_c5(month2,1,st+3,d))
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)
@@ -164,11 +156,7 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,6
         do d = 1, depth
-            if(month1 == 10)then ! want to see blue parts
-                testmatrix(st,d) = fwelcht_smaller(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
-            elseif(month1 == 12) then ! want to see red parts
-                testmatrix(st,d) = fwelcht_greater(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
-            end if
+            testmatrix(st,d) = fwelcht_onetailed(avsigma_c5(month1,1,st+3,d),sem_sigma_c5(month1,1,st+3,d),data_sigma_c5(month1,1,st+3,d),avsigma_c5(month2,1,st+3,d),sem_sigma_c5(month2,1,st+3,d),data_sigma_c5(month2,1,st+3,d))
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)
@@ -182,11 +170,7 @@ program hakidame
     call plot(width2+0.8,0.,-3)
     do st = 1,5
         do d = 1, depth
-            if(month1 == 10)then ! want to see red parts
-                testmatrix(st,d) = fwelcht_greater(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
-            elseif(month1 == 12) then ! want to see red parts
-                testmatrix(st,d) = fwelcht_greater(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
-            end if
+            testmatrix(st,d) = fwelcht_onetailed(avgeovel_5(month1,1,st,d),sem_geovel_5(month1,1,st,d),data_geovel_5(month1,1,st,d),avgeovel_5(month2,1,st,d),sem_geovel_5(month2,1,st,d),data_geovel_5(month2,1,st,d))
         end do
     end do
     ! call symbolc(width2/2.,0.7,0.6,"Welch's;T-Test",0.)

@@ -9,7 +9,7 @@ end module psstat
 module mypsstat
     logical::topstat = .false.,centerstat = .false.,bottomstat = .false.,logstat = .false. 
     integer::savecount = 0,plots2count = 0,tolog = 254
-    real,parameter::precision = 1.5*10.**(-4)
+    real,parameter::precision = 10.**(-5)
     real::xn,yn
     character(len=20),dimension(100)::labels=''
     real,dimension(100)::label_x=0.,label_y=0.
@@ -492,6 +492,41 @@ module functions
         end if
     
     end function fwelcht
+    function fwelcht_onetailed(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
+        implicit none
+        real, intent(in) :: mean1, s1, mean2, s2
+        integer, intent(in) :: dataquan1, dataquan2
+        integer :: result
+        real :: diff_mean, n1, n2, df, sem, bottomCI, topCI
+    
+        if (mean1 /= 0.0 .and. mean2 /= 0.0 .and. dataquan1 /= 0 .and. dataquan2 /= 0) then
+            diff_mean = mean1 - mean2
+            n1 = real(dataquan1)
+            n2 = real(dataquan2)
+            sem = sqrt((s1**2.0 / n1) + (s2**2.0 / n2))
+            df = (((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1)))
+            topCI = diff_mean + f_t90(nint(df)) * sem
+            bottomCI = diff_mean - f_t90(nint(df)) * sem ! using critical t values for 90% since it is one-tailed, the significance level is 95%
+            if(diff_mean > 0.)then ! assumes mean1 > mean2
+                if (bottomCI > 0.0) then
+                    result = 1 ! mean1 is significantly greater than mean2
+                else
+                    result = 0 ! no significant difference
+                end if
+            elseif(diff_mean < 0.)then  ! assumes mean1 < mean2
+                if (topCI < 0.) then
+                    result = -1 ! mean1 is significantly smaller than mean2
+                else
+                    result = 0 ! no significant difference
+                end if
+            elseif(diff_mean == 0.)then
+                result = 0 ! no difference in mean at all
+            end if 
+        else
+            result = 911 ! error
+        end if
+
+    end function fwelcht_onetailed
     function fwelcht_greater(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
         implicit none
         real, intent(in) :: mean1, s1, mean2, s2
@@ -515,7 +550,6 @@ module functions
             result = 911 ! error
         end if
     end function fwelcht_greater
-    
     function fwelcht_smaller(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
         implicit none
         real, intent(in) :: mean1, s1, mean2, s2
@@ -5722,6 +5756,9 @@ module oldsubs
         real::diff,initial_num
         integer::y,m,l,st,d,initial_depth
 
+        ! print*,'----------------------------------------'
+        ! print*,'You are using an obsolete calibrated_data subroutine, the station labels do not match the array indices'
+        ! print*,'----------------------------------------'
         allocate(potemp_5(years,months,lines,stations,depth))
         allocate(sal_5(years,months,lines,stations,depth))
         potemp_5 = 0.;sal_5 = 0.
@@ -5806,6 +5843,9 @@ module oldsubs
         real::diff,initial_num
         integer::y,m,l,st,d,initial_depth
 
+        ! print*,'----------------------------------------'
+        ! print*,'You are using an obsolete calibrated_data subroutine, the station labels do not match the array indices'
+        ! print*,'----------------------------------------'
         allocate(potemp_5(years,months,lines,stations,depth))
         allocate(sal_5(years,months,lines,stations,depth))
         potemp_5 = 0.;sal_5 = 0.
@@ -6641,7 +6681,41 @@ module subroutines
     contains
 
     ! DATA obtainment and manipulation
-        ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data
+        ! New Version of calibrated data, the station labels match the indices in the array. I should have done this much much earlier........1217
+        subroutine calibrated_data2(potemp_c5,sal_c5,sigma_c5,median_filter_db)
+            implicit none
+            real,dimension(15,12,2,9,400),intent(out)::potemp_c5,sal_c5
+            real,dimension(15,12,2,9,400),intent(out),optional::sigma_c5
+            integer,intent(in),optional::median_filter_db
+            integer::medfilt 
+
+            print*,'----------------------------------------------'
+            print*,'[Subroutine calibrated_data]'
+            print*,'The Station Labels DO Match the Array Indices'
+            print*,'----------------------------------------------'
+            ! Choosing the median filter interval
+            if(present(median_filter_db))then 
+                if(median_filter_db/=25 .and.median_filter_db/=51)then 
+                    print*,'Median Filter Interval Must be 25 or 51'
+                else;medfilt = median_filter_db
+                end if
+                medfilt = 51
+            end if
+            ! get data
+            if(medfilt == 51)then 
+                call calibrated_data51(potemp_c5,sal_c5)
+                potemp_c5 = potemp_c5(:,:,:,9:1:-1,:) ! flipping the array along the forth dimension, the station dimension
+                sal_c5 = sal_c5(:,:,:,9:1:-1,:)
+                if(present(sigma_c5))call create_sigma_array(potemp_c5,sal_c5,sigma_c5)
+            else
+                call calibrated_data25(potemp_c5,sal_c5)
+                potemp_c5 = potemp_c5(:,:,:,9:1:-1,:)
+                sal_c5 = sal_c5(:,:,:,9:1:-1,:)
+                if(present(sigma_c5))call create_sigma_array(potemp_c5,sal_c5,sigma_c5)
+            end if
+            return
+        end subroutine 
+        ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data output array has the size(15,12) regardless of data quantity
         subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate)
             implicit none
             type :: labeled_array
@@ -6654,12 +6728,17 @@ module subroutines
             integer,parameter::num_rows=150,num_years=15,num_months=12
             integer,intent(in),optional::ilabel
             character(len=*),intent(in),optional::slabel
-            integer,intent(in),optional::convert,calibrate
+            logical,intent(in),optional::convert,calibrate
             real,dimension(num_years,num_months),intent(out)::SSH2D
             real,dimension(:,:),allocatable::SSAP2D
             integer::n,i,ios,convint=0
             character::yyyy*4,row1*999,convstr*30
+            logical::convert_local = .false.,calibrate_local = .false.
 
+            if(present(convert))convert_local = convert
+            if(present(calibrate))calibrate_local = calibrate
+            print*,'----------------------------------------'
+            print*,'[Subroutine SSH_data]'
             allocate(localssh%num_labels(num_years,num_rows))
             allocate(localssh%str_labels(num_years,num_rows))
             allocate(localssh%values(num_years,num_rows,num_months)) ! allocating arrays just to use heap memory
@@ -6691,7 +6770,7 @@ module subroutines
                     do i = 1, num_rows
                         if(localssh%num_labels(n,i)==ilabel)then
                             SSH2D(n,:) = localssh%values(n,i,:)
-                            if(present(convert))then
+                            if(convert_local)then
                                 if(n==1)convstr = trim(localssh%str_labels(n,i))
                                 if(n/=1.and.convstr/=localssh%str_labels(n,i))then
                                     print*,'inconsistant station labels at',convstr,'and',localssh%str_labels(n,i)
@@ -6702,7 +6781,7 @@ module subroutines
                         if(i==num_rows)print*,'Station Index',ilabel,'not found for Year',n+2008
                     end do
                 end do
-                if(present(convert))print*,ilabel,'-->',convstr
+                if(convert_local)print*,ilabel,'-->',convstr
                 do n = 1, num_years
                     do i = 1, num_months
                         if(SSH2D(n,i)<100..and.SSH2D(n,i)/=-999.)then
@@ -6719,7 +6798,7 @@ module subroutines
                         end do
                     end if
                 end do
-                if(present(calibrate))then
+                if(calibrate_local)then
                     allocate(SSAP2D(num_years,num_months))
                     call SSAP_data(SSAP2D,ilabel=ilabel)
                     call SSH_calibration(SSH2D, SSAP2D)
@@ -6729,7 +6808,7 @@ module subroutines
                     do i = 1, num_rows
                         if(trim(localssh%str_labels(n,i))==slabel)then
                             SSH2D(n,:) = localssh%values(n,i,:)
-                            if(present(convert))then
+                            if(convert_local)then
                                 if(n==1)convint = localssh%num_labels(n,i)
                                 if(n/=1.and.convint/=localssh%num_labels(n,i))then
                                     print*,'inconsistant station labels at',convint,'and',localssh%num_labels(n,i)
@@ -6740,7 +6819,7 @@ module subroutines
                         if(i==num_rows)print*,'Station Label',slabel,'not found for Year',n+2008
                     end do
                 end do
-                if(present(convert))print*,slabel,'-->',convint
+                if(convert_local)print*,slabel,'-->',convint
                     do n = 1, num_years
                         do i = 1, num_months
                             if(SSH2D(n,i)<100..and.SSH2D(n,i)/=-999.)then
@@ -6757,13 +6836,15 @@ module subroutines
                             end do
                         end if
                     end do
-                if(present(calibrate))then
+                if(calibrate_local)then
                     allocate(SSAP2D(num_years,num_months))
                     call SSAP_data(SSAP2D,slabel=slabel)
                     call SSH_calibration(SSH2D, SSAP2D)
                 end if
             else;print*,'Provide Either Station Label or Index but not both'
             end if
+            print*,'----------------------------------------'
+            return
 
             contains
             subroutine parse_csv_row(row, num_label, str_label, values)
@@ -6817,10 +6898,12 @@ module subroutines
             integer,parameter::num_rows=150,num_years=15,num_months=12
             integer,intent(in),optional::ilabel
             character(len=*),intent(in),optional::slabel
-            integer,intent(in),optional::convert
+            logical,intent(in),optional::convert
             real,dimension(num_years,num_months),intent(out)::SSAP2D
             integer::n,i,ios,convint=0
             character::yyyy*4,row1*999,convstr*30
+            logical::convert_local = .false.
+            if(present(convert))convert_local = convert
 
             allocate(localssap%num_labels(num_years,num_rows))
             allocate(localssap%str_labels(num_years,num_rows))
@@ -6853,7 +6936,7 @@ module subroutines
                     do i = 1, num_rows
                         if(localssap%num_labels(n,i)==ilabel)then
                             SSAP2D(n,:) = localssap%values(n,i,:)
-                            if(present(convert))then
+                            if(convert_local)then
                                 if(n==1)convstr = trim(localssap%str_labels(n,i))
                                 if(n/=1.and.convstr/=localssap%str_labels(n,i))then
                                     print*,'inconsistant station labels at',convstr,'and',localssap%str_labels(n,i)
@@ -6864,13 +6947,13 @@ module subroutines
                         if(i==num_rows)print*,'Station Index',ilabel,'not found for Year',n+2008
                     end do
                 end do
-                if(present(convert))print*,ilabel,'-->',convstr
+                if(convert_local)print*,ilabel,'-->',convstr
             else if(.not.present(ilabel).and.present(slabel))then
                 do n = 1, num_years
                     do i = 1, num_rows
                         if(trim(localssap%str_labels(n,i))==slabel)then
                             SSAP2D(n,:) = localssap%values(n,i,:)
-                            if(present(convert))then
+                            if(convert_local)then
                                 if(n==1)convint = localssap%num_labels(n,i)
                                 if(n/=1.and.convint/=localssap%num_labels(n,i))then
                                     print*,'inconsistant station labels at',convint,'and',localssap%num_labels(n,i)
@@ -6881,7 +6964,7 @@ module subroutines
                         if(i==num_rows)print*,'Station Label',slabel,'not found for Year',n+2008
                     end do
                 end do
-                if(present(convert))print*,slabel,'-->',convint
+                if(convert_local)print*,slabel,'-->',convint
             else;print*,'Provide Either Station Label or Index but not both'
             end if
             do n = 1, num_years
@@ -7647,8 +7730,8 @@ module subroutines
                 call butler_psmask(butler_array,width,height,-2000.,-1000.,r = 0.5,g=0.6,b=1.) ! 1000-2000m
                 call butler_psmask(butler_array,width,height,-3000.,-2000.,r = 0.35,g=0.45,b=.9) ! 2000-3000m
                 call butler_psmask(butler_array,width,height,-10000.,-3000.,r = 0.2,g=0.3,b=.8) ! >3000m
-                print*,'Deepest Point of Your Map Domain is;',maxval(butler_array)
-                print*,'Heighest Point of Your Map Domain is;',minval(butler_array)
+                print*,'Deepest Point of Your Map Domain is;',minval(butler_array)
+                print*,'Heighest Point of Your Map Domain is;',maxval(butler_array)
                 if (symbol_size_local<=0.2) then;call newpen2(1);else if(symbol_size_local>=0.2 .and. symbol_size_local<=0.4) then;call newpen2(2);else;call newpen2(3);end if
                 call rgbk(0.,0.,0.) 
                 call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
@@ -9750,8 +9833,9 @@ module subroutines
                     memiter_local = memiter
                 else
                     do i = 1, 10
-                        if(mod(memf-memi,1./(10.**real(i-1)))==0.)then 
-                            memiter_local = int((memf-memi)/(10.**real(i-1))) + 1
+                        if(mod(abs(memf-memi),1./(10.**real(i-1)))<=precision)then 
+                            ! print*,'here',i,memf-memi,(memf-memi)/(10.**real(i-1))
+                            memiter_local = abs(int((memf-memi)*(10.**real(i-1)))) + 1
                             exit
                         end if
                     end do
@@ -9796,23 +9880,24 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 call rgbk(0.,0.,0.)
                 call box(width,height,3) 
-                if(present(maskbyc))then 
+                if(present(maskbyc).or.(memf+memi)==0.)then 
                     call rgbk(0.5,0.5,0.5);call plot(0.,height/2.,3);call plot(width,height/2.,2);call rgbk(0.,0.,0.)
                 end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                     ! creating num_memori and labels
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if(mem_local)then
+                    ! print*,'memiter_local =',memiter_local  
                     call num_memori(memi*memscale_local,memf*memscale_local,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle)
                 end if
                 if(present(memlabel))then 
                     call symbolc(rsign(real(iangle))*(memsymsize_local+real((abs(memflqt_local))+intdigits(int(memf*memscale_local))/3.)),height/2.,memsymsize_local,trim(adjustl(memlabel)),real(-iangle))
                 end if
                 if(present(tlabel))then 
-                    call symbolc(width/2.,height+memsymsize_local/2.,memsymsize_local,trim(adjustl(tlabel)),0.)
+                    call symbolc(width/2.,height+memsymsize_local/2.,memsymsize_local*1.3,trim(adjustl(tlabel)),0.)
                 end if
                 if(present(blabel))then 
-                    call symbolc(width/2.,-memsymsize_local*2.5,memsymsize_local,trim(adjustl(blabel)),0.)
+                    call symbolc(width/2.,-memsymsize_local*2.25,memsymsize_local,trim(adjustl(blabel)),0.)
                 end if
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                     ! getting dx and y values for array_1D
@@ -10018,7 +10103,7 @@ module MITgcm
             end do
         end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                    ! writing data to files or outgoing array
+                                    ! writing data to files or to outgoing array
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if(present(OBJ_2D))OBJ_2D = OBJ_local
 
@@ -10077,6 +10162,8 @@ module MITgcm
         logical,intent(in),optional::info
         logical::info_local = .false.
         integer :: i,j
+        print*,'------------------------'
+        print*,'Reading file:',trim(ncfile)
         if(present(info))info_local = info
         ! data obtainment
         ! Open the NetCDF file

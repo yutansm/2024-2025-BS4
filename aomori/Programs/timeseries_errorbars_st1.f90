@@ -45,7 +45,7 @@ program st1_mean_with_errorbars_by_depth
     ! call create_box(10.,6.,2);call plot(10.+3.,0.,-3)
     ! call create_box(10.,6.,2) top left top right bottom left bottom right 
 
-    call plots(2.5,16.,13,'/LARGE0/gr10291/nishimori2/aomori/Errorbar_plots/st1_TSsigmaDH.ps')
+    call plots(2.5,16.,13,'/LARGE0/gr10291/nishimori2/aomori/Errorbar_plots/st1_TSsigmaDHasdf.ps')
     call symbol(5.,2.5,0.8,'Mean with Error bars N-Line St.1',0.,len('Mean with Error bars N-Line St.1'))
     call plot(0.,-6.,-3)
 
