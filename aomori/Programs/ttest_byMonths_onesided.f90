@@ -45,8 +45,8 @@ program hakidame
         ! elseif(m==12)then;month1 = 12;month2 = 10
         ! else;cycle
         ! end if
-        if(m==8)then;month1 = 10;month2 = 8
-        elseif(m==10)then;month1 = 12;month2 = 10
+        if(m==10)then;month1 = 2;month2 = 10
+        ! elseif(m==10)then;month1 = 12;month2 = 10
         else;cycle
         end if
 
@@ -68,17 +68,17 @@ program hakidame
     call butler_cont(avpotemp_c5(month2,1,4:9,:),width1,-height1,0.,0.,1.,thicc=5)
     call colorscale(7,r1,g1,b1,33.95,34.3,2,0.5,2,height1-1.,0.3,lt = 1,gt = 1,rangle=90.,x= width1+2.,y = -height1/2.,symbol_start = 2)
 
-    if(month1==1.or.month1==2.or.month1==7 .or.month1 ==8)then 
-        diffp(6,:) = avpotemp_c5(month1,1,9,:)-avpotemp_c5(month2,1,9,:);diffp(1:5,:) = 0.
-        diffsal(6,:) = avsal_c5(month1,1,9,:)-avsal_c5(month2,1,9,:);diffsal(1:5,:) = 0.
-        diffsig(6,:) = avsigma_c5(month1,1,9,:)-avsigma_c5(month2,1,9,:);diffsig(1:5,:) = 0.
-        diffgeo = 0.
-    else
+    ! if(month1==1.or.month1==2.or.month1==7 .or.month1 ==8)then 
+    !     diffp(6,:) = avpotemp_c5(month1,1,9,:)-avpotemp_c5(month2,1,9,:);diffp(1:5,:) = 0.
+    !     diffsal(6,:) = avsal_c5(month1,1,9,:)-avsal_c5(month2,1,9,:);diffsal(1:5,:) = 0.
+    !     diffsig(6,:) = avsigma_c5(month1,1,9,:)-avsigma_c5(month2,1,9,:);diffsig(1:5,:) = 0.
+    !     diffgeo = 0.
+    ! else
         diffp = avpotemp_c5(month1,1,4:9,:)-avpotemp_c5(month2,1,4:9,:)
         diffsal = avsal_c5(month1,1,4:9,:)-avsal_c5(month2,1,4:9,:)
         diffsig = avsigma_c5(month1,1,4:9,:)-avsigma_c5(month2,1,4:9,:)
         diffgeo = avgeovel_5(month1,1,:,:)-avgeovel_5(month2,1,:,:)
-    end if
+    ! end if
     print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffp),maxval(diffp),'diffp'
     print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsal),maxval(diffsal),'diffsal'
     print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsig),maxval(diffsig),'diffsig'

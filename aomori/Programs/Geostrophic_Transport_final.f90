@@ -117,71 +117,80 @@ program hakidame
                                             ! Plotting
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! individual stations
-    call plots2(oopt = 'otops',nnfile = 'geo_transport',y = -height2,h = 'Monthly Geostrophic Transports [Sv]')
-    call plotsave('first')
-    do i = 1, 5
-        if(i == 1)then 
-            avarray = av12loop ; semarray = sem12loop
-            tlabel = 'Station 1-2'
-        else if(i == 2)then
-            avarray = av23loop ; semarray = sem23loop
-            tlabel = 'Station 2-3'
-        else if(i == 3)then
-            avarray = av34loop ; semarray = sem34loop
-            tlabel = 'Station 3-4'
-        else if(i == 4)then
-            avarray = av45loop ; semarray = sem45loop
-            tlabel = 'Station 4-5'
-        else if(i == 5)then
-            avarray = av56loop ; semarray = sem56loop
-            tlabel = 'Station 5-6'
-        end if
-        call mod12_memori(14,width2)
-        if(i==1)memstat = .true.
-        if(i/=1)memstat = .false.
-        if(i/=1)then 
-            call memori(3,0.05,1,height2,-90.,y = height2/2.,lthick = 3)
-        end if
-        call butler_linegraph(avarray,width2,height2,0.,1.,error_1D = semarray,mem = memstat,memiter = 3,tlabel = tlabel)
-        call plot(width2+.5,0.,-3)
-    end do
+    ! call plots2(oopt = 'otops',nnfile = 'geo_transport',y = -height2,h = 'Monthly Geostrophic Transports [Sv]')
+    call plots2(oopt = 'otops',psfile = '../Plots/Favorites/geo_transport2.ps',h = 'Monthly Geostrophic Transports [Sv]')
+    ! call plotsave('first')
+    ! do i = 1, 5
+    !     if(i == 1)then 
+    !         avarray = av12loop ; semarray = sem12loop
+    !         tlabel = 'Station 1-2'
+    !     else if(i == 2)then
+    !         avarray = av23loop ; semarray = sem23loop
+    !         tlabel = 'Station 2-3'
+    !     else if(i == 3)then
+    !         avarray = av34loop ; semarray = sem34loop
+    !         tlabel = 'Station 3-4'
+    !     else if(i == 4)then
+    !         avarray = av45loop ; semarray = sem45loop
+    !         tlabel = 'Station 4-5'
+    !     else if(i == 5)then
+    !         avarray = av56loop ; semarray = sem56loop
+    !         tlabel = 'Station 5-6'
+    !     end if
+    !     call mod12_memori(14,width2)
+    !     if(i==1)memstat = .true.
+    !     if(i/=1)memstat = .false.
+    !     if(i/=1)then 
+    !         call memori(3,0.05,1,height2,-90.,y = height2/2.,lthick = 3)
+    !     end if
+    !     call butler_linegraph(avarray,width2,height2,0.,1.,error_1D = semarray,mem = memstat,memiter = 3,tlabel = tlabel)
+    !     call plot(width2+.5,0.,-3)
+    ! end do
 
     ! all stations
-    call plotback('first')
+    ! call plotback('first')
     call plot(1.,-height-1.,-3)
 
     do i = 1, 5
         if(i == 1)then 
             avarray = avQ_1thru2loop ; semarray = semQ_1thru2loop
             tlabel = 'Station 1-2'
-            r1 = 1.;g1 = 0.;b1 = 0.
+            ! r1 = 1.;g1 = 0.;b1 = 0.
+            r1 = 0.;g1 = 0.;b1 = 0.
+            ! lthick = 11
             lthick = 11
-        else if(i == 2)then
-            avarray = avQ_1thru3loop ; semarray = semQ_1thru3loop
-            tlabel = 'Station 1-3'
-            r1 = 0.;g1 = 1.;b1 = 0.
-            lthick = 9
+        else if(i == 5)then
+            cycle
+            ! avarray = avQ_1thru3loop ; semarray = semQ_1thru3loop
+            ! tlabel = 'Station 1-3'
+            ! r1 = 0.;g1 = 1.;b1 = 0.
+            ! lthick = 9
         else if(i == 3)then
             avarray = avQ_1thru4loop ; semarray = semQ_1thru4loop
             tlabel = 'Station 1-4'
-            r1 = 0.;g1 = 0.;b1 = 1.
-            lthick = 7
+            ! r1 = 0.;g1 = 0.;b1 = 1.
+            r1 = 0.6;g1 = 0.6;b1 = 0.6
+            ! lthick = 7
+            lthick = 8
         else if(i == 4)then
-            avarray = avQ_1thru5loop ; semarray = semQ_1thru5loop
-            tlabel = 'Station 1-5'
-            r1 = 1.;g1 = .5;b1 = 0.
-            lthick = 5
-        else if(i == 5)then
+            cycle
+            ! avarray = avQ_1thru5loop ; semarray = semQ_1thru5loop
+            ! tlabel = 'Station 1-5'
+            ! r1 = 1.;g1 = .5;b1 = 0.
+            ! lthick = 5
+        else if(i == 2)then
             avarray = avQ_1thru6loop ; semarray = semQ_1thru6loop
             tlabel = 'Station 1-6'
-            r1 = 1.;g1 = 0.;b1 = 1.
-            lthick = 3
+            ! r1 = 1.;g1 = 0.;b1 = 1.
+            r1 = 0.;g1 = 0.;b1 = 0.
+            ! lthick = 3
+            lthick = 11
         end if
-        if(i==1)call mod12_memori(14,width,symbol_size = 0.6)
-        ! if(i==1)memstat = .true.
-        ! if(i/=1)memstat = .false.
-        if(i == 1) call num_memori(0.,3.,4,1,1.,-1,height,-90)
-        call butler_linegraph(avarray,width,height,0.,3.,error_1D = semarray,rl = r1,gl = g1,bl = b1,lthick = lthick)
+        if(i==1)then 
+            call mod12_memori(14,width,symbol_size = 1.)
+            call num_memori(0.,3.,7,1,1.,1,height,-90)
+        end if
+        call butler_linegraph(avarray,width,height,0.,3.,error_1D = semarray,rl = r1,gl = g1,bl = b1,lthick = lthick,blabel = 'Months')
     end do
     call plote
 end program

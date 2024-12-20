@@ -403,7 +403,7 @@ module functions
         implicit none
         integer,intent(in)::df
         real::t95coeff
-        real,dimension(0:30)::t95
+        real,dimension(0:1000)::t95
 
         t95(1) = 12.706 ; t95(11) = 2.2010 ; t95(21) = 2.0796
         t95(2) = 4.3026 ; t95(12) = 2.1788 ; t95(22) = 2.0739
@@ -416,19 +416,36 @@ module functions
         t95(9) = 2.2621 ; t95(19) = 2.0930 ; t95(29) = 2.0452
         t95(10) = 2.2281 ;t95(20) = 2.0860 ; t95(30) = 2.0423
 
+        if(df>=30 .and. df<=40)then 
+            t95(df) = 2.021
+        else if(df>=40 .and. df<=50)then
+            t95(df) = 2.009
+        else if(df>=50 .and. df<=60)then
+            t95(df) = 2.000
+        else if(df>=60 .and. df<=70)then
+            t95(df) = 1.994
+        else if(df>=70 .and. df<=80)then
+            t95(df) = 1.990
+        else if(df>=80 .and. df<=100)then
+            t95(df) = 1.984
+        else if(df>=100 .and. df<=1000)then
+            t95(df) = 1.962
+        end if
+
         t95(0) = 0. !just for the sake of programs
 
-        if(df>=0 .and. df<=30) then
+        if(df>=0 .and. df<=1000) then
             t95coeff = t95(df)
         else
-            t95coeff = 911; print*, 'df out of range'
+            t95coeff = 1.960
+             print*, 'df > 1000, approximating df as infinity'
         end if
     end function f_t95
     function f_t90(df) result(t90coeff)
         implicit none
         integer,intent(in)::df
         real::t90coeff
-        real,dimension(0:30)::t90
+        real,dimension(0:1000)::t90
 
         t90(1) = 6.3138 ; t90(11) = 1.7959 ; t90(21) = 1.7210
         t90(2) = 2.9200 ; t90(12) = 1.7823 ; t90(22) = 1.7171
@@ -443,10 +460,27 @@ module functions
 
         t90(0) = 0. !just for the sake of programs
 
-        if(df>=0 .and. df<=30) then
+        if(df>=30 .and. df<=40)then 
+            t90(df) = 1.684
+        else if(df>=40 .and. df<=50)then
+            t90(df) = 1.676
+        else if(df>=50 .and. df<=60)then
+            t90(df) = 1.671
+        else if(df>=60 .and. df<=70)then
+            t90(df) = 1.667
+        else if(df>=70 .and. df<=80)then
+            t90(df) = 1.664
+        else if(df>=80 .and. df<=100)then
+            t90(df) = 1.660
+        else if(df>=100 .and. df<=1000)then
+            t90(df) = 1.646
+        end if
+
+        if(df>=0 .and. df<=1000) then
             t90coeff = t90(df)
         else
-            t90coeff = 911; print*, 'df out of range'
+            t90coeff = 1.645
+             print*, 'df > 1000, approximating df as infinity'
         end if
     end function f_t90
     function fwelchdf(s1, dataquan1, s2, dataquan2) result(df)
@@ -460,8 +494,7 @@ module functions
         n2 = real(dataquan2)
         df = int((((s1**2.0) / n1) + ((s2**2.0) / n2))**2.0 / (((s1**2.0 / n1)**2.0 / (n1 - 1)) + ((s2**2.0 / n2)**2.0 / (n2 - 1))))
 
-    end function fwelchdf
-                                                                                                                                                                                                                      
+    end function fwelchdf                                                                                                                                                                                          
     function fwelcht(mean1, s1, dataquan1, mean2, s2, dataquan2) result(result)
         implicit none
         real, intent(in) :: mean1, s1, mean2, s2
@@ -603,6 +636,87 @@ module functions
         end if
     end function fwelcht90
 
+    function fcorrecoeff(array_1D, array_1D2) result(r)
+        implicit none
+        real, intent(in) :: array_1D(:), array_1D2(:)
+        real :: r
+        real :: mean1, mean2, s1, s2, sum0, sum1, sum2, covariance
+        integer :: n, count, dim
+    
+        dim = size(array_1D)
+        ! if (size(array_1D2) /= dim) then
+        !     print *, 'Arrays must have the same size.'
+        !     stop
+        ! end if
+    
+        sum0 = 0.0
+        sum1 = 0.0
+        sum2 = 0.0
+        count = 0
+    
+        do n = 1, dim
+            if (array_1D(n) /= 0.0 .and. array_1D2(n) /= 0.0) then
+                count = count + 1
+                sum1 = sum1 + array_1D(n)
+                sum2 = sum2 + array_1D2(n)
+            end if
+        end do
+    
+        if (count <= 1) then
+            r = 0.0
+        else
+            mean1 = sum1 / real(count)
+            mean2 = sum2 / real(count)
+            sum0 = 0.0
+            sum1 = 0.0
+            sum2 = 0.0
+            do n = 1, dim
+                if (array_1D(n) /= 0.0 .and. array_1D2(n) /= 0.0) then
+                    sum0 = sum0 + (array_1D(n) - mean1) * (array_1D2(n) - mean2)
+                    sum1 = sum1 + (array_1D(n) - mean1) ** 2
+                    sum2 = sum2 + (array_1D2(n) - mean2) ** 2
+                end if
+            end do
+            s1 = sqrt(sum1 / real(count - 1))
+            s2 = sqrt(sum2 / real(count - 1))
+            covariance = sum0 / real(count - 1)
+            if (s1 == 0.0 .or. s2 == 0.0) then
+                r = 0.0
+            else
+                r = covariance / (s1 * s2)
+            end if
+        end if
+    end function fcorrecoeff
+    ! returns the t-score for a given r value and n
+    ! n is the number of (pairs of) data points not degrees of freedom
+    function f_rtscore(n,r) result(tscore)
+        implicit none
+        real, intent(in) :: r
+        integer, intent(in) :: n
+        real :: tscore
+
+        tscore = r * sqrt(real(n - 2) / (1.0 - r**2))
+
+    end function f_rtscore
+    ! n is the quantity of data point pairs. not degrees of freedom
+    ! critical_values is an array of critical values for 95 percent confidence on both sides,column 1 gives positive critical value, column 2 gives negative critical value
+    function f_rcritical95(n) result(critical_values)
+        ! use functions
+        implicit none 
+        integer, intent(in) :: n
+        real :: critical_values(2)
+        integer :: df
+        real :: r
+    
+        if(n<=2)then 
+            df = 1
+        else 
+            df = n - 2
+        end if
+        r = sqrt(f_t95(df)**2.0 / (df + f_t95(df)**2.0))
+        critical_values(1) = r
+        critical_values(2) = -r
+    end function f_rcritical95
     function int2str(i) result(str)
         integer, intent(in) :: i
         character(:), allocatable :: str
@@ -695,8 +809,32 @@ module functions
             real_sign = 0.
         end if
     end function rsign
+    function stl2ai(station_label) result(array_index)
+        implicit none 
+        integer,intent(in)::station_label
+        integer::array_index
 
+        if(station_label>9 .or. station_label<1)then
+            print*,'station_label out of range'
+            stop
+        else
+            array_index = 10 - station_label
+        end if
 
+    end function stl2ai
+    function ai2stl(array_index) result(station_label)
+        implicit none 
+        integer,intent(in)::array_index
+        integer::station_label
+
+        if(array_index>9 .or. array_index<0)then
+            print*,'array_index out of range'
+            stop
+        else
+            station_label = 10 - array_index
+        end if
+
+    end function ai2stl
 end module functions
 
 module origin
@@ -917,11 +1055,11 @@ module origin
         return
     end
     ! index nnfile does not need an extension
-    subroutine plots2(psfile,nnfile,mode,h,oopt,x,y)
+    subroutine plots2(psfile,nnfile,mode,h,hsize,oopt,x,y)
         character(len=*),intent(in),optional:: psfile,mode,h,oopt,nnfile
         integer::intmode
         character(len=3)::countstr
-        real,intent(in),optional:: x,y
+        real,intent(in),optional:: x,y,hsize
 
         plots2count = plots2count + 1
         ! ounit = ounit - 1
@@ -945,7 +1083,11 @@ module origin
         else;print*,'you cannot specify both psfile and nnfile';stop
         end if
         if(present(h))then
-            call header(h)
+            if(present(hsize))then
+                call header(h,symbol_size = hsize)
+            else
+                call header(h)
+            end if
         end if
         if(present(oopt))then
             if(oopt == 'otops')then
@@ -6675,44 +6817,86 @@ module oldsubs
     end subroutine
 end module oldsubs
 
+module constants
+    implicit none
+    ! intrinsic::sin,cos,acos,asin,atan,atan2,exp,log,log10,sqrt,abs,mod,aimag,aint,anint,nint
+    integer, parameter :: years = 15, months = 12, lines = 2, stations = 9, depth = 400
+    real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.
+    real,dimension(years,months,lines,8,depth)::geovel_c5=0.
+    character(len=4),dimension(12)::monthnames = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
+    integer::y,m,l,st,d,i,j,k,n
+    real,parameter::pi = 3.14159265358979323846,gravity = 9.81,delta_x = 2.*pi*6378.*1000.*cos(41.*pi/180.)/360.*1./3.
+    ! delta_x = 28004.0293 is in meters
+    
+end module constants
+
 module subroutines 
     use oldsubs
     implicit none
     contains
 
     ! DATA obtainment and manipulation
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Be careful of the Array Station Indices, since I am used to drawing from left to right, although the station labels are from right to left
+      ! Vg arrays are from 1 to 8
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! New Version of calibrated data, the station labels match the indices in the array. I should have done this much much earlier........1217
-        subroutine calibrated_data2(potemp_c5,sal_c5,sigma_c5,median_filter_db)
+        subroutine calibrated_data2(potemp_c5,sal_c5,sigma_c5,geovel_c5,match_station_labels_and_array_indices,median_filter_db)
+            use functions
             implicit none
             real,dimension(15,12,2,9,400),intent(out)::potemp_c5,sal_c5
             real,dimension(15,12,2,9,400),intent(out),optional::sigma_c5
+            real,dimension(15,12,2,8,400),intent(out),optional::geovel_c5
+            real,dimension(:,:),allocatable::Vg2d
             integer,intent(in),optional::median_filter_db
-            integer::medfilt 
-
-            print*,'----------------------------------------------'
-            print*,'[Subroutine calibrated_data]'
-            print*,'The Station Labels DO Match the Array Indices'
-            print*,'----------------------------------------------'
+            logical,intent(in),optional::match_station_labels_and_array_indices 
+            integer::medfilt,y,m,l
+            real,parameter::pi = 3.14159265358979323846,delta_x = 2.*pi*6378.*1000.*cos(41.*pi/180.)/360.*1./3.
             ! Choosing the median filter interval
+
             if(present(median_filter_db))then 
                 if(median_filter_db/=25 .and.median_filter_db/=51)then 
                     print*,'Median Filter Interval Must be 25 or 51'
                 else;medfilt = median_filter_db
                 end if
+            else
                 medfilt = 51
             end if
+            print*,'--------------------------------------------------'
+            print*,'[Subroutine calibrated_data], '
+            print*, int2str(medfilt),'db median filtered'
             ! get data
             if(medfilt == 51)then 
                 call calibrated_data51(potemp_c5,sal_c5)
-                potemp_c5 = potemp_c5(:,:,:,9:1:-1,:) ! flipping the array along the forth dimension, the station dimension
-                sal_c5 = sal_c5(:,:,:,9:1:-1,:)
                 if(present(sigma_c5))call create_sigma_array(potemp_c5,sal_c5,sigma_c5)
             else
                 call calibrated_data25(potemp_c5,sal_c5)
-                potemp_c5 = potemp_c5(:,:,:,9:1:-1,:)
-                sal_c5 = sal_c5(:,:,:,9:1:-1,:)
                 if(present(sigma_c5))call create_sigma_array(potemp_c5,sal_c5,sigma_c5)
             end if
+            if(present(geovel_c5))then 
+                do y = 1, 15
+                    do m = 1, 12
+                        do l = 1,2
+                            call calc_geovel(Vg2d,delta_x,temp_2D = potemp_c5(y,m,l,:,:),sal_2D = sal_c5(y,m,l,:,:),lat = 40.3)
+                            geovel_c5(y,m,l,:,:) = Vg2d
+                        end do
+                    end do
+                end do
+            end if
+            
+            if(present(match_station_labels_and_array_indices))then 
+                if(match_station_labels_and_array_indices)then 
+                    potemp_c5 = potemp_c5(:,:,:,9:1:-1,:)
+                    sal_c5 = sal_c5(:,:,:,9:1:-1,:)
+                    if(present(sigma_c5))sigma_c5 = sigma_c5(:,:,:,9:1:-1,:)
+                    if(present(geovel_c5))geovel_c5 = geovel_c5(:,:,:,8:1:-1,:)
+                    print*,'**** Station Labels Match The Array Indices ****'
+                else;print*,'**** Station Labels And Array Indices are Flipped ****'
+                end if
+            else;print*,'**** Station Labels And Array Indices are Flipped ****'
+            end if
+
+            print*,'--------------------------------------------------'
             return
         end subroutine 
         ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data output array has the size(15,12) regardless of data quantity
@@ -8106,123 +8290,105 @@ module subroutines
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
 
         end subroutine
-        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,x,y)
+        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,x,y,gap)
             implicit none
-            real,intent(in)::ini_num,fin_num,symbol_size,length
-            integer,intent(in)::iterations,symbol_freq,angle,float_quantity
+            real,intent(in)::ini_num,fin_num,length
+            integer,intent(in),optional::iterations,symbol_freq,angle,float_quantity,gap
             ! integer,intent(in),optional::lt,gt
-            real,intent(in),optional::x,y
-            real::memori_diff,num_diff
-            integer::n
+            real,intent(in),optional::symbol_size,x,y
+            real::memori_diff,num_diff,symbol_size_local,gappy
+            integer::n,i,iterations_local,symbol_freq_local,float_quantity_local,angle_local,gap_local
         
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
-            if(symbol_size<=0.2)then;call newpen2(2)
-            else if(symbol_size>0.2.and.symbol_size<=0.5)then;call newpen2(3)
-            else if(symbol_size>0.5.and.symbol_size<=0.8)then;call newpen2(4)
-            else;call newpen2(5);end if
 
-            ! if(.not.present(lt).and..not.present(gt)) then
-                ! call newpen2(3)
-                if(iterations/=1)then 
-                    memori_diff = length/real(iterations-1); num_diff = (fin_num-ini_num)/real(iterations-1)
-                else;memori_diff = length; num_diff = (fin_num-ini_num)
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                    ! Creating Local Parameters
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                if(present(iterations))then 
+                    iterations_local = iterations
+                else
+                    do i = 1, 10
+                        if(mod(abs(fin_num-ini_num),1./(10.**real(i-1)))<=precision)then 
+                            iterations_local = abs(int((fin_num-ini_num)*(10.**real(i-1)))) + 1
+                            exit
+                        end if
+                    end do
                 end if
-                if(angle == 0) then
-                    do n = 1, iterations
-                        if(mod(n-1,symbol_freq)==0) then
-                            call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size,2)
-                            call numberc(real(n-1)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
-                        else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size,2)
+                ! print*,iterations_local
+                if(present(gap))then 
+                    gap_local = gap
+                else;gap_local = 0
+                end if
+                if(iterations_local/=1)then 
+                    num_diff = (fin_num-ini_num)/real(iterations_local-1)
+                else;num_diff = (fin_num-ini_num)
+                end if
+                if(gap_local == 2) then
+                    memori_diff = length/real(iterations_local);gappy = memori_diff/2.
+                else if(gap_local == 1) then
+                    memori_diff = length/real(iterations_local+1);gappy = memori_diff
+                else 
+                    memori_diff = length/real(iterations_local-1);gappy = 0.
+                end if
+
+                if(present(symbol_freq))then 
+                    symbol_freq_local = symbol_freq
+                else;symbol_freq_local = 1
+                end if
+
+                if(present(symbol_size))then 
+                    symbol_size_local = symbol_size
+                else;symbol_size_local = length/8.
+                end if
+                if(symbol_size_local<=0.2)then;call newpen2(2)
+                else if(symbol_size_local>0.2.and.symbol_size_local<=0.5)then;call newpen2(3)
+                else if(symbol_size_local>0.5.and.symbol_size_local<=0.8)then;call newpen2(4)
+                else;call newpen2(5);end if
+
+                if(present(float_quantity))then 
+                    float_quantity_local = float_quantity
+                else;float_quantity_local = 1
+                end if
+
+                if(present(angle))then 
+                    angle_local = angle
+                else;angle_local = 0
+                end if
+
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                                ! Plotting
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                call plot(gappy,0.,-3)
+                if(angle_local == 0) then
+                    do n = 1, iterations_local
+                        if(mod(n-1,symbol_freq_local)==0) then
+                            call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local,2)
+                            call numberc(real(n-1)*memori_diff,-1.2*symbol_size_local,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                        else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size_local,2)
                         end if
                     end do
-                else if(angle == 90) then
-                    do n = 1, iterations
-                        if(mod(n-1,symbol_freq)==0) then
-                            call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size,real(n-1)*memori_diff,2)
-                            call number(0.5*symbol_size,real(n-1)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
-                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size,real(n-1)*memori_diff,2)
+                else if(angle_local == 90) then
+                    do n = 1, iterations_local
+                        if(mod(n-1,symbol_freq_local)==0) then
+                            call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size_local,real(n-1)*memori_diff,2)
+                            call number(0.5*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size_local,real(n-1)*memori_diff,2)
                         end if
                     end do
-                else if (angle == -90) then
-                    do n = 1, iterations
-                        if(mod(n-1,symbol_freq)==0) then
-                            call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size,real(n-1)*memori_diff,2)
-                            call numberr(-0.6*symbol_size,real(n-1)*memori_diff-symbol_size*0.3,symbol_size,ini_num+num_diff*real(n-1),0.,float_quantity)
-                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size,real(n-1)*memori_diff,2)
+                else if (angle_local == -90) then
+                    do n = 1, iterations_local
+                        if(mod(n-1,symbol_freq_local)==0) then
+                            call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size_local,real(n-1)*memori_diff,2)
+                            call numberr(-0.6*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                        else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size_local,real(n-1)*memori_diff,2)
                         end if
                     end do
-                else;end if
-            ! else;end if
-        
-            ! if(present(lt).and.present(gt)) then
-            !     ! call newpen2(3)
-            !     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            !     if(angle == 0) then
-            !         do n = 0, iterations
-            !             if(mod(n,symbol_freq)==0) then;call numberc(real(n)*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !             call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.1,2)
-            !             else;call plot(real(n)*memori_diff,0.,3);call plot(real(n)*memori_diff,-0.05,2)
-            !             end if
-            !         end do
-            !         call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            !         call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-            !     else !(angle == 90)
-            !         do n = 0, iterations
-            !             if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !             call plot(0.,real(n)*memori_diff,3);call plot(0.01,real(n)*memori_diff,2)
-            !             else;call plot(0.,real(n)*memori_diff,3);call plot(0.05,real(n)*memori_diff,2)
-            !             end if
-            !         end do
-            !         call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            !         call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-            !     end if
-            ! else;end if 
-        
-            ! if(present(gt) .and. .not.present(lt)) then
-            ! ! call newpen2(3)
-            !     memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            !     if(angle == 0) then
-            !         do n = 0, iterations
-            !             if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !             call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-            !             else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-            !             end if
-            !         end do
-            !         call symbol(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call numberr(length+memori_diff*1.6,-2.0*symbol_size,symbol_size,fin_num,0.,float_quantity)
-            !     else !(angle == 90)
-            !         do n = 0, iterations
-            !             if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !             call plot(0.,n*memori_diff,3);call plot(0.01,n*memori_diff,2)
-            !             else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-            !             end if
-            !         end do
-            !         call symbolr(1.4*symbol_size,length+memori_diff*1.1,symbol_size,'>',0.,1);call number(1.4*symbol_size,length+memori_diff*1.1,symbol_size,fin_num,0.,float_quantity)
-            !     end if
-            ! else;end if
-        
-            ! if(.not.present(gt) .and. present(lt)) then
-            !     ! call newpen2(3)
-            !         memori_diff = length/real(iterations); num_diff = (fin_num-ini_num)/real(iterations)
-            !         if(angle == 0) then
-            !             do n = 0, iterations
-            !                 if(mod(n,symbol_freq)==0) then;call numberc(n*memori_diff,-1.2*symbol_size,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !                 call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.1,2)
-            !                 else;call plot(n*memori_diff,0.,3);call plot(n*memori_diff,-0.05,2)
-            !                 end if
-            !             end do
-            !             call symbolr(-memori_diff*1.6,-2.0*symbol_size,symbol_size,'<',0.,1);call number(-memori_diff*1.6,-2.0*symbol_size,symbol_size,ini_num,0.,float_quantity)
-            !         else !(angle == 90)
-            !             do n = 0, iterations
-            !                 if(mod(n,symbol_freq)==0) then;call number(0.5*symbol_size,real(n)*memori_diff,symbol_size,ini_num+num_diff*real(n),0.,float_quantity)
-            !                 call plot(0.,n*memori_diff,3);call plot(0.1,n*memori_diff,2)
-            !                 else;call plot(0.,n*memori_diff,3);call plot(0.05,n*memori_diff,2)
-            !                 end if
-            !             end do
-            !             call symbolr(1.4*symbol_size,-memori_diff*1.1,symbol_size,'<',0.,1);call number(1.4*symbol_size,-memori_diff*1.1,symbol_size,ini_num,0.,float_quantity)
-            !         end if
-            ! else;end if   
+                else;end if 
+                call plot(-gappy,0.,-3)  
 
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
@@ -8494,6 +8660,21 @@ module subroutines
 
 
         end subroutine
+        ! n is the quantity of data point pairs. not degrees of freedom
+        ! critical_values is an array of critical values for 95 percent confidence on both sides,column 1 gives positive critical value, column 2 gives negative critical value
+        ! subroutine rcritical95(n,critical_values)
+        !     use functions
+        !     implicit none 
+        !     real,dimension(2,1)::critical_values
+        !     integer,intent(in)::n
+        !     integer::df
+        !     real::r
+
+        !     df = n-2
+        !     r = sqrt(f_t95(df)**2./(df+f_t95(df)**2.))
+        !     critical_values(1,1) = r
+        !     critical_values(2,1) = -r
+        ! end subroutine
     
         ! avsdsemdataquan better series
         ! gives an array of mean arrays    DO NOT USE INSIDE A LOOP ALLOCATION IS TRICKY maybe not
@@ -9367,8 +9548,8 @@ module subroutines
                 call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,ival+real(n-1)*inc,ival+real(n)*inc,r1(n),g1(n),b1(n))
             end do
 
-            contquan = int((maxval(array_2D)-conti)/continc+1)
             if(present(conti).and.present(continc)) then
+                contquan = int((maxval(array_2D)-conti)/continc+1)
                 if(dim1-zerocolumns>1)then
                     do n = 0, contquan
                         if(abs(width)<=2.)then;call newpen2(2);elseif(abs(width)>2..and.abs(width)<=4.)then;call newpen2(3);else;call newpen2(4);end if
@@ -9791,18 +9972,18 @@ module subroutines
                 end if
             end subroutine process
         end subroutine
-        subroutine butler_linegraph(array_1D,width,height,memi,memf,rmask,mem,memscale,memiter,memsymfreq,memsymsize,memflqt,memloc,memlabel,blabel,tlabel,error_1D,maskbyc,dots,rl,gl,bl,lthick)
+        subroutine butler_linegraph(array_1D,width,height,memi,memf,rmask,mem,memscale,memiter,memsymfreq,memsymsize,memflqt,memloc,memlabel,blabel,tlabel,error_1D,maskbyc,dots,lidots,rl,gl,bl,lthick)
             use functions
             implicit none
             real,intent(in)::array_1D(:),width,height,memi,memf
             real,intent(in),optional::error_1D(:),memsymsize,rmask,memscale,rl,gl,bl
             integer,intent(in),optional::memiter,memsymfreq,memflqt,lthick
             character(len=*),intent(in),optional::memloc,memlabel,blabel,tlabel
-            logical,intent(in),optional::maskbyc,dots,mem
+            logical,intent(in),optional::maskbyc,dots,mem,lidots
             real,dimension(:),allocatable::ploty,plotysem,betmlkx,betmlky
             real::dx,memsymsize_local,rmask_local,a,b,red,green,blue,memscale_local
             integer::memiter_local,memsymfreq_local,memflqt_local,iangle,i,lthick_local
-            logical::maskbyc_local,dots_local,mem_local
+            logical::maskbyc_local,dots_local,mem_local,lidots_local
 
                 write(ounit,*)'%begin butler_linegraph'
                 if(present(error_1D))then
@@ -9873,6 +10054,10 @@ module subroutines
                     else if(memsymsize_local>0.2.and.memsymsize_local<=0.5)then;lthick_local = 3
                     else if(memsymsize_local>0.5.and.memsymsize_local<=0.8)then;lthick_local = 4
                     else;lthick_local = 5;end if
+                end if
+                if(present(lidots))then 
+                    lidots_local = lidots
+                else;lidots_local = .false.
                 end if
                 ! print*,'parameter values =',memi,memf,memiter_local,memsymfreq_local,memsymsize_local,memflqt_local,height,iangle,rmask_local,maskbyc_local,dots_local
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -9965,10 +10150,12 @@ module subroutines
                             call plot(dx*real(i-2)+dx/2.,ploty(i-1),3);call plot(dx*real(i-1)+dx/2.,ploty(i),2)
                         end if
                     end if
-                    if(i>1.and.array_1D(i) == (array_1D(i+1)+array_1D(i-1))/2.)then
-                        call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,4)
-                    else if(size(array_1D)>12.and.array_1D(1) == array_1D(1+12).and.array_1D(1) == (array_1D(2) + array_1D(12))/2.)then   ! mark presumably linearly interpolated values, not perfect at all
-                        call gmark(dx/2.,ploty(1),memsymsize_local/4.,4)
+                    if(lidots_local)then
+                        if(i>1.and.array_1D(i) == (array_1D(i+1)+array_1D(i-1))/2.)then
+                            call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,4)
+                        else if(size(array_1D)>12.and.array_1D(1) == array_1D(1+12).and.array_1D(1) == (array_1D(2) + array_1D(12))/2.)then   ! mark presumably linearly interpolated values, not perfect at all
+                            call gmark(dx/2.,ploty(1),memsymsize_local/4.,4)
+                        end if
                     end if
 
                     if(present(error_1D))then                           ! drawing error bars
@@ -9978,7 +10165,7 @@ module subroutines
 
                 deallocate(ploty)
                 if(present(error_1D))deallocate(plotysem)
-                call rgbk(0.,0.,0.)
+                if(present(rl).and.present(gl).and.present(bl))call rgbk(0.,0.,0.)
                 return
             
         end subroutine
@@ -10292,18 +10479,6 @@ module MITgcm
         ! data obtainment ends here
     end subroutine
 end module
-
-module constants
-    implicit none
-    ! intrinsic::sin,cos,acos,asin,atan,atan2,exp,log,log10,sqrt,abs,mod,aimag,aint,anint,nint
-    integer, parameter :: years = 15, months = 12, lines = 2, stations = 9, depth = 400
-    real,dimension(years,months,lines,stations,depth):: temp_5=0.,potemp_5=0.,sal_5=0.,sigma_5=0.,potemp_c5=0.,sal_c5=0.,sigma_c5=0.
-    character(len=4),dimension(12)::monthnames = (/'Jan.','Feb.','Mar.','Apr.','May ','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'/)
-    integer::y,m,l,st,d,i,j,k,n
-    real,parameter::pi = 3.14159265358979323846,g = 9.81,delta_x = 2.*pi*6378.*1000.*cos(41.*pi/180.)/360.*1./3.
-    ! delta_x = 28004.0293 is in meters
-    
-end module constants
 
 module always
     use subroutines
