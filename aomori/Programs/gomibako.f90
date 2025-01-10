@@ -95,7 +95,7 @@ program gomibako
         end do
 
         call avsemdata_1D(Ncontinuous,mean = Ntotalmean,s = Ntotalsd)
-        print*,'N mean and sem are = ',Ntotalmean,Ntotalsd
+        print*,'N mean and sd are = ',Ntotalmean,Ntotalsd
         allocate(Ntmeanarray(size(Ncontinuous)),Ntsdarray(size(Ncontinuous)))
         Ntmeanarray = Ntotalmean;Ntsdarray = Ntotalsd
 
