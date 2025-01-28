@@ -9,6 +9,7 @@ program gomibako
     real,dimension(:),allocatable::Ntmeanarray,Ntsdarray
     integer::initial,gap,obs_depth
 
+    ! just writing to avoid 
     call calibrated_data2(potemp_c5,sal_c5,match_station_labels_and_array_indices=.true.)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                     ! Station 4 Examination, the array indices match here

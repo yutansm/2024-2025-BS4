@@ -18,387 +18,7 @@ end module mypsstat
 module functions
     implicit none
     contains
-    function minex0(D1, D2, D3, D4, D5, D6) result(min_val)
-        implicit none
-        real, dimension(:), intent(in), optional :: D1
-        real, dimension(:,:), intent(in), optional :: D2
-        real, dimension(:,:,:), intent(in), optional :: D3
-        real, dimension(:,:,:,:), intent(in), optional :: D4
-        real, dimension(:,:,:,:,:), intent(in), optional :: D5
-        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
-        real, dimension(:), allocatable :: array1
-        real, dimension(:,:), allocatable :: array2
-        real, dimension(:,:,:), allocatable :: array3
-        real, dimension(:,:,:,:), allocatable :: array4
-        real, dimension(:,:,:,:,:), allocatable :: array5
-        real, dimension(:,:,:,:,:,:), allocatable :: array6
-        real :: min_val
-        integer :: n, l, m, o, p, q
-    
-        if (present(D1)) then
-            allocate(array1(size(D1)))
-            do n = 1, size(D1)
-                if (D1(n) /= 0.0) then
-                    array1(n) = D1(n)
-                else
-                    array1(n) = 10.0**10.0
-                end if
-            end do
-            min_val = minval(array1)
-            deallocate(array1)
-    
-        else if (present(D2)) then
-            allocate(array2(size(D2, 1), size(D2, 2)))
-            do n = 1, size(D2, 1)
-                do l = 1, size(D2, 2)
-                    if (D2(n, l) /= 0.0) then
-                        array2(n, l) = D2(n, l)
-                    else
-                        array2(n, l) = 10.0**10.0
-                    end if
-                end do
-            end do
-            min_val = minval(array2)
-            deallocate(array2)
-    
-        else if (present(D3)) then
-            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
-            do n = 1, size(D3, 1)
-                do l = 1, size(D3, 2)
-                    do m = 1, size(D3, 3)
-                        if (D3(n, l, m) /= 0.0) then
-                            array3(n, l, m) = D3(n, l, m)
-                        else
-                            array3(n, l, m) = 10.0**10.0
-                        end if
-                    end do
-                end do
-            end do
-            min_val = minval(array3)
-            deallocate(array3)
-    
-        else if (present(D4)) then
-            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
-            do n = 1, size(D4, 1)
-                do l = 1, size(D4, 2)
-                    do m = 1, size(D4, 3)
-                        do o = 1, size(D4, 4)
-                            if (D4(n, l, m, o) /= 0.0) then
-                                array4(n, l, m, o) = D4(n, l, m, o)
-                            else
-                                array4(n, l, m, o) = 10.0**10.0
-                            end if
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array4)
-            deallocate(array4)
-    
-        else if (present(D5)) then
-            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
-            do n = 1, size(D5, 1)
-                do l = 1, size(D5, 2)
-                    do m = 1, size(D5, 3)
-                        do o = 1, size(D5, 4)
-                            do p = 1, size(D5, 5)
-                                if (D5(n, l, m, o, p) /= 0.0) then
-                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
-                                else
-                                    array5(n, l, m, o, p) = 10.0**10.0
-                                end if
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array5)
-            deallocate(array5)
-    
-        else if (present(D6)) then
-            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
-            do n = 1, size(D6, 1)
-                do l = 1, size(D6, 2)
-                    do m = 1, size(D6, 3)
-                        do o = 1, size(D6, 4)
-                            do p = 1, size(D6, 5)
-                                do q = 1, size(D6, 6)
-                                    if (D6(n, l, m, o, p, q) /= 0.0) then
-                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
-                                    else
-                                        array6(n, l, m, o, p, q) = 10.0**10.0
-                                    end if
-                                end do
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array6)
-            deallocate(array6)
-    
-        else
-            print *, 'no, or invalid input'
-            stop
-        end if
-    end function minex0
-    function minexn(D1, D2, D3, D4, D5, D6,r1) result(min_val)
-        implicit none
-        real, dimension(:), intent(in), optional :: D1
-        real, dimension(:,:), intent(in), optional :: D2
-        real, dimension(:,:,:), intent(in), optional :: D3
-        real, dimension(:,:,:,:), intent(in), optional :: D4
-        real, dimension(:,:,:,:,:), intent(in), optional :: D5
-        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
-        real, dimension(:), allocatable :: array1
-        real, dimension(:,:), allocatable :: array2
-        real, dimension(:,:,:), allocatable :: array3
-        real, dimension(:,:,:,:), allocatable :: array4
-        real, dimension(:,:,:,:,:), allocatable :: array5
-        real, dimension(:,:,:,:,:,:), allocatable :: array6
-        real,intent(in)::r1
-        ! integer,intent(in),optional::loc
-        real :: min_val
-        integer :: n, l, m, o, p, q
-    
-        if (present(D1)) then
-            allocate(array1(size(D1)))
-            do n = 1, size(D1)
-                if (D1(n) /=r1) then
-                    array1(n) = D1(n)
-                else
-                    array1(n) = 10.0**10.0
-                end if
-            end do
-            min_val = minval(array1)
-            ! if(present(loc))print*,minloc(array1)
-            deallocate(array1)
-    
-        else if (present(D2)) then
-            allocate(array2(size(D2, 1), size(D2, 2)))
-            do n = 1, size(D2, 1)
-                do l = 1, size(D2, 2)
-                    if (D2(n, l) /=r1) then
-                        array2(n, l) = D2(n, l)
-                    else
-                        array2(n, l) = 10.0**10.0
-                    end if
-                end do
-            end do
-            min_val = minval(array2)
-            ! if(present(loc))print*,minloc(array2)
-            deallocate(array2)
-    
-        else if (present(D3)) then
-            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
-            do n = 1, size(D3, 1)
-                do l = 1, size(D3, 2)
-                    do m = 1, size(D3, 3)
-                        if (D3(n, l, m) /=r1) then
-                            array3(n, l, m) = D3(n, l, m)
-                        else
-                            array3(n, l, m) = 10.0**10.0
-                        end if
-                    end do
-                end do
-            end do
-            min_val = minval(array3)
-            ! if(present(loc))print*,minloc(array3)
-            deallocate(array3)
-    
-        else if (present(D4)) then
-            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
-            do n = 1, size(D4, 1)
-                do l = 1, size(D4, 2)
-                    do m = 1, size(D4, 3)
-                        do o = 1, size(D4, 4)
-                            if (D4(n, l, m, o) /=r1) then
-                                array4(n, l, m, o) = D4(n, l, m, o)
-                            else
-                                array4(n, l, m, o) = 10.0**10.0
-                            end if
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array4)
-            ! if(present(loc))print*,minloc(array4)
-            deallocate(array4)
-    
-        else if (present(D5)) then
-            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
-            do n = 1, size(D5, 1)
-                do l = 1, size(D5, 2)
-                    do m = 1, size(D5, 3)
-                        do o = 1, size(D5, 4)
-                            do p = 1, size(D5, 5)
-                                if (D5(n, l, m, o, p) /=r1) then
-                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
-                                else
-                                    array5(n, l, m, o, p) = 10.0**10.0
-                                end if
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array5)
-            ! if(present(loc))print*,minloc(array5)
-            deallocate(array5)
-    
-        else if (present(D6)) then
-            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
-            do n = 1, size(D6, 1)
-                do l = 1, size(D6, 2)
-                    do m = 1, size(D6, 3)
-                        do o = 1, size(D6, 4)
-                            do p = 1, size(D6, 5)
-                                do q = 1, size(D6, 6)
-                                    if (D6(n, l, m, o, p, q) /=r1) then
-                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
-                                    else
-                                        array6(n, l, m, o, p, q) = 10.0**10.0
-                                    end if
-                                end do
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array6)
-            ! if(present(loc))print*,minloc(array6)
-            deallocate(array6)
-    
-        else
-            print *, 'no, or invalid input'
-            stop
-        end if
-    end function minexn
-    function minexrange(D1, D2, D3, D4, D5, D6,r1,r2) result(min_val)
-        implicit none
-        real, dimension(:), intent(in), optional :: D1
-        real, dimension(:,:), intent(in), optional :: D2
-        real, dimension(:,:,:), intent(in), optional :: D3
-        real, dimension(:,:,:,:), intent(in), optional :: D4
-        real, dimension(:,:,:,:,:), intent(in), optional :: D5
-        real, dimension(:,:,:,:,:,:), intent(in), optional :: D6
-        real, dimension(:), allocatable :: array1
-        real, dimension(:,:), allocatable :: array2
-        real, dimension(:,:,:), allocatable :: array3
-        real, dimension(:,:,:,:), allocatable :: array4
-        real, dimension(:,:,:,:,:), allocatable :: array5
-        real, dimension(:,:,:,:,:,:), allocatable :: array6
-        real,intent(in)::r1,r2
-        real :: min_val
-        integer :: n, l, m, o, p, q
-
-        if (present(D1)) then
-            allocate(array1(size(D1)))
-            do n = 1, size(D1)
-                if (r1<=D1(n).and.D1(n)<=r2) then
-                    array1(n) = D1(n)
-                else
-                    array1(n) = 10.0**10.0
-                end if
-            end do
-            min_val = minval(array1)
-            deallocate(array1)
-
-        else if (present(D2)) then
-            allocate(array2(size(D2, 1), size(D2, 2)))
-            do n = 1, size(D2, 1)
-                do l = 1, size(D2, 2)
-                    if(r1<=D2(n, l).and.D2(n, l)<=r2) then
-                        array2(n, l) = D2(n, l)
-                    else
-                        array2(n, l) = 10.0**10.0
-                    end if
-                end do
-            end do
-            min_val = minval(array2)
-            deallocate(array2)
-
-        else if (present(D3)) then
-            allocate(array3(size(D3, 1), size(D3, 2), size(D3, 3)))
-            do n = 1, size(D3, 1)
-                do l = 1, size(D3, 2)
-                    do m = 1, size(D3, 3)
-                        if(r1<=D3(n, l, m).and.D3(n, l, m)<=r2) then
-                            array3(n, l, m) = D3(n, l, m)
-                        else
-                            array3(n, l, m) = 10.0**10.0
-                        end if
-                    end do
-                end do
-            end do
-            min_val = minval(array3)
-            deallocate(array3)
-
-        else if (present(D4)) then
-            allocate(array4(size(D4, 1), size(D4, 2), size(D4, 3), size(D4, 4)))
-            do n = 1, size(D4, 1)
-                do l = 1, size(D4, 2)
-                    do m = 1, size(D4, 3)
-                        do o = 1, size(D4, 4)
-                            if(r1<=D4(n, l, m, o).and.D4(n, l, m, o)<=r2) then
-                                array4(n, l, m, o) = D4(n, l, m, o)
-                            else
-                                array4(n, l, m, o) = 10.0**10.0
-                            end if
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array4)
-            deallocate(array4)
-
-        else if (present(D5)) then
-            allocate(array5(size(D5, 1), size(D5, 2), size(D5, 3), size(D5, 4), size(D5, 5)))
-            do n = 1, size(D5, 1)
-                do l = 1, size(D5, 2)
-                    do m = 1, size(D5, 3)
-                        do o = 1, size(D5, 4)
-                            do p = 1, size(D5, 5)
-                                if(r1<=D5(n, l, m, o, p).and.D5(n, l, m, o, p)<=r2) then
-                                    array5(n, l, m, o, p) = D5(n, l, m, o, p)
-                                else
-                                    array5(n, l, m, o, p) = 10.0**10.0
-                                end if
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array5)
-            deallocate(array5)
-
-        else if (present(D6)) then
-            allocate(array6(size(D6, 1), size(D6, 2), size(D6, 3), size(D6, 4), size(D6, 5), size(D6, 6)))
-            do n = 1, size(D6, 1)
-                do l = 1, size(D6, 2)
-                    do m = 1, size(D6, 3)
-                        do o = 1, size(D6, 4)
-                            do p = 1, size(D6, 5)
-                                do q = 1, size(D6, 6)
-                                    if(r1<=D6(n, l, m, o, p, q).and.D6(n, l, m, o, p, q)<=r2) then
-                                        array6(n, l, m, o, p, q) = D6(n, l, m, o, p, q)
-                                    else
-                                        array6(n, l, m, o, p, q) = 10.0**10.0
-                                    end if
-                                end do
-                            end do
-                        end do
-                    end do
-                end do
-            end do
-            min_val = minval(array6)
-            deallocate(array6)
-
-        else
-            print *, 'no, or invalid input'
-            stop
-        end if
-    end function minexrange
+    ! put depth in to calculate Potential Density
     function f_t95(df) result(t95coeff)
         implicit none
         integer,intent(in)::df
@@ -717,11 +337,16 @@ module functions
         critical_values(1) = r
         critical_values(2) = -r
     end function f_rcritical95
-    function int2str(i) result(str)
+    function int2str(i,form) result(str)
         integer, intent(in) :: i
         character(:), allocatable :: str
         character(range(i)+2) :: tmp
-        write(tmp, '(i0)') i
+        character(len=*),intent(in),optional::form
+        if(present(form))then
+            write(tmp,trim(adjustl(form))) i
+        else
+            write(tmp, '(i0)') i
+        end if
         str = trim(tmp)
     end function int2str
     function real2str(r,digits_after_point) result(str)
@@ -809,32 +434,138 @@ module functions
             real_sign = 0.
         end if
     end function rsign
-    function stl2ai(station_label) result(array_index)
-        implicit none 
-        integer,intent(in)::station_label
-        integer::array_index
+    function month_names(int) result(month_name)
+        implicit none
+        integer, intent(in) :: int
+        character(len=4) :: month_name
 
-        if(station_label>9 .or. station_label<1)then
-            print*,'station_label out of range'
-            stop
-        else
-            array_index = 10 - station_label
+        select case(int)
+            case(1)
+                month_name = 'Jan.'
+            case(2)
+                month_name = 'Feb.'
+            case(3)
+                month_name = 'Mar.'
+            case(4)
+                month_name = 'Apr.'
+            case(5)
+                month_name = 'May'
+            case(6)
+                month_name = 'Jun.'
+            case(7)
+                month_name = 'Jul.'
+            case(8)
+                month_name = 'Aug.'
+            case(9)
+                month_name = 'Sep.'
+            case(10)
+                month_name = 'Oct.'
+            case(11)
+                month_name = 'Nov.'
+            case(12)
+                month_name = 'Dec.'
+            case default
+                month_name = 'Err.'
+        end select
+    end function month_names
+
+    !!! Random
+    function JODC_dep_to_index(depth,info) result(index)
+        implicit none
+        integer,intent(in)::depth
+        logical,intent(in),optional::info
+        integer::index
+        logical::info_local
+        info_local = .false.
+        if(present(info))info_local = info
+        if(depth == 0)index = 0
+        if(depth == 10)index = 1
+        if(depth == 20)index = 2
+        if(depth == 30)index = 3
+        if(depth == 50)index = 4
+        if(depth == 75)index = 5
+        if(depth == 100)index = 6
+        if(depth == 125)index = 7
+        if(depth == 150)index = 8
+        if(depth == 200)index = 9
+        if(depth == 250)index = 10
+        if(depth == 300)index = 11
+        if(depth == 400)index = 12
+        if(depth == 500)index = 13
+        if(depth == 600)index = 14
+        if(depth == 700)index = 15
+        if(depth == 800)index = 16
+        if(depth == 900)index = 17
+        if(depth == 1000)index = 18
+        if(depth == 1100)index = 19
+        if(depth == 1200)index = 20
+        if(depth == 1300)index = 21
+        if(depth == 1400)index = 22
+        if(depth == 1500)index = 23
+        if(depth == 1750)index = 24
+        if(depth == 2000)index = 25
+        if(depth == 2500)index = 26
+        if(depth == 3000)index = 27
+        if(depth == 3500)index = 28
+        if(depth == 4000)index = 29
+        if(depth == 4500)index = 30
+        if(depth == 5000)index = 31
+        if(depth == 5500)index = 32
+
+        if(depth>5500.or.depth<0)then;print*,'out of range depth in JODC_data:',depth;stop;endif
+        if(info_local)then
+            print*,'depth:',depth,'index:',index
         end if
 
-    end function stl2ai
-    function ai2stl(array_index) result(station_label)
-        implicit none 
-        integer,intent(in)::array_index
-        integer::station_label
-
-        if(array_index>9 .or. array_index<0)then
-            print*,'array_index out of range'
-            stop
-        else
-            station_label = 10 - array_index
+    end function JODC_dep_to_index
+    function JODC_index_to_dep(index,info) result(depth)
+        implicit none
+        integer,intent(in)::index
+        logical,intent(in),optional::info
+        integer::depth
+        logical::info_local
+        info_local = .false.
+        if(present(info))info_local = info
+        select case(index)
+            case(0);depth = 0
+            case(1);depth = 10
+            case(2);depth = 20
+            case(3);depth = 30
+            case(4);depth = 50
+            case(5);depth = 75
+            case(6);depth = 100
+            case(7);depth = 125
+            case(8);depth = 150
+            case(9);depth = 200
+            case(10);depth = 250
+            case(11);depth = 300
+            case(12);depth = 400
+            case(13);depth = 500
+            case(14);depth = 600
+            case(15);depth = 700
+            case(16);depth = 800
+            case(17);depth = 900
+            case(18);depth = 1000
+            case(19);depth = 1100
+            case(20);depth = 1200
+            case(21);depth = 1300
+            case(22);depth = 1400
+            case(23);depth = 1500
+            case(24);depth = 1750
+            case(25);depth = 2000
+            case(26);depth = 2500
+            case(27);depth = 3000
+            case(28);depth = 3500
+            case(29);depth = 4000
+            case(30);depth = 4500
+            case(31);depth = 5000
+            case(32);depth = 5500
+        end select
+        if(index>32.or.index<0)then;print*,'out of range index in JODC_data:',index;stop;endif
+        if(info_local)then
+            print*,'index:',index,'depth:',depth
         end if
-
-    end function ai2stl
+    end function JODC_index_to_dep
 end module functions
 
 module origin
@@ -1066,7 +797,7 @@ module origin
         write(countstr,'(i3)') plots2count
         countstr = adjustl(countstr)
         if(present(mode))then
-            if(mode == 'land'.or.mode == 'landscape')then
+            if(mode == 'land'.or.mode == 'landscape'.or.mode =='Landscape'.or.mode =='landScape'.or.mode =='LandScape'.or.mode =='LANDSCAPE')then
                 intmode = 13
             else
                 intmode = 9
@@ -5756,7 +5487,9 @@ module origin
             write(time_str, '(i2.2, i2.2, i2.2)') values(5), values(6), values(7)
             date = trim(date_str) // 'T' // trim(time_str) // 'Z'
             write(tolog,*) 'Log file closed on ', date
-            close(tolog);return
+            close(tolog)
+            logstat = .false.
+            return
         else
             print*, 'log file is not open'
         end if
@@ -6467,7 +6200,7 @@ module oldsubs
                 Kt=Kw+(f0+f1*t+f2*t**2.+f3*t**3.)*S+(g0+g1*t+g2*t**2.)*S**(3./2.)
                 KK=Kt+AAAA*pp+BB*pp**2.
                 rhoafter=rho/(1.-pp/KK)
-                if (S==0) then
+                if (S==0.) then
                 sigma=0.
                 else
                 sigma=real(rhoafter)-1000.
@@ -6533,7 +6266,7 @@ module oldsubs
             Gamma=a0+a1*t+a2*(t**2.)+a3*(t**3.)+(S-35.)*(b0+b1*t)+p*(c0+c1*t+c2*(t**2.)+c3*(t**3.))+p*(S-35.)*(d0+d1*t)+(p**2.)*(e0+e1*t+e2*(t**2.))
             xk=d*Gamma
             Theta=(t+(xk-2.0*q)/6.)
-            if(S==0) then
+            if(S==0.) then
             potemp=0.
             else
             potemp=real(Theta)
@@ -6830,6 +6563,21 @@ module constants
     
 end module constants
 
+module data_types
+    implicit none
+    type :: JODC_TS
+        integer,dimension(:,:,:,:),allocatable::num_samples
+        real,dimension(:,:,:,:),allocatable::mean,max,min,sd,sem
+    end type JODC_TS
+    type :: JODC_RHO
+        real,dimension(:,:,:,:),allocatable::mean
+    end type JODC_RHO
+    type :: JODC_V
+        integer,dimension(:,:,:,:),allocatable::num_samples
+        real,dimension(:,:,:,:),allocatable::mean_dir,max_dir,min_dir,mean_vel,max_vel,stability
+    end type JODC_V
+end module data_types
+
 module subroutines 
     use oldsubs
     implicit none
@@ -6840,7 +6588,7 @@ module subroutines
       ! Be careful of the Array Station Indices, since I am used to drawing from left to right, although the station labels are from right to left
       ! Vg arrays are from 1 to 8
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        ! New Version of calibrated data, the station labels match the indices in the array. I should have done this much much earlier........1217
+        ! New Version of calibrated data, the station labels match the indices in the array if prompted. I should have done this much much earlier........12172024
         subroutine calibrated_data2(potemp_c5,sal_c5,sigma_c5,geovel_c5,match_station_labels_and_array_indices,median_filter_db)
             use functions
             implicit none
@@ -6899,6 +6647,402 @@ module subroutines
             print*,'--------------------------------------------------'
             return
         end subroutine 
+
+        ! JODC Data
+        ! Potential Temperature and Density are only calculated for the mean values
+        subroutine JODC_data(potemp,sal,den,vel,ilat,flat,ilon,flon,info)
+            use functions
+            use data_types
+            implicit none
+            type(JODC_TS),intent(out),optional::potemp,sal
+            type(JODC_RHO),intent(out),optional::den
+            type(JODC_V),intent(out),optional::vel
+            type(JODC_TS)::potemp_local,sal_local
+            type(JODC_RHO)::den_local
+            type(JODC_V)::vel_local 
+            integer,intent(in),optional::ilat,flat,ilon,flon
+            logical,intent(in),optional::info
+            integer::ios,i,j,ilat_local,ilon_local,flat_local,flon_local,month,lat,lon,dep,num
+            real::mean,max,min,sd
+            character(len=200)::firstrow,filename
+            logical::istat
+
+            istat = .false.
+            if(present(info))istat = info
+
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                        ! Allocation of (local) Arrays
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ilat_local = -90 ; flat_local = 90 ; ilon_local = -180 ; flon_local = 180 ! local array contains everything
+            if(present(potemp))then 
+                allocate(potemp_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp_local%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp_local%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp_local%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp_local%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                potemp_local%num_samples = 0;potemp_local%mean = 0.;potemp_local%max = 0.;potemp_local%min = 0.;potemp_local%sd = 0.;potemp_local%sem = 0.
+            end if
+            if(present(sal))then
+                allocate(sal_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal_local%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal_local%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal_local%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal_local%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                sal_local%num_samples = 0;sal_local%mean = 0.;sal_local%max = 0.;sal_local%min = 0.;sal_local%sd = 0.;sal_local%sem = 0.
+            end if 
+            if(present(den))then 
+                allocate(den_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                den_local%mean = 0.
+            end if
+            if(present(vel))then
+                allocate(vel_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%mean_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%max_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%min_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%mean_vel(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%max_vel(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(vel_local%stability(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                vel_local%num_samples = 0;vel_local%mean_dir = 0.;vel_local%max_dir = 0.;vel_local%min_dir = 0.;vel_local%mean_vel = 0.;vel_local%max_vel = 0.;vel_local%stability = 0.
+            end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! Reading files and putting the values inside local arrays
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            if(present(potemp).or.present(sal))then 
+                if(istat)print*,'--------------------------------'
+                if(istat)print*,'   Obtaining Salinity Data'
+                if(istat)print*,'--------------------------------'
+                do i = 0 ,12
+                    filename = '../Data/JODC/Salinity/bss-'//int2str(i,form = '(i2.2)')//'.csv'
+                    if(istat)then 
+                        if(i == 0)print*,'     Opening Annual Data File'
+                        if(i /= 0)print*,'     Opening File of '//month_names(i)
+                    end if
+                    open(20,file = filename,status = 'old',action = 'read')
+                    read(20,'(A)')firstrow
+                    do 
+                        read(20,*,iostat = ios)month,lat,lon,dep,num,mean,max,min,sd
+                        if(ios/=0)exit
+                        dep = JODC_dep_to_index(dep)
+
+                        sal_local%num_samples(month,lon,lat,dep) = num
+                        sal_local%mean(month,lon,lat,dep) = mean
+                        sal_local%max(month,lon,lat,dep) = max
+                        sal_local%min(month,lon,lat,dep) = min
+                        sal_local%sd(month,lon,lat,dep) = sd
+                        sal_local%sem(month,lon,lat,dep) = sd/sqrt(real(num))
+
+                    end do
+                    close(20)
+                    ! if(istat)print*,'Closing ...'
+                    if(istat)print*,'--------------------------------'
+                end do
+            end if
+            if(present(potemp).or.present(sal))then 
+                if(istat)print*,'--------------------------------'
+                if(istat)print*,'   Obtaining Temperature Data'
+                if(istat)print*,'--------------------------------'
+                do i = 0 ,12
+                    filename = '../Data/JODC/Temperature/bts-'//int2str(i,form = '(i2.2)')//'.csv'
+                    if(istat)then 
+                        if(i == 0)print*,'     Opening Annual Data File'
+                        if(i /= 0)print*,'     Opening File of '//month_names(i)
+                    end if
+                    open(20,file = filename,status = 'old',action = 'read')
+                    read(20,'(A)')firstrow
+                    do 
+                        read(20,*,iostat = ios)month,lat,lon,dep,num,mean,max,min,sd
+                        if(ios/=0)exit
+                        dep = JODC_dep_to_index(dep)
+
+                        potemp_local%num_samples(month,lon,lat,dep) = num
+                        potemp_local%mean(month,lon,lat,dep) = potemp_TSd(mean,sal_local%mean(month,lon,lat,dep),real(JODC_index_to_dep(dep)))
+                        potemp_local%max(month,lon,lat,dep) = max
+                        potemp_local%min(month,lon,lat,dep) = min
+                        potemp_local%sd(month,lon,lat,dep) = sd
+                        potemp_local%sem(month,lon,lat,dep) = sd/sqrt(real(num))
+                        
+                    end do
+                    close(20)
+                    ! if(istat)print*,'Closing ...'
+                    if(istat)print*,'--------------------------------'
+                end do
+            end if
+            if(present(den))then 
+                if(istat)print*,'--------------------------------'
+                if(istat)print*,'Calculating Potential Density...'
+                if(istat)print*,'--------------------------------'
+                do i = 0, 12
+                    do j = 0, 32 
+                        call calc_density(temp_2D = potemp_local%mean(i,:,:,j),sal_2D = sal_local%mean(i,:,:,j),den_2D = den_local%mean(i,:,:,j))
+                    end do
+                end do
+            end if
+
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! Putting the values of the local array into the outgoing array 
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(present(ilat))ilat_local = ilat
+            if(present(flat))flat_local = flat
+            if(present(ilon))ilon_local = ilon
+            if(present(flon))flon_local = flon
+
+            if(present(potemp))then 
+                allocate(potemp%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                potemp%num_samples = potemp_local%num_samples(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%mean = potemp_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%max = potemp_local%max(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%min = potemp_local%min(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%sd = potemp_local%sd(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%sem = potemp_local%sem(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(potemp_local%num_samples,potemp_local%mean,potemp_local%max,potemp_local%min,potemp_local%sd,potemp_local%sem)
+            end if
+
+            if(present(sal))then 
+                allocate(sal%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                sal%num_samples = sal_local%num_samples(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%mean = sal_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%max = sal_local%max(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%min = sal_local%min(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%sd = sal_local%sd(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%sem = sal_local%sem(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(sal_local%num_samples,sal_local%mean,sal_local%max,sal_local%min,sal_local%sd,sal_local%sem)
+            end if
+
+            if(present(den))then 
+                allocate(den%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                den%mean = den_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(den_local%mean)
+            end if
+
+        end subroutine
+
+        ! Uses Binary File and is much faster than the previous subroutine
+        ! Have Not Yet made the program for vel as it is not necessary for the time being
+        ! be wary that dynamic height dh is in cm
+        subroutine JODC_data2(potemp,sal,den,dh,vel,ilat,flat,ilon,flon,info)
+            use functions
+            use data_types
+            implicit none
+            type(JODC_TS),intent(out),optional::potemp,sal
+            type(JODC_RHO),intent(out),optional::den
+            type(JODC_RHO),intent(out),optional::dh
+            type(JODC_V),intent(out),optional::vel
+            type(JODC_TS)::potemp_local,sal_local
+            type(JODC_RHO)::den_local
+            type(JODC_RHO)::dh_local
+            type(JODC_V)::vel_local 
+            integer,intent(in),optional::ilat,flat,ilon,flon
+            logical,intent(in),optional::info
+            integer::ilat_local,ilon_local,flat_local,flon_local
+            character(len=200)::filename
+            logical::istat
+            ! real::den_mean,delta_zdb
+            ! real(kind = 8)::sum
+
+            istat = .false.
+            if(present(info))istat = info
+            filename = '../Data/JODC/JODC_DATA.bin'
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                                        ! Allocation of (local) Arrays
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ilat_local = -90 ; flat_local = 90 ; ilon_local = -180 ; flon_local = 180 ! local array contains everything
+                if(present(potemp))then 
+                    allocate(potemp_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(potemp_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(potemp_local%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(potemp_local%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(potemp_local%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(potemp_local%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    potemp_local%num_samples = 0;potemp_local%mean = 0.;potemp_local%max = 0.;potemp_local%min = 0.;potemp_local%sd = 0.;potemp_local%sem = 0.
+                end if
+                if(present(sal))then
+                    allocate(sal_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(sal_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(sal_local%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(sal_local%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(sal_local%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(sal_local%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    sal_local%num_samples = 0;sal_local%mean = 0.;sal_local%max = 0.;sal_local%min = 0.;sal_local%sd = 0.;sal_local%sem = 0.
+                end if 
+                if(present(den))then 
+                    allocate(den_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    den_local%mean = 0.
+                end if
+                if(present(dh))then 
+                    allocate(dh_local%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    dh_local%mean = 0.
+                end if
+                if(present(vel))then
+                    allocate(vel_local%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%mean_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%max_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%min_dir(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%mean_vel(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%max_vel(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    allocate(vel_local%stability(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                    vel_local%num_samples = 0;vel_local%mean_dir = 0.;vel_local%max_dir = 0.;vel_local%min_dir = 0.;vel_local%mean_vel = 0.;vel_local%max_vel = 0.;vel_local%stability = 0.
+                end if
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! Reading files and putting the values inside local arrays
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                if(present(potemp).or.present(dh))then 
+                    if(istat)print*,'--------------------------------'
+                    if(istat)print*,'   Obtaining Temperature Data'
+                    if(istat)print*,'--------------------------------'
+                    open(20,file = filename, form = 'unformatted',status = 'old',action = 'read',access = 'direct',recl = 4*13*361*181*33)
+                    read(20,rec = 1)potemp_local%num_samples
+                    read(20,rec = 2)potemp_local%mean
+                    read(20,rec = 3)potemp_local%max
+                    read(20,rec = 4)potemp_local%min
+                    read(20,rec = 5)potemp_local%sd
+                    read(20,rec = 6)potemp_local%sem
+                    close(20)
+                end if
+
+                if(present(sal).or.present(dh))then 
+                    if(istat)print*,'--------------------------------'
+                    if(istat)print*,'   Obtaining Salinity Data'
+                    if(istat)print*,'--------------------------------'
+                    open(20,file = filename, form = 'unformatted',status = 'old',action = 'read',access = 'direct',recl = 4*13*361*181*33)
+                    read(20,rec = 7)sal_local%num_samples
+                    read(20,rec = 8)sal_local%mean
+                    read(20,rec = 9)sal_local%max
+                    read(20,rec = 10)sal_local%min
+                    read(20,rec = 11)sal_local%sd
+                    read(20,rec = 12)sal_local%sem
+                    close(20)
+                end if
+
+                if(present(den).or.present(dh))then 
+                    if(istat)print*,'--------------------------------'
+                    if(istat)print*,' Obtaining Potential Density... '
+                    if(istat)print*,'--------------------------------'
+                    open(20,file = filename, form = 'unformatted',status = 'old',action = 'read',access = 'direct',recl = 4*13*361*181*33)
+                    read(20,rec = 13)den_local%mean
+                    close(20)
+                end if
+
+                if(present(dh))then 
+                    if(istat)print*,'--------------------------------'
+                    if(istat)print*,' Obtaining Dynamic Height... '
+                    if(istat)print*,'--------------------------------'
+                    open(20,file = filename, form = 'unformatted',status = 'old',action = 'read',access = 'direct',recl = 4*13*361*181*33)
+                    read(20,rec = 14)dh_local%mean
+                    close(20)
+
+                    !!!! Below is the initial code for calculating the dynamic height !!!!
+                        ! dh_local%mean(:,:,:,0) = 0.
+                        ! do i = 0,12
+                        !     do j = -180,180
+                        !         do k = -90,90
+                        !             do l = 1,32
+                        !                 if(sal_local%mean(i,j,k,l) < 20..or.potemp_local%mean(i,j,k,l) == 0.)then 
+                        !                     den_local%mean(i,j,k,l) = 0.
+                        !                 end if
+
+                        !                 if(den_local%mean(i,j,k,l) /= 0.)then 
+                        !                     if(den_local%mean(i,j,k,l-1) /= 0.)then ! the layer above is not 0
+                        !                         den_mean = (den_local%mean(i,j,k,l)+den_local%mean(i,j,k,l-1))/2.
+                        !                     else ! if the layer above is 0
+                        !                         den_mean = den_local%mean(i,j,k,l)
+                        !                     end if
+                        !                     delta_zdb = real(JODC_index_to_dep(l)-JODC_index_to_dep(l-1))
+                        !                     dh_local%mean(i,j,k,l) = dh_local%mean(i,j,k,l-1) + fcalc_dh(den_mean,delta_zdb,'cm')
+                        !                 else ! if the layer is 0
+                        !                     if(l==32)then 
+                        !                         dh_local%mean(i,j,k,l) = 0.
+                        !                     else
+                        !                         if(den_local%mean(i,j,k,l+1) /= 0..and.den_local%mean(i,j,k,l-1) /= 0.)then ! the layers above and below are non zero
+                        !                             den_mean = (den_local%mean(i,j,k,l+1)+den_local%mean(i,j,k,l-1))/2.
+                        !                             delta_zdb = real(JODC_index_to_dep(l)-JODC_index_to_dep(l-1))
+                        !                             dh_local%mean(i,j,k,l) = dh_local%mean(i,j,k,l-1) + fcalc_dh(den_mean,delta_zdb,'cm')
+                        !                         else 
+                        !                             dh_local%mean(i,j,k,l:32) = 0.;exit
+                        !                         end if
+                        !                     end if
+                        !                 end if
+                        !             end do
+                        !         end do
+                        !     end do
+                        ! end do
+                    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                end if
+
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ! Putting the values of the local array into the outgoing array 
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(present(ilat))ilat_local = ilat
+            if(present(flat))flat_local = flat
+            if(present(ilon))ilon_local = ilon
+            if(present(flon))flon_local = flon
+
+            if(present(potemp))then 
+                allocate(potemp%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(potemp%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                potemp%num_samples = potemp_local%num_samples(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%mean = potemp_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%max = potemp_local%max(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%min = potemp_local%min(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%sd = potemp_local%sd(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                potemp%sem = potemp_local%sem(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(potemp_local%num_samples,potemp_local%mean,potemp_local%max,potemp_local%min,potemp_local%sd,potemp_local%sem)
+            end if
+
+            if(present(sal))then 
+                allocate(sal%num_samples(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%max(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%min(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%sd(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+                allocate(sal%sem(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                sal%num_samples = sal_local%num_samples(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%mean = sal_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%max = sal_local%max(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%min = sal_local%min(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%sd = sal_local%sd(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                sal%sem = sal_local%sem(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(sal_local%num_samples,sal_local%mean,sal_local%max,sal_local%min,sal_local%sd,sal_local%sem)
+            end if
+
+            if(present(den))then 
+                allocate(den%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                den%mean = den_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(den_local%mean)
+            end if
+
+            if(present(dh))then 
+                allocate(dh%mean(0:12,ilon_local:flon_local,ilat_local:flat_local,0:32))
+
+                dh%mean = dh_local%mean(:,ilon_local:flon_local,ilat_local:flat_local,:)
+                deallocate(dh_local%mean)
+            end if
+
+        end subroutine
+                    
         ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data output array has the size(15,12) regardless of data quantity
         subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate)
             implicit none
@@ -7307,10 +7451,11 @@ module subroutines
                 end do
             end do
         end subroutine
-        subroutine calc_density(temp_2D,sal_2D,den_2D)
+        subroutine calc_density(temp_2D,sal_2D,den_2D,depth)
             implicit none
             real,intent(in)::temp_2D(:,:),sal_2D(:,:)
             real,intent(out)::den_2D(lbound(temp_2D,1):ubound(temp_2D,1),lbound(temp_2D,2):ubound(temp_2D,2))
+            real,intent(in),optional::depth
             integer::i,j,iterations1,iterations2
             ! real::den_local
             
@@ -7321,14 +7466,37 @@ module subroutines
 
             do i = 1, iterations1
                 do j = 1, iterations2
-                    call sigma_T_S(den_2D(i,j),temp_2D(i,j),sal_2D(i,j))
+                    if(present(depth))then 
+                        den_2D(i,j) = sigma_TS(temp_2D(i,j),sal_2D(i,j),depth)
+                    else 
+                        den_2D(i,j) = sigma_TS(temp_2D(i,j),sal_2D(i,j))
+                    end if
                 end do
             end do
 
 
         end subroutine
-        ! calculates dynamic height at the deepest point in [m], a 2d array is treated as a series of column arrays, same with calc_geovel
-        subroutine calc_dh(dh_1D, temp_2D, sal_2D, den_2D, delta_zdb)
+        function sigma_TS(temp,sal,depth) result(sigma)
+            implicit none
+            real,intent(in)::temp,sal
+            real,intent(in),optional::depth
+            real::sigma,potemp
+    
+            if(present(depth))then 
+                call potemp_T_S_depth(potemp,temp,sal,depth)
+                call sigma_T_S(sigma,potemp,sal)
+            else
+                call sigma_T_S(sigma,temp,sal)
+            end if
+        end function sigma_TS
+        function potemp_TSd(temp,sal,depth) result(potemp)
+            implicit none
+            real,intent(in)::temp,sal,depth
+            real::potemp
+            call potemp_T_S_depth(potemp,temp,sal,depth)
+        end function potemp_TSd
+        ! calculates dynamic height at the deepest point in [m or cm], a 2d array is treated as a series of column arrays, same with calc_geovel
+        subroutine calc_dh(dh_1D, temp_2D, sal_2D, den_2D, delta_zdb, unit)
             implicit none
             real, intent(in), optional :: temp_2D(:,:), sal_2D(:,:)
             real, intent(in), optional :: den_2D(:,:)
@@ -7338,6 +7506,11 @@ module subroutines
             integer :: i, j
             real(kind=8) :: sum_p, sum_d, g, delta_zdb_local
             real(kind=8), dimension(:,:), allocatable :: integral_D, a
+            character(len=*), intent(in), optional :: unit
+            character(len=5)::unit_local
+
+            unit_local = 'm'
+            if(present(unit))unit_local = unit
 
             if (present(temp_2D) .and. present(sal_2D)) then
                 if (size(temp_2D, 1) /= size(sal_2D, 1)) then
@@ -7383,11 +7556,44 @@ module subroutines
                 sum_p = 0.0d0
                 sum_d = 0.0d0
             end do
-            dh_1d = real(integral_D(:,ubound(integral_D, 2)),kind=4) ! dynamic height of the deepest point
+            if(trim(unit_local) == 'm')then 
+                dh_1d = real(integral_D(:,ubound(integral_D, 2)),kind=4) ! dynamic height of the deepest point
+            else if(trim(unit_local) == 'cm')then
+                dh_1d = real(integral_D(:,ubound(integral_D, 2)),kind=4) * 100.0
+            else
+                print*,'Unit must be either m or cm'
+                stop
+            end if
             deallocate(integral_D, a, den_2D_local)
             return
         
         end subroutine 
+        function fcalc_dh(den,delta_zdb,unit) result(dh) 
+            implicit none
+            real,intent(in)::den
+            real,intent(in),optional::delta_zdb
+            real(kind = 4)::dh
+            real(kind = 8)::g,delta_zdb_local
+            character(len=*), intent(in), optional :: unit
+            character(len=5)::unit_local
+            unit_local = 'm'
+            if(present(unit))unit_local = unit
+            if(den == 0.)then ;dh = 0.;return;endif
+            if(present(delta_zdb))then
+                delta_zdb_local = real(delta_zdb,kind = 8)
+            else
+                delta_zdb_local = 1.0d0
+            end if
+            g = 9.81d0
+            if(trim(unit_local) == 'm')then 
+                dh = real(1.0d0 / (1000.0d0 + real(den, kind=8)) * (10.0d0**(4.0d0)) * real(delta_zdb_local,kind=8) / g,kind = 4)
+            else if(trim(unit_local) == 'cm')then
+                dh = real(1.0d0 / (1000.0d0 + real(den, kind=8)) * (10.0d0**(4.0d0)) * real(delta_zdb_local,kind=8) / g,kind = 4) * 100.0
+            else
+                print*,'Unit must be either m or cm'
+                stop
+            end if
+        end function
         ! returns an array with one less column than the input array,arguments are all real(kind=4),the bottom row is the reference surface. unit is[m]
         subroutine calc_geovel(geovel_2D, delta_xm, delta_zdb, temp_2D, sal_2D, den_2D, f, lat)
             implicit none
@@ -8024,6 +8230,94 @@ module subroutines
             deallocate(dep,dep_0,butler_array)
                 
         end subroutine
+        subroutine simple_map(ini_lat,fin_lat,ini_long,fin_long,width,symbol_size,r,g,b,symbol_freq,symbols,paintland)
+            implicit none
+            integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long
+            integer,intent(in),optional::symbol_freq
+            real,intent(in):: width
+            real,intent(in),optional::symbol_size,r,g,b
+            intrinsic sin,cos,tan,asin,acos
+            integer,parameter::imax = 2080,jmax = 2640
+            real,dimension(:,:),allocatable::dep,butler_array
+            integer,dimension(:,:),allocatable::dep_0
+            logical,intent(in),optional::symbols,paintland
+            integer::j,is,ie,js,je,symbol_freq_local
+            real::dx,dy,height,ratio,pi,symbol_size_local,rl,gl,bl,NLineYco,SLineYco
+            logical::symbols_local,paintland_local
+            
+            !! local parameters
+            call rgbk(0.,0.,0.)
+            symbols_local = .false.
+            if(present(symbols))symbols_local = symbols
+            rl = 0.;gl = 0.;bl = 0.
+            if(present(r))rl = r
+            if(present(g))gl = g
+            if(present(b))bl = b
+            if(present(symbol_freq))then 
+                symbol_freq_local = symbol_freq
+            else
+                symbol_freq_local = 10
+            end if
+
+            paintland_local = .true.
+            if(present(paintland))paintland_local = paintland
+            !!
+            call box(width,height)
+            allocate(dep(imax,jmax));allocate(dep_0(imax,jmax))
+            dep = 0.;dep_0 = 1
+            open(21,file='../Data/japan1km122-148_24-46.bin',form='unformatted',status='old')
+            do j = jmax,1,-1  ! reading in reverse so i can draw map from bottom left
+                read(21)dep(:,j)
+            end do
+            close(21)
+            dep = -dep
+            ! maxval(dep) == -9784 minval(dep) == 3660 (fuji); Note that the data is in meters and z axis is positive upwards
+            if(present(symbol_size))then;symbol_size_local = symbol_size;else;symbol_size_local = width/11.;end if
+
+            if (ini_lat<24 .or. ini_lat>46 .or. fin_lat<24 .or. fin_lat>46 .or. ini_long<122 .or. ini_long>148 .or. fin_long<122 .or. fin_long>148 .or.ini_lat>fin_lat .or. ini_long>fin_long) then
+                print*, 'Your map coordinates must be within 24-46N and 122-148E'
+            else
+                js = (ini_lat-24)*120+1
+                je = (fin_lat-24)*120
+                is = (ini_long-122)*80+1
+                ie = (fin_long-122)*80
+                pi = 2.*asin(1.)
+                ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
+                height = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
+                dx = width/real(ie-is)
+                dy = height/real(je-js)
+               
+                print*,'Deepest Point of Your Map Domain is;',minval(dep)
+                print*,'Heighest Point of Your Map Domain is;',maxval(dep)
+                if (width/11.<=0.2) then;call newpen2(2);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(3);else;call newpen2(5);end if
+                call rgbk(rl,gl,bl) 
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+                if(paintland_local)then
+                    allocate(butler_array(ie-is+1,je-js+1))
+                    butler_array = dep(is:ie,js:je)
+                    call butler_psmask(butler_array,width,height,0.,3700.,r=0.8,g=.9,b=0.1)  ! land
+                endif 
+            end if
+            call rgbk(0.6,0.6,0.6)
+            NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
+            call plot(dx*(138.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
+            call plot(dx*(138.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
+
+            call rgbk(0.,0.,0.)
+            if(symbols_local)then 
+                call num_memori(real(ini_lat),real(fin_lat),(fin_lat-ini_lat)*2+1,symbol_freq_local,symbol_size_local,-1,height,-90)
+                call num_memori(real(ini_long),real(fin_long),(fin_long-ini_long)*2+1,symbol_freq_local*2,symbol_size_local,-1,width,0)
+            else
+                call memori((fin_lat-ini_lat)*2,symbol_size_local*0.2,symbol_freq,height,-90.,y = height/2.)
+                call memori((fin_long-ini_long)*2,symbol_size_local*0.2,symbol_freq,width,0.,x = width/2.)
+            end if
+
+            
+            ! call symbolc(width/2.,-symbol_size_local*2.6,symbol_size_local*0.8,'Longitude (deg.E)')
+            ! call symbolc(-symbol_size_local*2.5,height/2.,symbol_size_local*0.8,'Latitude (deg.N)',90.)
+            deallocate(dep,dep_0)
+            if(paintland_local)deallocate(butler_array)
+        end subroutine
         subroutine floating_numbers(ini_num,num_inc,iterations,symbol_size,x_inc,y_inc,rangle,float_quantity,x,y)
             real,intent(in)::symbol_size,x_inc,y_inc,rangle,ini_num,num_inc
             real,intent(in),optional::x,y
@@ -8277,7 +8571,7 @@ module subroutines
                 if(bimemori_freq==0)then;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
                 elseif(bimemori_freq/=0) then
                     if(mod(n,bimemori_freq)==0 .or.n==1)then
-                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size*2.,2)
+                    call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size*1.5,2)
                     else;call plot(gappy+real(n-1)*dx,0.,3);call plot(gappy+real(n-1)*dx,-memori_size,2)
                     end if
                 end if
@@ -8290,13 +8584,13 @@ module subroutines
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
 
         end subroutine
-        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,x,y,gap)
+        subroutine num_memori(ini_num,fin_num,iterations,symbol_freq,symbol_size,float_quantity,length,angle,x,y,gap,num_fac)
             implicit none
             real,intent(in)::ini_num,fin_num,length
             integer,intent(in),optional::iterations,symbol_freq,angle,float_quantity,gap
             ! integer,intent(in),optional::lt,gt
-            real,intent(in),optional::symbol_size,x,y
-            real::memori_diff,num_diff,symbol_size_local,gappy
+            real,intent(in),optional::symbol_size,x,y,num_fac
+            real::memori_diff,num_diff,symbol_size_local,gappy,num_fac_local
             integer::n,i,iterations_local,symbol_freq_local,float_quantity_local,angle_local,gap_local
         
             if(present(x).and.present(y))call plot(x,y,-3)
@@ -8358,6 +8652,11 @@ module subroutines
                 else;angle_local = 0
                 end if
 
+                if(present(num_fac))then 
+                    num_fac_local = num_fac
+                else;num_fac_local = 1.
+                end if
+
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                                 ! Plotting
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -8367,7 +8666,7 @@ module subroutines
                     do n = 1, iterations_local
                         if(mod(n-1,symbol_freq_local)==0) then
                             call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local,2)
-                            call numberc(real(n-1)*memori_diff,-1.2*symbol_size_local,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                            call numberc(real(n-1)*memori_diff,-1.2*symbol_size_local,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
                         else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size_local,2)
                         end if
                     end do
@@ -8375,7 +8674,7 @@ module subroutines
                     do n = 1, iterations_local
                         if(mod(n-1,symbol_freq_local)==0) then
                             call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size_local,real(n-1)*memori_diff,2)
-                            call number(0.5*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                            call number(0.5*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
                         else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size_local,real(n-1)*memori_diff,2)
                         end if
                     end do
@@ -8383,7 +8682,7 @@ module subroutines
                     do n = 1, iterations_local
                         if(mod(n-1,symbol_freq_local)==0) then
                             call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size_local,real(n-1)*memori_diff,2)
-                            call numberr(-0.6*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,ini_num+num_diff*real(n-1),0.,float_quantity_local)
+                            call numberr(-0.6*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
                         else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size_local,real(n-1)*memori_diff,2)
                         end if
                     end do
@@ -9329,6 +9628,7 @@ module subroutines
         end subroutine  
     ! END BASIC STATISTICS 
     ! PS boys, NOTE: THE ARRAY LBOUND NEED NOT BE 1 as [assumed shape arrays] reshape the array lbound to 1 (tested)
+    ! REMEMBER THAT THESE SUBROUTINES DRAW COLUMNS OF EACH ROW INDEX IN THE ARRAY (i.e. in array(x,y), x need be the row index (or x axis), y need be the column index (or y axis))
 
         ! if present, gap is dx/2. ;centralization of colors is done relative to integer centralize * dirty due to unnecessary use of bounds
         subroutine butler_psk(array_2D,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
@@ -9478,11 +9778,11 @@ module subroutines
 
         end subroutine
         ! can draw contours on 1 column arrays
-        subroutine butler_psbet(array_2D,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,centralize)
+        subroutine butler_psbet(array_2D,width,height,maskval,ival,fval,inc,colorscheme,iterations,bpt1,bpt2,bpt3,conti,continc,thicc,r,g,b,gap,centralize)
             implicit none
             integer,intent(in)::iterations
             real,intent(in)::maskval,ival,fval,inc,width,height
-            integer,intent(in),optional::bpt1,bpt2,bpt3,thicc,centralize
+            integer,intent(in),optional::bpt1,bpt2,bpt3,thicc,centralize,gap
             real,intent(in),optional::conti,continc
             real,intent(in)::array_2D(:,:)
             integer,dimension(size(array_2D,1),size(array_2D,2))::mask
@@ -9496,10 +9796,15 @@ module subroutines
             ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
             !     print*,'Array size /= dim1 or dim2 (butler_psbet)';stop
             ! end if
+            
             dim1 = size(array_2D,1);dim2 = size(array_2D,2)
             if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psbet)';end if
             dx = width/real(dim1);dy = height/real(dim2)
             call box(width,height,3)
+            if(.not.present(gap))then
+                dx = width/real(dim1);dy = height/real(dim2)
+            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2)*real(dim2-1)/real(dim2);call plot(width/real(dim1)/2.,height/real(dim2)/2.,-3)
+            end if
             select case(colorscheme)
             case('red');call colorgrad('red',iterations,r1,g1,b1)
             case('wred');call colorgrad('wred',iterations,r1,g1,b1)
@@ -9581,6 +9886,8 @@ module subroutines
             ! else;print*,'no contour'
 
             deallocate(r1,g1,b1)
+            if(present(gap))then;call plot(-width/real(dim1)/2.,-height/real(dim2)/2.,-3);else;end if
+            write(ounit,*)'%end butler_psbet'
         end subroutine
         ! can draw contours on 1 column arrays * dirty due to unnecessary use of bounds
         subroutine butler_cont(array_2D,width,height,maskval,conti,continc,thicc,r,g,b,gap,maskn,contq)
@@ -9763,7 +10070,7 @@ module subroutines
             call box(width,height,3)
             if(.not.present(gap))then
                 dx = width/real(dim1);dy = height/real(dim2)
-            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2);call plot(width/real(dim1)/2.,0.,-3)
+            else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2)*real(dim2-1)/real(dim2);call plot(width/real(dim1)/2.,height/real(dim2)/2.,-3)
             end if
             do i = 1, dim1
                 do j = 1, dim2
@@ -9777,7 +10084,7 @@ module subroutines
 
             if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
             call betcolorI(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,imask,r1,g1,b1)
-            if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
+            if(present(gap))then;call plot(-width/real(dim1)/2.,-height/real(dim2)/2.,-3);else;end if
             write(16,*)"% end butler_mask"
 
         end subroutine
@@ -10152,7 +10459,7 @@ module subroutines
                     end if
                     if(lidots_local)then
                         if(i>1.and.array_1D(i) == (array_1D(i+1)+array_1D(i-1))/2.)then
-                            call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,4)
+                            call gmark(dx*real(i-1)+dx/2.,ploty(i),memsymsize_local/4.,4) ! the program below only works for 2 elements should fix this later
                         else if(size(array_1D)>12.and.array_1D(1) == array_1D(1+12).and.array_1D(1) == (array_1D(2) + array_1D(12))/2.)then   ! mark presumably linearly interpolated values, not perfect at all
                             call gmark(dx/2.,ploty(1),memsymsize_local/4.,4)
                         end if
@@ -10485,6 +10792,7 @@ module always
     use MITgcm
     use constants
     use functions
+    use data_types
     contains
 end module
 

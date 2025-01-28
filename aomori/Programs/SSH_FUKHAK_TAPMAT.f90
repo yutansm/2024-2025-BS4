@@ -14,7 +14,8 @@ program SSH_FukHak_TapMat
 
     ! obtain SSAP calibrated data
     call SSH_data(esa,ilabel = 2605,convert = .true., calibrate = .true.) !!!!!! is Fukaura !!!!!!
-    call SSH_data(oku,ilabel = 2103,convert = .true., calibrate = .true.) !!!!!! is Hakodate !!!!!!
+    ! call SSH_data(oku,ilabel = 2103,convert = .true., calibrate = .true.) !!!!!! is Hakodate !!!!!!
+    call SSH_data(oku,ilabel = 4701,convert = .true., calibrate = .true.) !!!!!! is Matsumae !!!!!!
     call SSH_data(sak, ilabel = 3603, convert = .true., calibrate = .true.) !!!!!! is Tappi !!!!!!
     call SSH_data(tob, ilabel = 4701, convert = .true., calibrate = .true.) !!!!!! is Matsumae !!!!!!
 
@@ -99,7 +100,7 @@ program SSH_FukHak_TapMat
                                 ! plot the data
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    call plots2('../Plots/Favorites/SSH_FukHak_TapMat.ps',h = 'Title',oopt= 'otops')
+    call plots2('../Plots/Favorites/SSH_FukMat_TapMat.ps',h = 'Title',oopt= 'otops')
     call plot(0.7,-.5-height,-3);call plotsave('first')
         ! monthly means and diffs
         ! esashi and okushiri
