@@ -7,7 +7,7 @@ program linear_transfromations
 
     call plots2(nnfile = 'GEBCO',oopt = 'obottoms',mode = 'portrait', y = 3.)
 
-    call GEBCOmap(123,146,24,46,18.,symbols = .true.,symbol_size = 0.7,paintland = .true.,paintsea = .true.,HIRES = .true.)
+    call GEBCOmap(123,150,24,46,18.,symbols = .true.,symbol_size = 0.7,paintland = .true.,paintsea = .true.,HIRES = .true.)
 
     call plote
 

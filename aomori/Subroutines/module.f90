@@ -12381,7 +12381,7 @@ module MITgcm
                 allocate(bathy(dimlens(1)*lonrange/360,dimlens(2)*latrange/180))
                 start = [(ilon+180)*240, (ilat+90)*240]
                 countq = [lonrange*240,latrange*240]
-                print*,start,countq,'here'
+                ! print*,start,countq,'here'
                 status = nf90_get_var(ncid, varid, bathy, start = start, count = countq)
                 if(status /= nf90_noerr)call handle_err(status)
                 if(info_local)then 
@@ -12451,7 +12451,7 @@ module MITgcm
         je = (fin_lat - ini_lat)*240
         is = 1
         ie = (fin_long - ini_long)*240
-        print*,is,ie,js,je
+        ! print*,is,ie,js,je
         pi = 2.*asin(1.)
         ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
         height_local = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
