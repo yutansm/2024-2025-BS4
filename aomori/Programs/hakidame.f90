@@ -1,89 +1,43 @@
-program reproducible_random
+program sshagain
     use always
     implicit none
-    integer,parameter::size = 200000,sample_size = 2,sample_size2 = 5
-    real,parameter::ini = -4.,fin = 4.,lambda = 0.8
-    integer :: seed(2,8) ! size for the seed array in gfortran is 8
-    real,dimension(:,:),allocatable::Z,T,expsamples
-    real,dimension(:),allocatable::dx,fn,X12,gn,Chi,dx2,fT,Exponential,expsamplemeans,expscaledmean,expsamplevarsq
-    real::mu,sigma
+    real,dimension(15,12)::fuk
+    real,dimension(12*15)::fukseries,fuk_fukmeanseries
+    real,dimension(:),allocatable::fukmean,fuksem
     
-    call plots2(nnfile = 'Standard_Normal1',oopt = 'obottoms',x = 2., y = 5.)
-    ! do i = 1,2
-    !     do j =  1, 8
-    !         seed(i,j) = 2**(i+j)
-    !     end do
-    ! end do
-    call Z_variables(Z,size)
-    call T_variables(T,size,sample_size)
-    call exp_variables(Exponential,size,lambda)
-    call avsemdata_1D(Exponential,mean = mu, s = sigma)
-    print*,mu,sigma
-    call exp_var_samples(expsamples,size,sample_size2,lambda)
-    allocate(expsamplemeans(size),expscaledmean(size),expsamplevarsq(size))
-    do i = 1, size
-        call avsemdata_1D(expsamples(i,:),mean = expsamplemeans(i), s = expsamplevarsq(i))
-        expscaledmean(i) = (expsamplemeans(i) - mu)/sigma*sqrt(real(sample_size2))
-        ! expscaledmean(i) = (expsamplemeans(i) - mu)/expsamplevarsq(i)*sqrt(real(sample_size2))
-    end do
-    ! print*,T
-    allocate(X12(size))
-    X12 = Z(1,:)**2 + Z(2,:)**2
 
-    call xixfdx(dx,ini,fin,iter = 100,info = .true.)
-    call xixfdx(dx2,0.,5.,iter = 100,info = .true.)
-    allocate(fn(100),gn(100),Chi(100),fT(100))
-    fn = 1./sqrt(2*pi)*exp(-0.5*dx**2)
-    gn = gamma(dx)
-    Chi = f_Chisq(dx2,2)
-    fT = f_T(dx,sample_size)
+    call ssh_data(fuk,slabel = '深浦',convert = .true.,calibrate = .true.,diff_from_yearly_mean = .true.)
+    fuk = fuk/10.
+    call avsemdata_2D(fuk,'dim1',mean_1D = fukmean,sem_1D = fuksem)
+    ! print*,fuksem
+    fukseries = reshape(transpose(fuk),[12*15]) 
 
-    do i = 1, 100
-        ! print*,dx(i),fn(i)
-        ! print*,gn(i)
-        if(ieee_is_nan(dx(i)))print*,'dx is nan at ',i
-        if(ieee_is_nan(fn(i)))print*,'fn is nan at ',i
-        if(ieee_is_nan(gn(i)))then;print*,'gn is nan at ',i;gn(i) = 0.;end if
-        if(ieee_is_nan(Chi(i)))print*,'Chi is nan at ',i
-        if(ieee_is_nan(fT(i)))print*,'fT is nan at ',i,fT(i)
+    do i = 1, 180
+        if(mod(i,12) == 0)then
+            fuk_fukmeanseries(i) = fukseries(i) - fukmean(12)
+        else
+            fuk_fukmeanseries(i) = fukseries(i) - fukmean(mod(i,12))
+        end if
     end do
 
+    call plots2(nnfile = 'fukaura',oopt = 'otops',x = 2.,y = -5.5,h = 'Fukaura Tides')
 
-    call histogram_PMF(Z(1,:),10.,10.,ini,fin,0.05,yf = 0.5)
-    call num_memori2(ini,fin,10.,0.1,symbol_freq = 20,symbol_size = 1.3)
-    call num_memori2(0.,.5,10.,0.1,-90.)
-    call helper_linegraph(fn,10.,10.,0.,.5,rl = 1.,lthick = 6)
-    ! call helper_linegraph(fT,10.,10.,0.,.5,gl = 1.,lthick = 4)
+    call symbolc(23./2.,5.8,0.8,'(Pressure Corrected SSH) - (Monthly Means)')
+    call butler_linegraph(fuk_fukmeanseries,23.,5.,-10.,10.,0.,.true.,memsymfreq = 5,LI = .true.,maskbelow = 0.)
+    call mod12_memori(180,23.,0.3,num_freq = 6,gap = 2)
+    call floating_numbers(2009.,1.,15,0.5,23./15.,0.,0.,-1,x = 23./30.,y = 5.1)
+    call plot(0.,-7.,-3)
 
-    call plot(13.,0.,-3)
-    call histogram_PMF(X12,10.,10.,0.,5.,0.05)
-    call num_memori2(0.,1.,10.,0.1,-90.)
-    call num_memori2(0.,5.,10.,0.1,0.,symbol_freq = 10)
-    call helper_linegraph(Chi,10.,10.,0.,1.,rl = 1.)
+    call symbolc(23./2.,5.8,0.8,'Pressure Corrected SSH')
+    call butler_linegraph(fukseries,23.,5.,-20.,20.,0.,.true.,memsymfreq = 5,LI = .true.,maskbelow = 0.)
+    call mod12_memori(180,23.,0.3,num_freq = 6,gap = 2)
+    call floating_numbers(2009.,1.,15,0.5,23./15.,0.,0.,-1,x = 23./30.,y = 5.1)
 
-    call newpage(x = 2.,y = 5.)
-    call histogram_PMF(T(1,:),10.,10.,ini,fin,0.05,yf = 0.5)
-    call num_memori2(ini,fin,10.,0.1,symbol_freq = 20,symbol_size = 1.3)
-    call num_memori2(0.,.5,10.,0.1,-90.)
-    call helper_linegraph(fT,10.,10.,0.,.5,gl = 1.)
-
-    call newpage(x = 2.,y = 5.)
-    call histogram_PMF(Exponential,10.,10.,0.,5.,0.05)
-    call num_memori2(0.,1.,10.,0.1,-90.)
-    call num_memori2(0.,5.,10.,0.1,0.,symbol_freq = 10)
-
-    call plot(13.5,0.,-3)
-    call histogram_PMF(expscaledmean,10.,10.,ini,fin,0.05,yf = 0.5)
-    call num_memori2(0.,1.,10.,0.1,-90.)
-    call num_memori2(ini,fin,10.,0.1,0.,symbol_freq = 20)
-    call helper_linegraph(fn,10.,10.,0.,.5,rl = 1.)
-
-
-    call newpage(x = 5.)
-    call butler_linegraph(gn,10.,10.,-5.,5.,rl = 1.,mem = .true.,dots = .true.)
+    call plot(0.,-5.,-3)
+    call butler_linegraph(fukmean,10.,4.,-20.,20.,0.,.true.,memsymfreq = 5,maskbelow = 0.,error_1D = fuksem)
+    call mod12_memori(12,10.,0.3,num_freq = 1,gap = 2)
+    call symbol(11.,2.,0.8,'<- Monthly Means')
 
     call plote
 
-    deallocate(Z)
-
-end program reproducible_random
+end program 

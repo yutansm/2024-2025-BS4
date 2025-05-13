@@ -1,8 +1,8 @@
 program testing_butler_psbet
     use always 
     implicit none 
-    integer,parameter::obsdepth = 400, watercolumnheight = 150
-    integer::depthindex,depdiff,dep(0:12)
+    integer,parameter::obsdepth = 400, watercolumnheight = 200
+    integer::depthindex,depdiff,dep(0:12),meanmaxloc(3),meanminloc(3)
     real,dimension(:),allocatable::r1,g1,b1,x1d,y1d,Jx,Jy
     logical::stat
     real::x,red,green,blue,dotsize,meansalinity(0:12,126:142,32:46),sref,sobs,freshwatervolume(0:12,126:142,32:46),gridvolume,height,width = 4.
@@ -19,7 +19,7 @@ program testing_butler_psbet
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Initial Inspection
-    ! call plots2(oopt = 'otops',x = 2., y = -2.,h = 'Salinity Profiles',nnfile = 'JODC_CTD_Salinity_Comparison')
+    call plots2(oopt = 'otops',x = 2., y = -2.,h = 'Salinity Profiles',nnfile = 'JODC_CTD_Salinity_Comparison')
     ! ! Station 1 
     !     call num_memori(0.,400.,41,5,0.7,-1,-15.,rangle = -90.)
     !     call symbolc(3.5,2.,0.8,'St1')
@@ -33,34 +33,34 @@ program testing_butler_psbet
     !     end do
     ! ! Station 1
 
-    ! JODC Raw
+    ! ! JODC Raw
         depthindex = JODC_dep2index(obsdepth,info = .true.)
-        ! allocate(x1d(0:depthindex),y1d(0:depthindex))
-        ! call plot(8.,0.,-3)
-        ! do i = 0,depthindex
-        !     y1d(i) = real(JODC_index2dep(i))
-        ! end do
+    !     allocate(x1d(0:depthindex),y1d(0:depthindex))
+    !     call plot(8.,0.,-3)
+    !     do i = 0,depthindex
+    !         y1d(i) = real(JODC_index2dep(i))
+    !     end do
 
-        ! call newpen2(6);call newpen2(-6);call rgbk(0.4,1.,0.4)
-        ! call plot(7./2.,0.,3);call plot(7./2.,-15.,2)
-        ! call rgbk(0.,0.,0.)
-        ! do i = 12,0,-1
-        !     do j = 126,142
-        !         do k = 32,46
-        !             if(i == 0)then 
-        !                 red = 1.;green = 0.4;blue = 0.4; dotsize = 0.1
-        !             else ;red = 0.4;green= 0.4;blue = 0.4 ; dotsize = 0.15
-        !             end if
-        !             x1d = sal%mean(i,j,k,0:depthindex)
-        !             call helper_scatter(x1d,y1d,7.,-15.,xi = 30.,xf = 35.,yi = 0.,yf = 400.,r = red,g = green,b = blue,dotsize = dotsize)
-        !         end do
-        !     end do
-        ! end do
-        ! call rgbk(0.,0.,0.)
-        ! call memori(41,0.1,5,-15.,rangle = -90.,y = -15./2.)
-        ! call num_memori(35.,30.,51,10,0.6,-1,7.,rangle = 180.,x = 7.,y = 0.1)
-        ! call symbolc(3.5,2.,0.8,'JODC, Raw')
-    ! JODC Raw
+    !     call newpen2(6);call newpen2(-6);call rgbk(0.4,1.,0.4)
+    !     call plot(7./2.,0.,3);call plot(7./2.,-15.,2)
+    !     call rgbk(0.,0.,0.)
+    !     do i = 12,0,-1
+    !         do j = 126,142
+    !             do k = 32,46
+    !                 if(i == 0)then 
+    !                     red = 1.;green = 0.4;blue = 0.4; dotsize = 0.1
+    !                 else ;red = 0.4;green= 0.4;blue = 0.4 ; dotsize = 0.15
+    !                 end if
+    !                 x1d = sal%mean(i,j,k,0:depthindex)
+    !                 call helper_scatter(x1d,y1d,7.,-15.,xi = 30.,xf = 35.,yi = 0.,yf = 400.,r = red,g = green,b = blue,dotsize = dotsize)
+    !             end do
+    !         end do
+    !     end do
+    !     call rgbk(0.,0.,0.)
+    !     call memori(41,0.1,5,-15.,rangle = -90.,y = -15./2.)
+    !     call num_memori(35.,30.,51,10,0.6,-1,7.,rangle = 180.,x = 7.,y = 0.1)
+    !     call symbolc(3.5,2.,0.8,'JODC, Raw')
+    ! ! JODC Raw
 
     ! Linear Interpolation of JODC Salinity   !     IS NECESSARY FOR LATER PROGRAMS
         do i = 12,0,-1
@@ -110,32 +110,30 @@ program testing_butler_psbet
     ! call plot(7./2.,0.,3);call plot(7./2.,-15.,2)
     ! call rgbk(0.,0.,0.)
 
-    ! JODC Interpolated
-        ! allocate(Jx(0:obsdepth),Jy(0:obsdepth))
-        ! Jy = [(i,i = 0,obsdepth)]
-        ! do i = 12,0,-1
-        !     do j = 126,142
-        !         do k = 32,46
-        !             if(i == 0)then 
-        !                 red = 1.;green = 0.4;blue = 0.4; dotsize = 0.02
-        !             else ;red = 0.4;green= 0.4;blue = 0.4 ; dotsize = 0.05
-        !             end if
-        !             Jx = Jsal400(i,j,k,:)
-        !             call helper_scatter(Jx,Jy,7.,-15.,xi = 30.,xf = 35.,yi = 0.,yf = 400.,r = red,g = green,b = blue,dotsize = dotsize)
-        !         end do
-        !     end do
-        ! end do
-        ! call memori(41,0.1,5,-15.,rangle = -90.,y = -15./2.)
-        ! call num_memori(35.,30.,51,10,0.6,-1,7.,rangle = 180.,x = 7.,y = 0.1)
-        ! call symbolc(3.5,2.,0.8,'JODC, Interpolated')
-    ! JODC Interpolated
-
-    call plote 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! End of Initial Inspection
-
-call plots2(oopt = 'otops',x = -0.5, y = -5.,h = 'Freshwater Volume, 1°*1°*'//trim(int2str(watercolumnheight))//'m',nnfile = 'FreshWaterVolume2_'//trim(int2str(watercolumnheight))//'m')
-
-    meansalinity = 0.
+    !JODC Interpolated
+        allocate(Jx(0:obsdepth),Jy(0:obsdepth))
+        Jy = [(i,i = 0,obsdepth)]
+        do i = 12,0,-1
+            do j = 126,142
+                do k = 32,46
+                    if(i == 0)then 
+                        red = 1.;green = 0.4;blue = 0.4; dotsize = 0.02
+                    else ;red = 0.4;green= 0.4;blue = 0.4 ; dotsize = 0.05
+                    end if
+                    Jx = Jsal400(i,j,k,:)
+                    call helper_scatter(Jx,Jy,7.,-15.,xi = 30.,xf = 35.,yi = 0.,yf = 400.,r = red,g = green,b = blue,dotsize = dotsize,maskxf = 26.)
+                end do
+            end do
+        end do
+        call memori(41,0.1,5,-15.,rangle = -90.,y = -15./2.)
+        call num_memori(35.,30.,51,10,0.6,-1,7.,rangle = 180.,x = 7.,y = 0.1)
+        call symbolc(3.5,2.,0.8,'JODC, Interpolated')
+    !JODC Interpolated
+        meansalinity = 0.
+        call plot(10.,0.,-3)
+        call newpen2(6);call newpen2(-6);call rgbk(0.4,1.,0.4)
+        call plot(7./2.,0.,3);call plot(7./2.,-15.,2)
+        call rgbk(0.,0.,0.)
     ! Calculation of Mean Salinity of water column with depth of watercolumnheightm
         do i = 12,0,-1
             do j = 126,142
@@ -154,138 +152,200 @@ call plots2(oopt = 'otops',x = -0.5, y = -5.,h = 'Freshwater Volume, 1°*1°*'//
                 end do
             end do
         end do
-    ! log
-        ! call openlog(basename = 'JODC_meansal_uptowatercolumnheightm')
-        ! write(tolog,*)'Maximum and Minimum of Mean Salinity of water column with depth of watercolumnheightm'
-        ! write(tolog,*)'the array indices are 0:12(seasons), 126:142(longitude), 32:46(latitude)'
-        ! write(tolog,*) maxval(meansalinity),minval(meansalinity,mask = meansalinity/=0.)
-        ! write(tolog,*) maxloc(meansalinity),minloc(meansalinity,mask = meansalinity/=0.)
-
-        ! write(tolog,*) 'max and min for every month'
-        ! do i = 0,12
-        !     write(tolog,*) maxval(meansalinity(i,:,:)),minval(meansalinity(i,:,:),mask = meansalinity(i,:,:)/=0.)
-        !     write(tolog,*) maxloc(meansalinity(i,:,:)),minloc(meansalinity(i,:,:),mask = meansalinity(i,:,:)/=0.)
-        ! end do
-        ! call closelog
-    !
-
         sref = maxval(meansalinity(:,:,:)) ! sref is the max sal of yearly mean
+        meanmaxloc = maxloc(meansalinity)
+        meanminloc = minloc(meansalinity,mask = meansalinity/=0.)
+        meanmaxloc(1) = meanmaxloc(1) - 1
+        meanmaxloc(2) = meanmaxloc(2) +125
+        meanmaxloc(3) = meanmaxloc(3) + 31
+        meanminloc(1) = meanminloc(1) - 1
+        meanminloc(2) = meanminloc(2) +125
+        meanminloc(3) = meanminloc(3) + 31
         print*,sref
-        ! sref  = 35.0
-
-
-        do i = 0,12
+        print*,meansalinity(meanmaxloc(1),meanmaxloc(2),meanmaxloc(3)),meansalinity(meanminloc(1),meanminloc(2),meanminloc(3)),'meanmaxloc,meanminloc'
+        print*,meanmaxloc,meanminloc
+    ! end of Calculation
+    !JODC Interpolated
+        do i = 12,0,-1
             do j = 126,142
                 do k = 32,46
-                    sobs = meansalinity(i,j,k)
-                    if(sobs == 0.)then 
-                        freshwatervolume(i,j,k) = 0.;cycle
+                    if(i == 0)then 
+                        red = 1.;green = 0.4;blue = 0.4; dotsize = 0.02
+                    else ;red = 0.4;green= 0.4;blue = 0.4 ; dotsize = 0.05
                     end if
-                    freshwatervolume(i,j,k) = gridvolume * ((sref - sobs)/sref)
-                    ! print*,sobs,((sref - sobs)/sref),freshwatervolume(i,j,k)
+                    Jx = Jsal400(i,j,k,:)
+                    call helper_scatter(Jx,Jy,7.,-15.,xi = 33.,xf = 35.,yi = 0.,yf = 400.,r = red,g = green,b = blue,dotsize = dotsize,maskxf = 32.5)
                 end do
             end do
         end do
-        ! freshwatervolume = freshwatervolume/10.**(9) ! convert to km^3
-        freshwatervolume = freshwatervolume / lon1deg / lat1deg ! volume / columnheight * 1m^2
-        freshwaterratio = freshwatervolume / watercolumnheight * 100. ! percentage of freshwater volume in the water column
-        print*,minval(freshwatervolume,mask = freshwatervolume/=0.),maxval(freshwatervolume)
-        print*,minval(freshwaterratio,mask = freshwaterratio/=0.),maxval(freshwaterratio)
+        Jx = Jsal400(meanmaxloc(1),meanmaxloc(2),meanmaxloc(3),:)
+        call helper_scatter(Jx,Jy,7.,-15.,xi = 33.,xf = 35.,yi = 0.,yf = 400.,r = 0.,g = 0.8,b = 0.,dotsize = 0.07)
+        Jx = Jsal400(meanminloc(1),meanminloc(2),meanminloc(3),:)
+        call helper_scatter(Jx,Jy,7.,-15.,xi = 33.,xf = 35.,yi = 0.,yf = 400.,r = 0.,g = 0.,b = 0.8,dotsize = 0.07)
+        call memori(41,0.1,5,-15.,rangle = -90.,y = -15./2.)
+        call num_memori(35.,33.,21,5,0.6,1,7.,rangle = 180.,x = 7.,y = 0.1)
+        call symbolc(3.5,2.,0.8,'JODC, Interpolated')
+        
+    !JODC Interpolated
 
-        ! print*,freshwatervolume
-    ! monthly
-        call plotsave('first')
-        do i = 1,12
-            call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4)
-            call symbolc(width/2.,height+0.2,0.8,monthnames(i))
-            call butler_psk(freshwatervolume(i,:,:),width,height,0.,0.,4.,.5,'r2b',8,5,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
-            call plot(width+0.8,0.,-3)
-            if(i == 6)then 
-                call plotback('first');call plot(0.,-height-2.,-3)
-            end if
-        end do
+    
 
-        call ocenter(y = -6.)
-        call colorscale(r1,g1,b1,0.,4.,2,0.7,1,10.,0.3,lt = 1, gt = 1)
-        call symbolc(0.,-2.,0.8,'H*1*1[m^3]')
-    ! monthly
-    ! monthly ratio
-        call newpage
-        call plotback('first')
-        do i = 1,12
-            call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4)
-            call symbolc(width/2.,height+0.2,0.8,monthnames(i))
-            call butler_psk(freshwaterratio(i,:,:),width,height,0.,0.,2.8,.4,'r2b',7,4,conti = 0.,continc = .1,r = r1,g = g1,b = b1)
-            call plot(width+0.8,0.,-3)
-            if(i == 6)then 
-                call plotback('first');call plot(0.,-height-2.,-3)
-            end if
-        end do
+    call plote 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! End of Initial Inspection
 
-        call ocenter(y = -6.)
-        call colorscale(r1,g1,b1,0.,2.8,2,0.7,1,10.,0.3,lt = 1, gt = 1)
-        call symbolc(0.,-2.,0.8,'[%]')
-    ! monthly ratio
-    ! monthly diff
-        call newpage
-        call plotback('first')
-        do i = 1,12
-            if(i == 1)then 
-                do j = 126,142
-                    do k = 32,46
-                        if(freshwatervolume(i,j,k)/=0. .and. freshwatervolume(12,j,k)/=0.)then 
-                            somejodcarray(i,j,k) = freshwatervolume(i,j,k) - freshwatervolume(12,j,k)
-                        else
-                            somejodcarray(i,j,k) = 0.
-                        end if  
-                    end do
-                end do
-            else
-                do j = 126,142
-                    do k = 32,46
-                        if(freshwatervolume(i,j,k)/=0. .and. freshwatervolume(i-1,j,k)/=0.)then 
-                            somejodcarray(i,j,k) = freshwatervolume(i,j,k) - freshwatervolume(i-1,j,k)
-                        else
-                            somejodcarray(i,j,k) = 0.
-                        end if  
-                    end do
-                end do
-            end if
-            call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4)
-            if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
-            if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
-            call butler_psk(somejodcarray(i,:,:),width,height,0.,-1.,1.,.2,'r2b',10,6,conti = -100.,continc = .1,r = r1,g = g1,b = b1)
-            call plot(width+0.8,0.,-3)
-            if(i == 6)then 
-                call plotback('first');call plot(0.,-height-2.,-3)
-            end if
-        end do
-        print*,minval(somejodcarray,mask = somejodcarray/=0.),maxval(somejodcarray)
+! call plots2(oopt = 'otops',x = -0.5, y = -5.,h = 'Freshwater Volume, 1°*1°*'//trim(int2str(watercolumnheight))//'m',nnfile = 'FreshWaterVolume2_'//trim(int2str(watercolumnheight))//'m')
 
-        call ocenter(y = -6.)
-        call colorscale(r1,g1,b1,-1.,1.,5,0.7,1,10.,0.3,lt = 1, gt = 1)
-        call symbolc(0.,-2.,0.8,'H*1*1[m^3]')
-    ! monthly diff
-    ! monthly diff ratio
-        call newpage
-        call plotback('first')
-        somejodcarray = somejodcarray / watercolumnheight * 100.
-        do i = 1,12
-            call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4)
-            if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
-            if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
-            call butler_psk(somejodcarray(i,:,:),width,height,0.,-0.5,0.5,.1,'r2b',10,6,conti = -100.,continc = .1,r = r1,g = g1,b = b1)
-            call plot(width+0.8,0.,-3)
-            if(i == 6)then 
-                call plotback('first');call plot(0.,-height-2.,-3)
-            end if
-        end do
-        print*,minval(somejodcarray,mask = somejodcarray/=0.),maxval(somejodcarray)
+!     meansalinity = 0.
+!     ! Calculation of Mean Salinity of water column with depth of watercolumnheightm
+!         do i = 12,0,-1
+!             do j = 126,142
+!                 do k = 32,46
+!                     ! print*,count(Jsal400(i,j,k,0:watercolumnheight)>20.)
+!                     if(count(Jsal400(i,j,k,0:watercolumnheight)>20.)==0)then 
+!                         ! print*,'No data of array(0:watercolumnheight) at',i,j,k
+!                     elseif(count(Jsal400(i,j,k,0:watercolumnheight)>20.)<watercolumnheight)then 
+!                         ! print*,'Data quantity less than watercolumnheight of array(0:watercolumnheight) at',i,j,k,count(Jsal400(i,j,k,0:watercolumnheight)>20.)
+!                     ! elseif(all(Jsal400(i,j,k,101:watercolumnheight)==0.))then 
+!                         ! print*,'No data deeper than 100m at',i,j,k
+!                     else ! sufficient data quantity and depth
+!                         meansalinity(i,j,k) = sum(Jsal400(i,j,k,0:watercolumnheight))/real(watercolumnheight+1)
+!                         ! print*,'Mean Salinity of water column with depth of watercolumnheightm at',i,j,k,'is',meansalinity
+!                     end if
+!                 end do
+!             end do
+!         end do
+!     ! log
+!         ! call openlog(basename = 'JODC_meansal_uptowatercolumnheightm')
+!         ! write(tolog,*)'Maximum and Minimum of Mean Salinity of water column with depth of watercolumnheightm'
+!         ! write(tolog,*)'the array indices are 0:12(seasons), 126:142(longitude), 32:46(latitude)'
+!         ! write(tolog,*) maxval(meansalinity),minval(meansalinity,mask = meansalinity/=0.)
+!         ! write(tolog,*) maxloc(meansalinity),minloc(meansalinity,mask = meansalinity/=0.)
 
-        call ocenter(y = -6.)
-        call colorscale(r1,g1,b1,-0.5,0.5,5,0.7,1,10.,0.3,lt = 1, gt = 1)
-        call symbolc(0.,-2.,0.8,'[%]')
-    ! monthly diff ratio
+!         ! write(tolog,*) 'max and min for every month'
+!         ! do i = 0,12
+!         !     write(tolog,*) maxval(meansalinity(i,:,:)),minval(meansalinity(i,:,:),mask = meansalinity(i,:,:)/=0.)
+!         !     write(tolog,*) maxloc(meansalinity(i,:,:)),minloc(meansalinity(i,:,:),mask = meansalinity(i,:,:)/=0.)
+!         ! end do
+!         ! call closelog
+!     !
+
+!         sref = maxval(meansalinity(:,:,:)) ! sref is the max sal of yearly mean
+!         print*,sref
+!         ! sref  = 35.0
+
+
+!         do i = 0,12
+!             do j = 126,142
+!                 do k = 32,46
+!                     sobs = meansalinity(i,j,k)
+!                     if(sobs == 0.)then 
+!                         freshwatervolume(i,j,k) = 0.;cycle
+!                     end if
+!                     freshwatervolume(i,j,k) = gridvolume * ((sref - sobs)/sref)
+!                     ! print*,sobs,((sref - sobs)/sref),freshwatervolume(i,j,k)
+!                 end do
+!             end do
+!         end do
+!         ! freshwatervolume = freshwatervolume/10.**(9) ! convert to km^3
+!         freshwatervolume = freshwatervolume / lon1deg / lat1deg ! volume / columnheight * 1m^2
+!         freshwaterratio = freshwatervolume / watercolumnheight * 100. ! percentage of freshwater volume in the water column
+!         print*,minval(freshwatervolume,mask = freshwatervolume/=0.),maxval(freshwatervolume)
+!         print*,minval(freshwaterratio,mask = freshwaterratio/=0.),maxval(freshwaterratio)
+
+!         ! print*,freshwatervolume
+!     ! monthly
+!         call plotsave('first')
+!         do i = 1,12
+!             call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4,paintland = .true.)
+!             call symbolc(width/2.,height+0.2,0.8,monthnames(i))
+!             call butler_psk(freshwatervolume(i,:,:),width,height,0.,0.,4.,.5,'r2b',8,5,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
+!             call plot(width+0.8,0.,-3)
+!             if(i == 6)then 
+!                 call plotback('first');call plot(0.,-height-2.,-3)
+!             end if
+!         end do
+
+!         call ocenter(y = -6.)
+!         call colorscale(r1,g1,b1,0.,4.,2,0.7,1,10.,0.3,lt = 1, gt = 1)
+!         call symbolc(0.,-2.,0.8,'H*1*1[m^3]')
+!     ! monthly
+!     ! monthly ratio
+!         call newpage
+!         call plotback('first')
+!         do i = 1,12
+!             call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4,paintland = .true.)
+!             call symbolc(width/2.,height+0.2,0.8,monthnames(i))
+!             call butler_psk(freshwaterratio(i,:,:),width,height,0.,0.,2.8,.4,'r2b',7,4,conti = 0.,continc = .1,r = r1,g = g1,b = b1)
+!             call plot(width+0.8,0.,-3)
+!             if(i == 6)then 
+!                 call plotback('first');call plot(0.,-height-2.,-3)
+!             end if
+!         end do
+
+!         call ocenter(y = -6.)
+!         call colorscale(r1,g1,b1,0.,2.8,2,0.7,1,10.,0.3,lt = 1, gt = 1)
+!         call symbolc(0.,-2.,0.8,'[%]')
+!     ! monthly ratio
+!     ! monthly diff
+!         call newpage
+!         call plotback('first')
+!         do i = 1,12
+!             if(i == 1)then 
+!                 do j = 126,142
+!                     do k = 32,46
+!                         if(freshwatervolume(i,j,k)/=0. .and. freshwatervolume(12,j,k)/=0.)then 
+!                             somejodcarray(i,j,k) = freshwatervolume(i,j,k) - freshwatervolume(12,j,k)
+!                         else
+!                             somejodcarray(i,j,k) = 0.
+!                         end if  
+!                     end do
+!                 end do
+!             else
+!                 do j = 126,142
+!                     do k = 32,46
+!                         if(freshwatervolume(i,j,k)/=0. .and. freshwatervolume(i-1,j,k)/=0.)then 
+!                             somejodcarray(i,j,k) = freshwatervolume(i,j,k) - freshwatervolume(i-1,j,k)
+!                         else
+!                             somejodcarray(i,j,k) = 0.
+!                         end if  
+!                     end do
+!                 end do
+!             end if
+!             call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4,paintland = .true.)
+!             if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
+!             if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
+!             call butler_psk(somejodcarray(i,:,:),width,height,0.,-1.,1.,.2,'r2b',10,6,conti = -100.,continc = .1,r = r1,g = g1,b = b1)
+!             call plot(width+0.8,0.,-3)
+!             if(i == 6)then 
+!                 call plotback('first');call plot(0.,-height-2.,-3)
+!             end if
+!         end do
+!         print*,minval(somejodcarray,mask = somejodcarray/=0.),maxval(somejodcarray)
+
+!         call ocenter(y = -6.)
+!         call colorscale(r1,g1,b1,-1.,1.,5,0.7,1,10.,0.3,lt = 1, gt = 1)
+!         call symbolc(0.,-2.,0.8,'H*1*1[m^3]')
+!     ! monthly diff
+!     ! monthly diff ratio
+!         call newpage
+!         call plotback('first')
+!         somejodcarray = somejodcarray / watercolumnheight * 100.
+!         do i = 1,12
+!             call simple_map(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 4)
+!             if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
+!             if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
+!             call butler_psk(somejodcarray(i,:,:),width,height,0.,-0.5,0.5,.1,'r2b',10,6,conti = -100.,continc = .1,r = r1,g = g1,b = b1)
+!             call plot(width+0.8,0.,-3)
+!             if(i == 6)then 
+!                 call plotback('first');call plot(0.,-height-2.,-3)
+!             end if
+!         end do
+!         print*,minval(somejodcarray,mask = somejodcarray/=0.),maxval(somejodcarray)
+
+!         call ocenter(y = -6.)
+!         call colorscale(r1,g1,b1,-0.5,0.5,5,0.7,1,10.,0.3,lt = 1, gt = 1)
+!         call symbolc(0.,-2.,0.8,'[%]')
+!     ! monthly diff ratio
 
 
     call plote

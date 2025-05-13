@@ -1364,9 +1364,10 @@ module origin
         call newpen2(dashy)
         return
     end
-    subroutine newpen3(rp)
+    subroutine newpen3(rp,dashy)
         implicit none
         real, intent(in) :: rp
+        integer,intent(in),optional::dashy
     
         write(ounit,*) "% begin newpen3 ", rp
         ! write(ounit,*) "sn"
@@ -1376,6 +1377,7 @@ module origin
             write(ounit,*) rp, ' sl'
         else
         end if
+        if(present(dashy))call newpen2(dashy)
         write(ounit,*) "% end newpen3"
         return
     end subroutine newpen3
@@ -7294,22 +7296,28 @@ module subroutines
                     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         
                         if(present(sal))then 
-                            sal%mean(:,141:142,32:44,:) = 0. 
-                            ! sal%mean(:,141:142,32:40,:) = 0. 
-                            sal%mean(1:,140,42,1:5) = 0. ! Tsugaru one grid
-                            sal%mean(:,140,32:39,:) = 0.
-                            sal%mean(:,139,32:36,:) = 0.
-                            sal%mean(:,138,32:36,:) = 0.
-                            sal%mean(:,131:137,32:34,:) = 0.
-                            sal%mean(:,130,32:32,:) = 0.
-                            sal%sem(:,141:142,32:44,:) = 0.
+                            sal%mean(:,145,44,:) = 0.
+                            sal%mean(:,143,45:46,:) = 0.
+                            sal%mean(:,141,41:44,:) = 0. 
+                            sal%mean(:,142,43:44,:) = 0. 
+                            ! sal%mean(:,141:142,32:40,:) = 0.
+                            sal%mean(1:,140,42,1:5) = 0.
+                            sal%mean(:,140,36:39,:) = 0.
+                            sal%mean(:,138:139,36,:) = 0.
+                            sal%mean(:,133:135,34,:) = 0.
+                            sal%mean(:,131,33,:) = 0.
+
+                            sal%sem(:,145,44,:) = 0.
+                            sal%sem(:,143,45:46,:) = 0.
+                            sal%sem(:,141,41:44,:) = 0.
+                            sal%sem(:,142,43:44,:) = 0.
                             ! sal%sem(:,141:142,32:40,:) = 0.
                             sal%sem(1:,140,42,1:5) = 0.
-                            sal%sem(:,140,32:39,:) = 0.
-                            sal%sem(:,139,32:36,:) = 0.
-                            sal%sem(:,138,32:36,:) = 0.
-                            sal%sem(:,131:137,32:34,:) = 0.
-                            sal%sem(:,130,32:32,:) = 0.
+                            sal%sem(:,140,36:39,:) = 0.
+                            sal%sem(:,138:139,36,:) = 0.
+                            sal%sem(:,133:135,34,:) = 0.
+                            sal%sem(:,131,33,:) = 0.
+                            
                             sal%mean(2,132,41,0) = 0.    ! removing weird data  02,41,132,0,5,27.88,34.03,3.4,13.68
                             sal%mean(6,133,39,0) = 0.    ! removing weird data  06,39,133,0,60,31.08,34.58,3.39,9.32
                             sal%mean(7,137,43,0) = 0.    ! removing weird data  07,43,137,0,6,32.09,33.97,22.92,4.49
@@ -7324,22 +7332,28 @@ module subroutines
                             sal%sem(5,138,44,4) = 0.    ! removing weird data  05,44,138,50,5,33.56,34.18,31.48,1.17
                         end if
                         if(present(potemp))then 
-                            potemp%mean(:,141:142,32:44,:) = 0. 
+                            potemp%mean(:,145,44,:) = 0.
+                            potemp%mean(:,143,45:46,:) = 0.
+                            potemp%mean(:,141,41:44,:) = 0. 
+                            potemp%mean(:,142,43:44,:) = 0. 
                             ! potemp%mean(:,141:142,32:40,:) = 0.
                             potemp%mean(1:,140,42,1:5) = 0.
-                            potemp%mean(:,140,32:39,:) = 0.
-                            potemp%mean(:,139,32:36,:) = 0.
-                            potemp%mean(:,138,32:36,:) = 0.
-                            potemp%mean(:,131:137,32:34,:) = 0.
-                            potemp%mean(:,130,32:32,:) = 0.
-                            potemp%sem(:,141:142,32:44,:) = 0.
+                            potemp%mean(:,140,36:39,:) = 0.
+                            potemp%mean(:,138:139,36,:) = 0.
+                            potemp%mean(:,133:135,34,:) = 0.
+                            potemp%mean(:,131,33,:) = 0.
+
+                            potemp%sem(:,145,44,:) = 0.
+                            potemp%sem(:,143,45:46,:) = 0.
+                            potemp%sem(:,141,41:44,:) = 0.
+                            potemp%sem(:,142,43:44,:) = 0.
                             ! potemp%sem(:,141:142,32:40,:) = 0.
                             potemp%sem(1:,140,42,1:5) = 0.
-                            potemp%sem(:,140,32:39,:) = 0.
-                            potemp%sem(:,139,32:36,:) = 0.
-                            potemp%sem(:,138,32:36,:) = 0.
-                            potemp%sem(:,131:137,32:34,:) = 0.
-                            potemp%sem(:,130,32:32,:) = 0.
+                            potemp%sem(:,140,36:39,:) = 0.
+                            potemp%sem(:,138:139,36,:) = 0.
+                            potemp%sem(:,133:135,34,:) = 0.
+                            potemp%sem(:,131,33,:) = 0.
+                            
                             potemp%mean(2,132,41,0) = 0.    ! removing weird data  02,41,132,0,5,27.88,34.03,3.4,13.68
                             potemp%mean(6,133,39,0) = 0.    ! removing weird data  06,39,133,0,60,31.08,34.58,3.39,9.32
                             potemp%mean(7,137,43,0) = 0.    ! removing weird data  07,43,137,0,6,32.09,33.97,22.92,4.49
@@ -7354,14 +7368,17 @@ module subroutines
                             potemp%sem(5,138,44,4) = 0.    ! removing weird data  05,44,138,50,5,33.56,34.18,31.48,1.17
                         end if
                         if(present(den))then 
-                            den%mean(:,141:142,32:44,:) = 0.
+                            den%mean(:,145,44,:) = 0.
+                            den%mean(:,143,45:46,:) = 0.
+                            den%mean(:,141,41:44,:) = 0. 
+                            den%mean(:,142,43:44,:) = 0. 
                             ! den%mean(:,141:142,32:40,:) = 0.
                             den%mean(1:,140,42,1:5) = 0.
-                            den%mean(:,140,32:39,:) = 0.
-                            den%mean(:,139,32:36,:) = 0.
-                            den%mean(:,138,32:36,:) = 0.
-                            den%mean(:,131:137,32:34,:) = 0.
-                            den%mean(:,130,32:32,:) = 0.
+                            den%mean(:,140,36:39,:) = 0.
+                            den%mean(:,138:139,36,:) = 0.
+                            den%mean(:,133:135,34,:) = 0.
+                            den%mean(:,131,33,:) = 0.
+
                             den%mean(2,132,41,0) = 0.    ! removing weird data  02,41,132,0,5,27.88,34.03,3.4,13.68
                             den%mean(6,133,39,0) = 0.    ! removing weird data  06,39,133,0,60,31.08,34.58,3.39,9.32
                             den%mean(7,137,43,0) = 0.    ! removing weird data  07,43,137,0,6,32.09,33.97,22.92,4.49
@@ -7370,14 +7387,17 @@ module subroutines
                             den%mean(5,138,44,4) = 0.    ! removing weird data  05,44,138,50,5,33.56,34.18,31.48,1.17
                         end if
                         if(present(dh))then
-                            dh%mean(:,141:142,32:44,:) = 0.
+                            dh%mean(:,145,44,:) = 0.
+                            dh%mean(:,143,45:46,:) = 0.
+                            dh%mean(:,141,41:44,:) = 0. 
+                            dh%mean(:,142,43:44,:) = 0. 
                             ! dh%mean(:,141:142,32:40,:) = 0.
                             dh%mean(1:,140,42,1:5) = 0.
-                            dh%mean(:,140,32:39,:) = 0.
-                            dh%mean(:,139,32:36,:) = 0.
-                            dh%mean(:,138,32:36,:) = 0.
-                            dh%mean(:,131:137,32:34,:) = 0.
-                            dh%mean(:,130,32:32,:) = 0.
+                            dh%mean(:,140,36:39,:) = 0.
+                            dh%mean(:,138:139,36,:) = 0.
+                            dh%mean(:,133:135,34,:) = 0.
+                            dh%mean(:,131,33,:) = 0.
+
                             dh%mean(2,132,41,0) = 0.    ! removing weird data  02,41,132,0,5,27.88,34.03,3.4,13.68
                             dh%mean(6,133,39,0) = 0.    ! removing weird data  06,39,133,0,60,31.08,34.58,3.39,9.32
                             dh%mean(7,137,43,0) = 0.    ! removing weird data  07,43,137,0,6,32.09,33.97,22.92,4.49
@@ -7399,7 +7419,8 @@ module subroutines
         end subroutine
                     
         ! SSH DATA put st label and get array of 15 years and 12 months.   -999 means no data or insufficient data output array has the size(15,12) regardless of data quantity
-        subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate,diff_from_yearly_mean)
+        ! diff_from_yearly_mean option omits the -999. data for calculation -> no -999s in the output array
+        subroutine SSH_data(SSH2D,ilabel,slabel,convert,calibrate,diff_from_yearly_mean,unit)
             implicit none
             type :: labeled_array
                 integer, dimension(:,:),allocatable:: num_labels
@@ -7410,7 +7431,7 @@ module subroutines
             type(labeled_array) :: localssh
             integer,parameter::num_rows=150,num_years=15,num_months=12
             integer,intent(in),optional::ilabel
-            character(len=*),intent(in),optional::slabel
+            character(len=*),intent(in),optional::slabel,unit
             logical,intent(in),optional::convert,calibrate,diff_from_yearly_mean
             real,dimension(num_years,num_months),intent(out)::SSH2D
             real,dimension(:,:),allocatable::SSAP2D
@@ -7489,6 +7510,7 @@ module subroutines
                     call SSAP_data(SSAP2D,ilabel=ilabel)
                     call SSH_calibration(SSH2D, SSAP2D)
                     ! deallocate(SSAP2D)
+                    print*,'Atmospheric Correction is applied'
                 end if
                 if(diff_from_yearly_mean_local)then
                     call avsemdata_2D(SSH2D,'dim2',mean_1D = SSH_ymean,rmask = -999.) ! this mode works for uncalibrated data too
@@ -7540,9 +7562,10 @@ module subroutines
                     call SSAP_data(SSAP2D,slabel=slabel)
                     call SSH_calibration(SSH2D, SSAP2D)
                     ! deallocate(SSAP2D)
+                    print*,'Atmospheric Correction is applied'
                 end if
                 if(diff_from_yearly_mean_local)then
-                    call avsemdata_2D(SSH2D,'dim2',mean_1D = SSH_ymean,rmask = -999.) ! this mode works for uncalibrated data too
+                    call avsemdata_2D(SSH2D,'dim2',mean_1D = SSH_ymean,rmask = -999.) ! this mode works for uncalibrated data too -> i love u
                     do i = 1, 15
                         do j = 1,12
                             if(SSH2D(i,j)/=-999..and.SSH2D(i,j)/=0.)then
@@ -7554,6 +7577,15 @@ module subroutines
                     print*,'Array elements contain differences from each year'
                 end if
             else;print*,'Provide Either Station Label or Index but not both'
+            end if
+            if(present(unit))then  ! the orginal unit is mm
+                if(unit == 'cm')then 
+                    SSH2D = SSH2D/10.;print*,'Unit is cm'
+                else if(unit == 'm')then 
+                    SSH2D = SSH2D/1000.;print*,'Unit is m'
+                else
+                    print*,'Unit not recognized, using mm'
+                end if
             end if
             print*,'-------------------------------------------------------------------------------------------------------'
             return
@@ -7728,6 +7760,18 @@ module subroutines
             end subroutine parse_csv_row    
 
         end subroutine
+
+        ! subroutine amedas_matsumae(velo,angle)
+        !     implicit none
+
+        ! end subroutine
+        ! subroutine amedas_imabetsu(velo,angle)
+        !     implicit none
+        !     real,dimension(180)::velo,angle
+        !     integer::i,j
+        !     real::vel,ang
+        ! end subroutine
+
         subroutine SSHlabelconversion(ilabel,slabel)
             implicit none
             integer,parameter::num_rows=150,num_years=15,num_months=12
@@ -8079,14 +8123,107 @@ module subroutines
             return
         
         end subroutine 
+
+        ! For 1D arrays
+        ! subroutine findnthlargest_1d(array, n, nth_value, location)
+        !     implicit none
+        !     real, intent(in) :: array(:)
+        !     integer, intent(in) :: n
+        !     real, intent(out),optional :: nth_value
+        !     integer, intent(out), optional :: location
+
+        !     real, allocatable :: temp_array(:)
+        !     integer :: array_size
+
+        !     if(.not.present(nth_value).and..not.present(location))then 
+        !         print*, 'Error: nth_value or location must be present'
+        !         return
+        !     end if
+
+        !     array_size = size(array)
+        !     if (n <= 0 .or. n > array_size) then
+        !         print*, 'Error: n must be between 1 and ', array_size
+        !         if(present(nth_value))nth_value = -huge(1.0)
+        !         return
+        !     end if
+
+    
+        !     allocate(temp_array(array_size))
+        !     temp_array = array
+        !     call sort_descending(temp_array)
+        !     if(present(nth_value))nth_value = temp_array(n)
+        !     if(present(location))then 
+        !         location = findloc(temp_array,temp_array(n))
+        !     end if
+
+        !     deallocate(temp_array)
+        ! end subroutine findnthlargest_1d
+
+        ! ! For 2D, 3D, and 4D arrays - reshape to 1D and call the implementation
+        ! subroutine findnthlargest_2d(array, n, nth_value)
+        !     implicit none
+        !     real, intent(in) :: array(:,:)
+        !     integer, intent(in) :: n
+        !     real, intent(out) :: nth_value
+
+        !     real, allocatable :: temp_array(:)
+
+        !     allocate(temp_array(size(array)))
+        !     temp_array = reshape(array, [size(array)])
+        !     call findnthlargest_1d(temp_array, n, nth_value)
+
+        !     deallocate(temp_array)
+        ! end subroutine findnthlargest_2d
+
+        ! Repeat pattern for 3D and 4D...
+
+        ! Helper subroutine to sort in descending order
+        subroutine sort_descending(arr)
+            implicit none
+            real, intent(inout) :: arr(:)
+            integer :: i, j
+            real :: temp
+
+            do i = 1, size(arr)-1
+                do j = i+1, size(arr)
+                    if (arr(j) > arr(i)) then
+                        temp = arr(i)
+                        arr(i) = arr(j)
+                        arr(j) = temp
+                    end if
+                end do
+            end do
+        end subroutine sort_descending
+        subroutine sort_ascending(arr)
+            implicit none
+            real, intent(inout) :: arr(:)
+            integer :: i, j
+            real :: temp
+
+            do i = 1, size(arr)-1
+                do j = i+1, size(arr)
+                    if (arr(j) < arr(i)) then
+                        temp = arr(i)
+                        arr(i) = arr(j)
+                        arr(j) = temp
+                    end if
+                end do
+            end do
+        end subroutine sort_ascending
     ! END DATA obtainment and manipulation
 
     ! PLOTS
-        subroutine box(width,height,thickness,x,y)
+        subroutine box(width,height,thickness,x,y,r,g,b)
             implicit none
             real,intent(in)::width,height
-            real,intent(in),optional::x,y
+            real,intent(in),optional::x,y,r,g,b
             integer,intent(in),optional::thickness
+            real::rl,gl,bl
+            rl = 0.;gl = 0.;bl = 0.
+            if(present(r))rl = r
+            if(present(g))gl = g
+            if(present(b))bl = b
+            call rgbk(rl,gl,bl)
             if(present(x).and.present(y))call plot(x,y,-3)
             if(present(x).and. .not.present(y))call plot(x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,y,-3)
@@ -8095,6 +8232,7 @@ module subroutines
             if(present(x).and.present(y))call plot(-x,-y,-3)
             if(present(x).and. .not.present(y))call plot(-x,0.,-3)
             if(present(y).and. .not.present(x))call plot(0.,-y,-3)
+            call rgbk(0.,0.,0.)
         end subroutine    
         subroutine griddedbox(width,height,thickness,ngridsx,ngridsy,x,y,dashy)
             implicit none
@@ -8947,37 +9085,39 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                                 ! Plotting
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+                ! old code
                 ! call plot(gappy,0.,-3)
-                ! if(angle_local == 0) then
-                !     do n = 1, iterations_local
-                !         if(mod(n-1,symbol_freq_local)==0) then
-                !             call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local,2)
-                !             call numberc(real(n-1)*memori_diff,-1.2*symbol_size_local,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
-                !         else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size_local,2)
-                !         end if
-                !     end do
-                ! else if(angle_local == 90) then
-                !     do n = 1, iterations_local
-                !         if(mod(n-1,symbol_freq_local)==0) then
-                !             call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size_local,real(n-1)*memori_diff,2)
-                !             call number(0.5*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
-                !         else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size_local,real(n-1)*memori_diff,2)
-                !         end if
-                !     end do
-                ! else if (angle_local == -90) then
-                !     do n = 1, iterations_local
-                !         if(mod(n-1,symbol_freq_local)==0) then
-                !             call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size_local,real(n-1)*memori_diff,2)
-                !             call numberr(-0.6*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
-                !         else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size_local,real(n-1)*memori_diff,2)
-                !         end if
-                !     end do
-                ! else;end if 
+                    ! if(angle_local == 0) then
+                    !     do n = 1, iterations_local
+                    !         if(mod(n-1,symbol_freq_local)==0) then
+                    !             call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local,2)
+                    !             call numberc(real(n-1)*memori_diff,-1.2*symbol_size_local,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
+                    !         else; call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.2*symbol_size_local,2)
+                    !         end if
+                    !     end do
+                    ! else if(angle_local == 90) then
+                    !     do n = 1, iterations_local
+                    !         if(mod(n-1,symbol_freq_local)==0) then
+                    !             call plot(0.,real(n-1)*memori_diff,3);call plot(0.3*symbol_size_local,real(n-1)*memori_diff,2)
+                    !             call number(0.5*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
+                    !         else;call plot(0.,real(n-1)*memori_diff,3);call plot(0.2*symbol_size_local,real(n-1)*memori_diff,2)
+                    !         end if
+                    !     end do
+                    ! else if (angle_local == -90) then
+                    !     do n = 1, iterations_local
+                    !         if(mod(n-1,symbol_freq_local)==0) then
+                    !             call plot(0.,real(n-1)*memori_diff,3);call plot(-0.3*symbol_size_local,real(n-1)*memori_diff,2)
+                    !             call numberr(-0.6*symbol_size_local,real(n-1)*memori_diff-symbol_size_local*0.3,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
+                    !         else;call plot(0.,real(n-1)*memori_diff,3);call plot(-0.2*symbol_size_local,real(n-1)*memori_diff,2)
+                    !         end if
+                    !     end do
+                    ! else;end if 
                 ! call plot(-gappy,0.,-3) 
-                nsize = symbol_size_local*(1.+float_quantity_local+real(intdigits(int(fin_num))))*0.45
+
+                if(float_quantity_local == -1)nsize = symbol_size_local*(1.+float_quantity_local+real(intdigits(int(fin_num))))*0.45
+                if(float_quantity_local /= -1)nsize = symbol_size_local*(float_quantity_local+real(intdigits(int(fin_num))))*0.45
                 if(intdigits(int(fin_num)) == 1 )nsize = nsize *1.3
-                ! print*,nsize,symbol_size_local,float_quantity_local,intdigits(int(fin_num))
+                if(abs(angle_local) == 180.)nsize = symbol_size_local*(1.3)*0.45
 
                 call plot(gappy,0.,-3)
                 do n = 1, iterations_local
@@ -8985,7 +9125,13 @@ module subroutines
                         if(angle_local/=0.)then 
                             call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local*rsign(angle_local),2)
                             if(rotatenumbers_local)then 
-                                call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*rsign(angle_local),symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                if(angle_local == 180.)then 
+                                    call numberc(real(n-1)*memori_diff,-nsize*rsign(angle_local),symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                ! else if(angle_local == -90.)then
+                                !     call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*rsign(angle_local),symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                else
+                                    call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*rsign(angle_local),symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                end if
                             else
                                 call numberc(real(n-1)*memori_diff,-1.3*symbol_size_local*rsign(angle_local),symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
                             end if
@@ -9032,7 +9178,8 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 if(present(inc))then 
-                    iterations_local = int((fin_num-ini_num)/inc + 1)
+                    iterations_local = abs(nint((fin_num-ini_num)/inc)) +1
+                    ! print*,'here',iterations_local,fin_num-ini_num,inc,abs(nint((fin_num-ini_num)/inc))
                 else
                     do i = 1, 10
                         if(mod(abs(fin_num-ini_num),1./(10.**real(i-1)))<=precision)then 
@@ -9098,22 +9245,24 @@ module subroutines
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                                                                 ! Plotting
             !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                ! if(float_quantity_local<=0.or.sign1 == -1.)then 
-                !     nsize = symbol_size_local*(real(intdigits(int(fin_num))))*0.45
-                ! else
-                    nsize = symbol_size_local*(float_quantity_local+real(intdigits(int(fin_num))))*0.45
-                    ! print*,float_quantity_local,intdigits(int(fin_num))
+                    if(float_quantity_local == -1)nsize = symbol_size_local*(1.+float_quantity_local+real(intdigits(int(fin_num))))*0.45
+                    if(float_quantity_local /= -1)nsize = symbol_size_local*(float_quantity_local+real(intdigits(int(fin_num))))*0.45
                     if(intdigits(int(fin_num)) == 1 )nsize = nsize *1.3
-                ! end if
-                ! print*,nsize,symbol_size_local,float_quantity_local,intdigits(int(fin_num))
-                ! print*,'here2'
+                    if(abs(angle_local) == 180.)nsize = symbol_size_local*(1.3)*0.45
+
                 call plot(gappy,0.,-3)
                 do n = 1, iterations_local
                     if(mod(n-1,symbol_freq_local)==0) then
                         if(angle_local/=0..or.sign1 == -1.)then 
                             call plot(real(n-1)*memori_diff,0.,3);call plot(real(n-1)*memori_diff,-0.3*symbol_size_local*sign1,2)
                             if(rotatenumbers_local)then 
-                                call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*sign1,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                if(angle_local == 180.)then 
+                                    call numberc(real(n-1)*memori_diff,-nsize*sign1,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                ! elseif(angle_local == -90.)then 
+                                !     call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*2./3.*sign1,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                else
+                                    call numberc(real(n-1)*memori_diff-symbol_size_local*0.3,-nsize*sign1,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,-abs(angle_local),float_quantity_local)
+                                end if
                             else
                                 call numberc(real(n-1)*memori_diff,-1.3*symbol_size_local*sign1,symbol_size_local,(ini_num+num_diff*real(n-1))/num_fac_local,0.,float_quantity_local)
                             end if
@@ -9633,7 +9782,6 @@ module subroutines
             end if
 
         end subroutine
-
         subroutine avsemdata_2D(array_2D,dec_dim,mean_1D,s_1D,sem_1D,dataquan_1D,rmask)
             implicit none
             ! integer,intent(in)::dim1,dim2
@@ -9718,7 +9866,6 @@ module subroutines
             ! if(present(dataquan_1D)) deallocate(dataquan_1D)
 
         end subroutine
-
         subroutine avsemdata_3D(array_3D,dec_dim,mean_2D,s_2D,sem_2D,dataquan_2D,rmask)
             implicit none
             ! integer,intent(in)::dim1,dim2,dim3
@@ -9817,7 +9964,6 @@ module subroutines
 
 
         end subroutine
-
         subroutine avsemdata_4D(array_4D,dec_dim,mean_3D,s_3D,sem_3D,dataquan_3D,rmask)
             implicit none
             ! integer,intent(in)::dim1,dim2,dim3,dim4
@@ -9934,7 +10080,6 @@ module subroutines
             end do
 
         end subroutine
-
         subroutine avsemdata_5D(array_5D,dec_dim,mean_4D,s_4D,sem_4D,dataquan_4D,rmask)
             implicit none
             ! integer,intent(in)::dim1,dim2,dim3,dim4,dim5
@@ -10076,7 +10221,6 @@ module subroutines
                 end do
             end do
         end subroutine
-
         subroutine avsemdata_6D(array_6D,dec_dim,mean_5D,s_5D,sem_5D,dataquan_5D,rmask)
             implicit none
             ! integer,intent(in)::dim1,dim2,dim3,dim4,dim5,dim6
@@ -10279,23 +10423,16 @@ module subroutines
             if((abs(ival+inc*real(iterations)-fval))>=precision)then;print*,'your f value =',fval,'calculated f value =',ival+inc*real(iterations),abs(ival+inc*real(iterations)-fval),'(butler_psk)';end if
             call box(width,height,3)
 
-            select case(colorscheme)
-            case('red');call colorgrad('red',iterations,r1,g1,b1)
-            case('wred');call colorgrad('wred',iterations,r1,g1,b1)
-            case('green');call colorgrad('green',iterations,r1,g1,b1)
-            case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
-            case('blue');call colorgrad('blue',iterations,r1,g1,b1)
-            case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('r2b');if(present(bpt1))then;call r2b_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psk)';stop;end if
-            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psk)';stop;end if
-            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psk)';stop;end if
-            case default;print*,'Invalid colorscheme (butler_psk)';stop
-            end select
+            ! Obtain colors 
+            if(present(bpt1).and.present(bpt2).and.present(bpt3))then 
+                call colorvault(colorscheme,iterations,bpt1,bpt2,bpt3,r1,g1,b1)
+            else if(present(bpt1).and.present(bpt2))then
+                call colorvault(colorscheme,iterations,bpt1,bpt2,r = r1,g = g1,b = b1)
+            else if(present(bpt1))then
+                call colorvault(colorscheme,iterations,bpt1,r = r1,g = g1,b = b1)
+            else
+                call colorgrad(colorscheme,iterations,r = r1,g = g1,b = b1)
+            end if
 
             if(present(centralize))then
                 call centeralize_colors(iterations,centralize,r1,g1,b1)
@@ -10432,22 +10569,16 @@ module subroutines
                 dx = width/real(dim1);dy = height/real(dim2)
             else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2)*real(dim2-1)/real(dim2);call plot(width/real(dim1)/2.,height/real(dim2)/2.,-3)
             end if
-            select case(colorscheme)
-            case('red');call colorgrad('red',iterations,r1,g1,b1)
-            case('wred');call colorgrad('wred',iterations,r1,g1,b1)
-            case('green');call colorgrad('green',iterations,r1,g1,b1)
-            case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
-            case('blue');call colorgrad('blue',iterations,r1,g1,b1)
-            case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
-            case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
-            case default;print*,'Invalid colorscheme (butler_pebet)';stop
-            end select
+            ! Obtain colors 
+            if(present(bpt1).and.present(bpt2).and.present(bpt3))then 
+                call colorvault(colorscheme,iterations,bpt1,bpt2,bpt3,r1,g1,b1)
+            else if(present(bpt1).and.present(bpt2))then
+                call colorvault(colorscheme,iterations,bpt1,bpt2,r = r1,g = g1,b = b1)
+            else if(present(bpt1))then
+                call colorvault(colorscheme,iterations,bpt1,r = r1,g = g1,b = b1)
+            else
+                call colorgrad(colorscheme,iterations,r = r1,g = g1,b = b1)
+            end if
 
             if(present(centralize))then
                 call centeralize_colors(iterations,centralize,r1,g1,b1)
@@ -10560,22 +10691,12 @@ module subroutines
                 dx = width/real(dim1);dy = height/real(dim2)
             else;dx = width/real(dim1)*real(dim1-1)/real(dim1);dy = height/real(dim2)*real(dim2-1)/real(dim2);call plot(width/real(dim1)/2.,height/real(dim2)/2.,-3)
             end if
-            select case(colorscheme)
-            case('red');call colorgrad('red',iterations,r1,g1,b1)
-            case('wred');call colorgrad('wred',iterations,r1,g1,b1)
-            case('green');call colorgrad('green',iterations,r1,g1,b1)
-            case('wgreen');call colorgrad('wgreen',iterations,r1,g1,b1)
-            case('blue');call colorgrad('blue',iterations,r1,g1,b1)
-            case('wblue');call colorgrad('wblue',iterations,r1,g1,b1)
-            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r1,g1,b1);else;print*,'bpt1 is required (butler_psbet)';stop;end if
-            ! case('b2cy2y2r');if(present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
-            ! case('b2g2y2r');if(present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r1,g1,b1);else;print*,'bpt2 and bpt3 are required (butler_psbet)';stop;end if
-            case default;print*,'Invalid colorscheme (butler_pebet2)';stop
-            end select
+            ! Obtain colors 
+            if(present(bpt1))then
+                call colorvault(colorscheme,iterations,bpt1,r = r1,g = g1,b = b1)
+            else
+                call colorgrad(colorscheme,iterations,r = r1,g = g1,b = b1)
+            end if
             
             if(present(r).and.present(g).and.present(b).or.present(centralize)) then
                 allocate(r(0:iterations+2),g(0:iterations+2),b(0:iterations+2))
@@ -10825,11 +10946,129 @@ module subroutines
             end do
             ! print*,mask
 
-            if(present(r).and.present(g).and.present(b))then;r1=r;g1=g;b1=b;else;r1=0.;g1=0.;b1=0.;end if
+            r1 = 1.;g1 = 1.;b1 = 1.
+            if(present(r))r1 = r
+            if(present(g))g1 = g
+            if(present(b))b1 = b
             call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,-10.**(10.),10.**(10.),r1,g1,b1)
             if(present(gap))then;call plot(-width/real(dim1)/2.,0.,-3);else;end if
             write(16,*)"% end butler_mask"
 
+        end subroutine
+        subroutine butler_masknonzero(array_2D,width,height,r,g,b)
+            use functions
+            implicit none
+            real,intent(in),optional::r,g,b
+            real,intent(in)::width,height
+            real,intent(in)::array_2D(:,:)
+            integer,dimension(size(array_2D,1),size(array_2D,2))::mask
+            real::dx,dy,r1,g1,b1
+            integer::i,j,dim1,dim2
+            
+            write(16,*)"% begin butler_mask"
+
+            ! if(size(array_2D,1)/=dim1 .or. size(array_2D,2)/=dim2) then 
+            !     print*,'Array size /= dim1 or dim2 (butler_mask)';stop
+            ! end if
+            dx = width/real(size(array_2D,1));dy = height/real(size(array_2D,2))
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
+            call box(width,height,3)
+            do i = 1, dim1
+                do j = 1, dim2
+                    if(array_2D(i,j)/=0.) then
+                        mask(i,j)=1
+                    else;mask(i,j)=0
+                    end if
+
+                end do
+            end do
+            ! print*,mask
+            r1 = 0.;g1 = .8;b1 = 0.
+            if(present(r))r1 = r
+            if(present(g))g1 = g
+            if(present(b))b1 = b
+            call betcolork2(dx,dy,array_2D,mask,1,dim1,1,dim2,dim1,dim2,-10.**(10.),10.**(10.),r1,g1,b1)
+            do i = 1, dim1
+                do j = 1, dim2
+                    call symbolc(dx/2.+dx*(i-1),dy/2.+dy*(j-1),sqrt(dx*dy)/2.,int2str(i)//';'//int2str(j))
+                end do
+            end do
+            call griddedbox(width,height,2,dim1,dim2)
+            write(16,*)"% end butler_mask"
+
+        end subroutine
+        subroutine butler_gridcoords(array_2D,width,height)
+            use functions
+            implicit none
+            real,intent(in)::width,height
+            real,intent(in)::array_2D(:,:)
+            real::dx,dy
+            integer::i,j,dim1,dim2
+
+            dx = width/real(size(array_2D,1));dy = height/real(size(array_2D,2))
+            dim1 = size(array_2D,1);dim2 = size(array_2D,2)
+            call rgbk(0.,0.8,0.)
+            do i = 1, dim1
+                do j = 1, dim2
+                    call symbolc(dx/2.+dx*(i-1),dy/2.+dy*(j-1),sqrt(dx*dy)/2.,int2str(i)//';'//int2str(j))
+                end do
+            end do
+            call rgbk(0.,0.,0.)
+            call griddedbox(width,height,2,dim1,dim2)
+        end subroutine
+        subroutine butler_datanum(array_3D,width,height,quantityaxis)
+            use functions
+            implicit none
+            real,intent(in)::width,height
+            integer,intent(in)::quantityaxis
+            real,intent(in)::array_3D(:,:,:)
+            real,allocatable::quantity(:,:)
+            real::dx,dy
+            integer::i,j
+
+            if(quantityaxis == 1)then 
+                allocate(quantity(size(array_3D,2),size(array_3D,3)))
+                dx = width/real(size(array_3D,2));dy = height/real(size(array_3D,3))
+                do i = 1, size(array_3D,2)
+                    do j = 1, size(array_3D,3)
+                        quantity(i,j) = real(count(array_3D(:,i,j)/=0.))
+                        if(i == 5.and.j == 10)print*,array_3D(:,i,j),count(array_3D(:,i,j)/=0.),quantity(i,j),'here'
+                    end do
+                end do
+            else if(quantityaxis == 2)then
+                dx = width/real(size(array_3D,1));dy = height/real(size(array_3D,3))
+                allocate(quantity(size(array_3D,1),size(array_3D,3)))
+                do i = 1, size(array_3D,1)
+                    do j = 1, size(array_3D,3)
+                        quantity(i,j) = real(count(array_3D(i,:,j)/=0.))
+                    end do
+                end do
+            else if(quantityaxis == 3)then
+                dx = width/real(size(array_3D,1));dy = height/real(size(array_3D,2))
+                allocate(quantity(size(array_3D,1),size(array_3D,2)))
+                do i = 1, size(array_3D,1)
+                    do j = 1, size(array_3D,2)
+                        quantity(i,j) = real(count(array_3D(i,j,:)/=0.))
+                    end do
+                end do
+            end if
+
+            ! print*,quantity,size(quantity,1),size(quantity,2),real(size(array_3D,quantityaxis))
+            ! print*,dx
+            call butler_mask(quantity,width,height,0.,real(size(array_3D,quantityaxis))*1./3.,r = 1.,g = 0.4,b = 0.4)
+            call butler_mask(quantity,width,height,real(size(array_3D,quantityaxis))*1./3.,real(size(array_3D,quantityaxis))*2./3.,r = 1.,g = 1.,b = 0.4)
+            call butler_mask(quantity,width,height,real(size(array_3D,quantityaxis))*2./3.,real(size(array_3D,quantityaxis)),r = 0.4,g = 1.,b = 0.4)
+            
+            do i = 1, size(quantity,1)
+                do j = 1, size(quantity,2)
+                    call rgbk(.3,.3,.3)
+                    call symbol(dx/10.+dx*(i-1),dy/10.+dy*(j-1),sqrt(dx*dy)/3.,int2str(i)//','//int2str(j))
+                    call rgbk(0.,0.,0.)
+                    call symbolr(dx*(i)-dx/10.,dy*(j)-sqrt(dx*dy)/3.,sqrt(dx*dy)/3.,int2str(int(quantity(i,j))))
+                end do
+            end do
+            call griddedbox(width,height,2,size(quantity,1),size(quantity,2))
+            deallocate(quantity)
         end subroutine
         ! for integer arrays
         subroutine butler_imask(array_2D,width,height,imask,r,g,b,gap)
@@ -10952,13 +11191,13 @@ module subroutines
         ! recognizes x_2D as an array of values in the x axis,y_2D as values in the y axis in a xy plane. or any cartesian plane.
         ! as of now, mask applies to both x and y arrays
         ! nonzero bound values are plotted regardless of the thinning factors
-        subroutine butler_vector(x_2D,y_2D,width,height,scalef,thinfx,thinfy,maskini,maskfin,arrowwidth,line_thickness,arrowtype,gap)
+        subroutine butler_vector(x_2D,y_2D,width,height,scalef,thinfx,thinfy,maskini,maskfin,arrowwidth,line_thickness,arrowtype,r,g,b)
             implicit none
             real,intent(in)::x_2D(:,:),y_2D(:,:),width,height
             real,dimension(:,:),allocatable::Vscaler
-            real,intent(in),optional::maskini,maskfin,arrowwidth,scalef
-            integer,intent(in),optional::gap,arrowtype,line_thickness,thinfx,thinfy
-            real::dx,dy,arrowwidth_local,scalef_local,x0,y0,x1,y1
+            real,intent(in),optional::maskini,maskfin,arrowwidth,scalef,r,g,b
+            integer,intent(in),optional::arrowtype,line_thickness,thinfx,thinfy
+            real::dx,dy,arrowwidth_local,scalef_local,x0,y0,x1,y1,rl,gl,bl
             integer::dim1,dim2,i,j,arrowtype_local,thinf_local_x,thinf_local_y,qx,rx,qy,ry,l,m,n0lbx=0,n0ubx=0,n0lby=0,n0uby=0
             integer,dimension(:),allocatable::leapx,leapy
 
@@ -10972,10 +11211,12 @@ module subroutines
             allocate(Vscaler(dim1,dim2))
             Vscaler = sqrt(x_2D**2. + y_2D**2.)
 
-            if(.not.present(gap))then
-                dx = width/real(dim1-1);dy = height/real(dim2-1)
-            else;dx = width/real(dim1);dy = height/real(dim2)
-            end if
+            dx = width/real(dim1);dy = height/real(dim2)
+
+            rl = 0.;gl = 0.;bl = 0.
+            if(present(r))rl = r
+            if(present(g))gl = g
+            if(present(b))bl = b
             
             n0lbx = 0;n0ubx = 0;n0lby = 0;n0uby = 0
 
@@ -11025,6 +11266,7 @@ module subroutines
             if(ry/=0)then;leapy(1:ry) = leapy(1:ry) + 1;endif
 
             l = n0lbx;m = n0lby
+            call rgbk(rl,gl,bl)
             do i = 1, size(leapx)+1
                 do j = 1, size(leapy)+1
                     call process(l,m)
@@ -11033,16 +11275,14 @@ module subroutines
                 if(i/=size(leapx)+1)l = l + leapx(i)
                 m = 1
             end do
+            call rgbk(0.,0.,0.)
             deallocate(leapx,leapy,Vscaler)
             write(ounit,*)'%end butler_vector'
             return
             contains
             subroutine process(x,y)
                 integer,intent(in)::x,y
-                if(.not.present(gap))then
-                    x0 = real(x-1)*dx;y0 = real(y-1)*dy
-                else;x0 = real(x-1)*dx + dx/2.;y0 = real(y-1)*dy + dy/2.
-                endif
+                x0 = real(x-1)*dx + dx/2.;y0 = real(y-1)*dy + dy/2.
                 ! if(x_2D(x,y)==0..and.y_2D(x,y)==0.)then;print*,'zero vector (butler_vector)';endif
                 x1 = x0 + x_2D(x,y)*scalef_local
                 y1 = y0 + y_2D(x,y)*scalef_local
@@ -11557,13 +11797,15 @@ module subroutines
             
         end subroutine
         ! x and y values of the same array index are plotted in a scatter plot
-        subroutine helper_scatter(x_1D,y_1D,width,height,xi,xf,yi,yf,r,g,b,dotsize)
+        subroutine helper_scatter(x_1D,y_1D,width,height,xi,xf,yi,yf,r,g,b,dotsize,maskxi,maskxf,maskyi,maskyf)
             implicit none
             real,intent(in)::x_1D(:),y_1D(:),width,height,xi,xf,yi,yf
+            real,intent(in),optional::maskxi,maskxf,maskyi,maskyf
             real,dimension(:),allocatable::plotx,ploty
+            integer,dimension(:),allocatable::plotmask
             ! logical,intent(in),optional::memx,memy,xinc,yinc
             real,intent(in),optional::r,g,b,dotsize
-            real::rl,gl,bl,dotsize_local
+            real::rl,gl,bl,dotsize_local,maskxi_local,maskxf_local,maskyi_local,maskyf_local
             integer::iterations,i
 
 
@@ -11573,14 +11815,26 @@ module subroutines
                 print*,'Array sizes do not match (butler_scatter)','size of x=',size(x_1D),'size of y=',size(y_1D);stop
             stop;endif
             iterations = size(x_1D)
+            maskxi_local = -99999999.;maskxf_local = -99999999.;maskyi_local = -99999999.;maskyf_local = -99999999.
+            if(present(maskxi))maskxi_local = maskxi
+            if(present(maskxf))maskxf_local = maskxf
+            if(present(maskyi))maskyi_local = maskyi
+            if(present(maskyf))maskyf_local = maskyf
             ! print*,lbound(x_1D,1),ubound(x_1D,1),lbound(y_1D,1),ubound(y_1D,1)
-            allocate(plotx(iterations),ploty(iterations))
+            allocate(plotx(iterations),ploty(iterations),plotmask(iterations))
             call rgbk(0.,0.,0.)
             call box(width,height,3)
 
             do i = 1, iterations
                 call gmark_ratio(x_1D(i),xi,xf,width,plotx(i))
                 call gmark_ratio(y_1D(i),yi,yf,height,ploty(i))
+                if(x_1D(i) >= maskxi_local .and. x_1D(i) <= maskxf_local)then 
+                    plotmask(i) = 0
+                elseif(y_1D(i) >= maskyi_local .and. y_1D(i) <= maskyf_local)then 
+                    plotmask(i) = 0
+                else
+                    plotmask(i) = 1
+                end if
             end do
 
             rl = 0.;gl = 0.;bl = 0.
@@ -11592,11 +11846,12 @@ module subroutines
             dotsize_local = min(height,width)/100.
             if(present(dotsize))dotsize_local = dotsize
             do i = 1, iterations
+                if(plotmask(i) == 0)cycle
                 call gmark(plotx(i),ploty(i),dotsize_local,1)
             end do
             call rgbk(0.,0.,0.)
 
-
+            deallocate(plotx,ploty,plotmask)
 
         end subroutine
         ! below shows probability density right now
@@ -11645,6 +11900,33 @@ module subroutines
             deallocate(quantity,probability)
 
         end subroutine
+        subroutine colorvault(colorscheme,iterations,bpt1,bpt2,bpt3,r,g,b)
+            implicit none
+            integer,intent(in)::iterations
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer,intent(in),optional::bpt1,bpt2,bpt3
+            character(len=*),intent(in)::colorscheme
+
+            select case(colorscheme)
+            case('red');call colorgrad('red',iterations,r,g,b)
+            case('wred');call colorgrad('wred',iterations,r,g,b)
+            case('green');call colorgrad('green',iterations,r,g,b)
+            case('wgreen');call colorgrad('wgreen',iterations,r,g,b)
+            case('blue');call colorgrad('blue',iterations,r,g,b)
+            case('wblue');call colorgrad('wblue',iterations,r,g,b)
+            case('b2r');if(present(bpt1))then;call b2r_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('r2b');if(present(bpt1))then;call r2b_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('cy2b');if(present(bpt1))then;call cy2b_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('b2w2r');if(present(bpt1))then;call b2w2r_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('b2gy2r');if(present(bpt1))then;call b2gy2r_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('r2g');if(present(bpt1))then;call r2g_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('bk2r2g');if(present(bpt1))then;call bk2r2g_colorgrad(iterations,bpt1,r,g,b);else;print*,'bpt1 is required (color vault)';stop;end if
+            case('b2cy2y2r');if(present(bpt1).and.present(bpt2).and.present(bpt3)) then;call b2cy2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r,g,b);else;print*,'bpt2 and bpt3 are required (color vault)';stop;end if
+            case('b2g2y2r');if(present(bpt1).and.present(bpt2).and.present(bpt3)) then;call b2g2y2r_colorgrad(iterations,bpt1,bpt2,bpt3,r,g,b);else;print*,'bpt2 and bpt3 are required (color vault)';stop;end if
+            case default;print*,'Invalid colorscheme (butler_pebet)';stop
+            end select
+        end subroutine
+
     ! END PS bois
 
     ! COLORGRAD
@@ -11755,6 +12037,33 @@ module subroutines
             r(iterations+1) = 0. ; g(iterations+1) = 0. ; b(iterations+1) = 0.6
 
         end subroutine
+        subroutine cy2b_colorgrad(iterations,midpoint,r,g,b)
+            implicit none
+            integer,intent(in)::iterations,midpoint
+            real,dimension(:),allocatable,intent(out)::r,g,b
+            integer::n
+            
+            if(iterations-midpoint<1)then;print*,'midpoint is too close to the end (cy2r)';stop;endif
+            allocate(r(0:iterations+1),g(0:iterations+1),b(0:iterations+1))
+            do n = 1, iterations
+                if(midpoint==1.and.n==1)then;r(1)=0.9;g(1)=1.;b(1)=1.;cycle;endif
+                if (n < midpoint) then 
+                    b(n) = 0.95
+                    g(n) = 1.
+                    r(n) = 0.9 - (real(n-1)/real(midpoint-1))*0.9 ! perfect cyan at midpoint-1
+                else
+                    b(n) = 1.
+                    g(n) = 0.7-(real(n-midpoint)/real(iterations-midpoint))*0.7
+                    r(n) = 0.
+                end if
+                ! print*,r(n),g(n),b(n),'n=',n
+            end do
+
+            r(0) = 1.; g(0) = 1.; b(0) = 1.
+            r(iterations+1) = 0. ; g(iterations+1) = 0. ; b(iterations+1) = 0.6
+
+        end subroutine
+
         subroutine b2w2r_colorgrad(iterations,midpoint,r,g,b)
             implicit none
             integer,intent(in)::iterations,midpoint
@@ -12006,14 +12315,650 @@ module subroutines
                 end if
             end if
         end subroutine
-        subroutine colorarray_welder()
-        end subroutine
     ! END COLORGRAD  
 
     ! RANDOM
 end module subroutines
 
+module net_cdf
+    implicit none
+    contains
+    subroutine handle_err(status)
+        use netcdf
+        integer, intent(in) :: status
+        if (status /= nf90_noerr) then
+            print *, trim(nf90_strerror(status))
+            stop "Stopped"
+        end if
+    end subroutine handle_err
+    ! put the varname and the dimension size, currently supports upto 5 arrays
+    subroutine inquire_netcdf(ncfile)
+        use netcdf
+        implicit none
+        character(len=*),intent(in) :: ncfile
+        integer :: ncid, status
+        integer :: nvars, ndims, ngatts, unlimdimid
+        integer :: varid
+        character(len=nf90_max_name) :: varname
+        integer, allocatable :: dimids(:), dimlens(:)
+        integer :: i
+
+        print*,"-------------------------------------------------------"
+        print*,'Reading file:',trim(ncfile)
+        ! data obtainment
+        ! Open the NetCDF file and get the id
+        status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        ! Get information about the file
+        status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        print *, "File information:"
+        print *, "-------------------------------------------------------"
+        print *, "Number of variables:", nvars
+        print *, "Number of dimensions defined:", ndims
+        print *, "Number of global attributes:", ngatts
+        print *, "Unlimited dimension ID:", unlimdimid
+        print *, "-------------------------------------------------------"
+
+        ! Iterate through all variables to get basic idea of the file
+        do varid = 1, nvars ! varid apparently starts from 1 in fortran
+            ! Get variable name and number of dimensions from varid
+            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims) ! the number of dimensions the variable has
+            if (status /= nf90_noerr) call handle_err(status)
+
+            print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+            if(ndims >=100)then;print*,'ndims >= 100';stop;endif
+
+            ! Allocate arrays for dimension IDs and lengths
+            allocate(dimids(ndims), dimlens(ndims))
+
+            ! Get dimension IDs
+            status = nf90_inquire_variable(ncid, varid, dimids=dimids)
+            if (status /= nf90_noerr) call handle_err(status)
+
+            ! Get dimension lengths
+            do i = 1, ndims
+                status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
+                if (status /= nf90_noerr) call handle_err(status)
+                print *, "  Dimension ", i, " length: ", dimlens(i)
+            end do
+            ! put it in arrays if prompted(you have to know the varname and the dimension size before run time which is sad)
+
+
+            deallocate(dimids, dimlens)
+            print *, "-------------------------------------------------------"
+        end do
+
+
+        ! Close the file
+        status = nf90_close(ncid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+    end subroutine
+    ! supports upto 10 dimensions, ndims is the number of dimensions, dimlens is the length of each dimension(1D array)
+    subroutine create_array(ndims,ndimlens,array1,array2,array3,array4,array5,array6,array7,array8,array9,array10)
+        implicit none
+        integer, intent(in) :: ndims
+        integer, dimension(:), intent(in) :: ndimlens
+        real,allocatable,intent(out),optional :: array1(:), array2(:,:), array3(:,:,:), array4(:,:,:,:), array5(:,:,:,:,:), array6(:,:,:,:,:,:), array7(:,:,:,:,:,:,:), array8(:,:,:,:,:,:,:,:), array9(:,:,:,:,:,:,:,:,:), array10(:,:,:,:,:,:,:,:,:,:)
+
+        if(ndims>10)then;print*,'currently does not support arrays with more than 10 dimensions';stop;endif
+        if(ndims /= size(ndimlens))then;print*,'ndims and size of ndimlens do not match';stop;endif
+        if(ndims == 1)then
+            allocate(array1(ndimlens(1)))
+            array1 = 0.
+        else if(ndims == 2)then
+            allocate(array2(ndimlens(1),ndimlens(2)))
+            array2 = 0.
+        else if(ndims == 3)then
+            allocate(array3(ndimlens(1),ndimlens(2),ndimlens(3)))
+            array3 = 0.
+        else if(ndims == 4)then
+            allocate(array4(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4)))
+            array4 = 0.
+        else if(ndims == 5)then
+            allocate(array5(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5)))
+            array5 = 0.
+        else if(ndims == 6)then
+            allocate(array6(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5),ndimlens(6)))
+            array6 = 0.
+        else if(ndims == 7)then
+            allocate(array7(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5),ndimlens(6),ndimlens(7)))
+            array7 = 0.
+        else if(ndims == 8)then
+            allocate(array8(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5),ndimlens(6),ndimlens(7),ndimlens(8)))
+            array8 = 0.
+        else if(ndims == 9)then
+            allocate(array9(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5),ndimlens(6),ndimlens(7),ndimlens(8), ndimlens(9)))
+            array9 = 0.
+        else if(ndims == 10)then
+            allocate(array10(ndimlens(1),ndimlens(2),ndimlens(3),ndimlens(4),ndimlens(5),ndimlens(6),ndimlens(7),ndimlens(8), ndimlens(9), ndimlens(10)))
+            array10 = 0.
+        end if
+    
+    end subroutine create_array
+
+    ! N20-50, E120-150 size
+    ! temp,u,v,w are all 3 dimensional (lon*lat*time(85years*12months)), data at layer 1000hPa which is closest to the surface
+    subroutine ERA5_1000hPa(temp,u,v,w,info)
+        use netcdf
+        implicit none
+        character(len=200) :: ncfile
+        integer :: ncid, status, ndims, nvars, ngatts, unlimdimid, varid, i
+        character(len=nf90_max_name) :: varname
+        integer, allocatable :: dimids(:), dimlens(:)
+        logical,intent(in),optional::info
+        real,dimension(:,:,:),allocatable,intent(out),optional::temp,u,v,w
+        real,dimension(:,:,:,:),allocatable::temp_local,u_local,v_local,w_local
+        logical::info_local = .false.
+
+        if(present(info))info_local = info
+        if(info_local)print*,"-------------------------------------------------------"
+        ncfile = "/Users/yuta/LABWORK/2024-2025-BS4/aomori/Data/ERA5/ERA5_winds_uvwtemp_20-50N_120-150E.nc"
+        if(info_local)print*,'Reading file:',trim(ncfile)
+        ! data obtainment
+        ! Open the NetCDF file and get the id
+        status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        ! Get information about the file
+        status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        if(info_local)print *, "File information:"
+        if(info_local)print *, "-------------------------------------------------------"
+        if(info_local)print *, "Number of variables:", nvars
+        if(info_local)print *, "Number of dimensions defined:", ndims
+        if(info_local)print *, "Number of global attributes:", ngatts
+        if(info_local)print *, "Unlimited dimension ID:", unlimdimid
+        if(info_local)print *, "-------------------------------------------------------"
+
+        ! Iterate through all variables to get basic idea of the file
+        do varid = 1, nvars ! varid apparently starts from 1 in fortran
+            ! Get variable name and number of dimensions from varid
+            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims) ! the number of dimensions the variable has
+            if (status /= nf90_noerr) call handle_err(status)
+
+            if(info_local)print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+            if(ndims >=100)then;print*,'ndims >= 100';stop;endif
+
+            ! Allocate arrays for dimension IDs and lengths
+            allocate(dimids(ndims), dimlens(ndims))
+
+            ! Get dimension IDs
+            status = nf90_inquire_variable(ncid, varid, dimids=dimids)
+            if (status /= nf90_noerr) call handle_err(status)
+
+            ! Get dimension lengths
+            do i = 1, ndims
+                status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
+                if (status /= nf90_noerr) call handle_err(status)
+                if(info_local)print *, "  Dimension ", i, " length: ", dimlens(i)
+            end do
+            ! put it in arrays if prompted(you have to know the varname and the dimension size before run time which is sad)
+
+            select case(trim(varname))
+            case('t')
+                if(present(temp))then 
+                    allocate(temp_local(dimlens(1),dimlens(2),dimlens(3),dimlens(4)));temp_local = 0.
+                    status = nf90_get_var(ncid, varid, temp_local)
+                    if(status /= nf90_noerr) call handle_err(status)
+                    allocate(temp(dimlens(1),dimlens(2),dimlens(4)));temp = 0.
+                    temp = temp_local(:,:,1,:)
+                    if(info_local)print*,'obtained temp (variable t)'
+                    deallocate(temp_local)
+                end if
+            case('u')
+                if(present(u))then
+                    allocate(u_local(dimlens(1),dimlens(2),dimlens(3),dimlens(4)));u_local = 0.
+                    status = nf90_get_var(ncid, varid, u_local)
+                    if(status /= nf90_noerr) call handle_err(status)
+                    allocate(u(dimlens(1),dimlens(2),dimlens(4)));u = 0.
+                    u = u_local(:,:,1,:)
+                    if(info_local)print*,'obtained u (variable u)'
+                    deallocate(u_local)
+                end if
+            case('v')
+                if(present(v))then
+                    allocate(v_local(dimlens(1),dimlens(2),dimlens(3),dimlens(4)));v_local = 0.
+                    status = nf90_get_var(ncid, varid, v_local)
+                    if(status /= nf90_noerr) call handle_err(status)
+                    allocate(v(dimlens(1),dimlens(2),dimlens(4)));v = 0.
+                    v = v_local(:,:,1,:)
+                    if(info_local)print*,'obtained v (variable v)'
+                    deallocate(v_local)
+                end if
+            case('w')
+                if(present(w))then
+                    allocate(w_local(dimlens(1),dimlens(2),dimlens(3),dimlens(4)));w_local = 0.
+                    status = nf90_get_var(ncid, varid, w_local)
+                    if(status /= nf90_noerr) call handle_err(status)
+                    allocate(w(dimlens(1),dimlens(2),dimlens(4)));w = 0.
+                    w = w_local(:,:,1,:)
+                    if(info_local)print*,'obtained w (variable w)'
+                    deallocate(w_local)
+                end if
+            end select
+            deallocate(dimids, dimlens)
+            print *, "-------------------------------------------------------"
+        end do
+    end subroutine
+
+    ! Bathy is a 2D array with lon(-180:180), lat(-90:90) as its dimensions. tid has the type identifier of every grid of Bathy array.
+    subroutine readGEBCO(ncfile,bathy,ilon,flon,ilat,flat,info,bathy1deg)
+        use netcdf
+        implicit none
+        character(len=*),intent(in) :: ncfile
+        integer :: ncid, status
+        integer :: nvars, ndims, ngatts, unlimdimid
+        integer :: varid
+        character(len=nf90_max_name) :: varname
+        integer,intent(in)::ilon,flon,ilat,flat
+        real,dimension(:,:),allocatable,intent(out)::bathy
+        real,dimension(:,:),allocatable,intent(out),optional::bathy1deg
+        real,dimension(:,:),allocatable::bathy1degmini
+        ! real,dimension(:,:),allocatable,intent(out),optional::tid   
+        integer, allocatable :: dimids(:), dimlens(:)
+        integer :: i, start(2),countq(2),lonrange,latrange,x,y
+        logical,intent(in),optional::info
+        logical::info_local = .false.
+
+        lonrange = flon - ilon
+        latrange = flat - ilat
+        if(lonrange<0.or.latrange<0)then;print*,'range of lon or lat is negative';stop;endif
+
+        if(present(info))info_local = info
+        if(info_local)print*,'------------------------------------------------------------------------------------------------'
+        if(info_local)print*,'Reading file:',trim(ncfile)
+        ! Open the NetCDF file
+        status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        ! Get information about the file
+        status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
+        if (status /= nf90_noerr) call handle_err(status)
+
+        if(info_local)print *, "Number of variables:", nvars
+
+        ! Iterate through all variables to get basic idea of the file
+        if(info_local)print*,'------------------------------------------------------------------------------------------------'
+        do varid = 1, nvars
+            ! Get variable name and number of dimensions
+            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
+            if (status /= nf90_noerr) call handle_err(status)
+
+            if(info_local)print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
+
+            ! Allocate arrays for dimension IDs and lengths
+            allocate(dimids(ndims), dimlens(ndims))
+
+            ! Get dimension IDs
+            status = nf90_inquire_variable(ncid, varid, dimids=dimids)
+            if (status /= nf90_noerr) call handle_err(status)
+
+            ! Get dimension lengths
+            do i = 1, ndims
+                status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
+                if (status /= nf90_noerr) call handle_err(status)
+                if(info_local)print *, "  Dimension ", i, " length: ", dimlens(i)
+            end do
+
+            ! Allocate arrays based on variable name and then read data
+            select case(trim(varname)) ! already know the name of the variable
+            case('elevation')
+                if(present(bathy1deg))then ! making the gridded data lower resolution
+                    do i = 1, 20
+                        if(i==1)allocate(bathy1deg(21600,10800)) ! this is what i want
+
+                        allocate(bathy(4320,43200)) ! 1/20 of total domain... 
+                        start = [(i-1)*4320+1,1] ! start form the bottom left
+                        countq = [4320,43200]
+                        status = nf90_get_var(ncid, varid, bathy, start = start, count = countq)
+                        if(status /= nf90_noerr)call handle_err(status)
+                        ! got the 1/20 array, now scale it 1/16
+                        allocate(bathy1degmini(1080,10800))
+                        do x = 1, 1080
+                            do y = 1, 10800
+                                bathy1degmini(x,y) = sum(bathy((x-1)*4+1:(x-1)*4+4,(y-1)*4+1:(y-1)*4+4))/real(count(bathy((x-1)*4+1:(x-1)*4+4,(y-1)*4+1:(y-1)*4+4)/=0.)) ! mean of non zero values
+                            end do
+                        end do
+                        bathy1deg((i-1)*1080+1:(i)*1080,:) = bathy1degmini
+                        deallocate(bathy,bathy1degmini)
+                        print*,'end of loop',i,'of 20'
+                    end do
+                    ! open(234,file = 'GEBCO_2024_1*1.bin',status = 'replace', action = 'write', form = 'unformatted', access = 'direct', recl = 21600*10800*4, convert='big_endian')
+                    ! write(234,rec=1) bathy1deg
+                    ! close(234)
+                else ! super high resolution 15 arc min grids
+                    allocate(bathy(dimlens(1)*lonrange/360,dimlens(2)*latrange/180))
+                    start = [(ilon+180)*240, (ilat+90)*240]
+                    countq = [lonrange*240,latrange*240]
+                    ! print*,start,countq,'here'
+                    status = nf90_get_var(ncid, varid, bathy, start = start, count = countq)
+                    if(status /= nf90_noerr)call handle_err(status)
+                    if(info_local)then 
+                        print*,'lon =',ilon,'to',flon,'lat =',ilat,'to',flat,'size of bathy:',lbound(bathy,1),ubound(bathy,1),lbound(bathy,2),ubound(bathy,2)
+                        print*,'minimum bathymetry:',minval(bathy);print*,'maximum bathymetry:',maxval(bathy)
+                    end if
+                end if
+            end select
+            deallocate(dimids, dimlens)
+            if(info_local)print*,'------------------------------------------------'
+        end do
+        return
+
+        
+    end subroutine
+            ! uses original 15 arc second resolution data 
+    subroutine GEBCOmap(ini_long,fin_long,ini_lat,fin_lat,width,symbol_size,r,g,b,symbol_freq,symbols,paintland,paintsea,HIRES,lines,x,y,height)
+        use subroutines
+        implicit none
+        integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long
+        integer,intent(in),optional::symbol_freq
+        real,intent(in):: width
+        real,intent(in),optional::symbol_size,r,g,b,x,y
+        real,intent(out),optional::height   
+        intrinsic sin,cos,tan,asin,acos
+        real,dimension(:,:),allocatable::dep
+        integer,dimension(:,:),allocatable::dep_0
+        logical,intent(in),optional::symbols,paintland,lines,paintsea,HIRES
+        integer::is,ie,js,je,symbol_freq_local,imax,jmax
+        real::dx,dy,height_local,ratio,pi,symbol_size_local,rl,gl,bl,NLineYco,SLineYco
+        logical::symbols_local,paintland_local,lines_local,paint_sea_local,HIRES_local
+        
+        if(present(x))call plot(x,0.,-3)
+        if(present(y))call plot(0.,y,-3)
+        !! local parameters
+        call rgbk(0.,0.,0.)
+        symbols_local = .false.
+        if(present(symbols))symbols_local = symbols
+        rl = 0.;gl = 0.;bl = 0.
+        if(present(r))rl = r
+        if(present(g))gl = g
+        if(present(b))bl = b
+        if(present(symbol_freq))then 
+            symbol_freq_local = symbol_freq
+        else
+            symbol_freq_local = 2
+        end if
+
+        paintland_local = .false.
+        if(present(paintland))paintland_local = paintland
+        paint_sea_local = .false.
+        if(present(paintsea))paint_sea_local = paintsea
+        lines_local = .false.
+        if(present(lines))lines_local = lines
+        HIRES_local = .false.
+        if(present(HIRES))HIRES_local = HIRES
+
+        !!
+        call readGEBCO('../Data/GEBCO/GEBCO_2024.nc',dep,ini_long,fin_long,ini_lat,fin_lat)
+        allocate(dep_0(size(dep,1),size(dep,2)))
+        imax = size(dep,1);jmax = size(dep,2)
+        ! print*,'size of dep:',size(dep,1),size(dep,2)
+        dep_0 = 1 ! mask nothing
+        ! dep = -dep
+        ! maxval(dep) == -9784 minval(dep) == 3660 (fuji); Note that the data is in meters and z axis is positive upwards
+        if(present(symbol_size))then;symbol_size_local = symbol_size;else;symbol_size_local = width/11.;end if
+
+        js = 1
+        je = (fin_lat - ini_lat)*240
+        is = 1
+        ie = (fin_long - ini_long)*240
+        ! print*,is,ie,js,je
+        pi = 2.*asin(1.)
+        ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
+        height_local = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
+        if(present(height))height = height_local
+        dx = width/real(ie-is)
+        dy = height_local/real(je-js)
+        call box(width,height_local)
+        
+        print*,'Deepest Point of Your Map Domain is;',minval(dep)
+        print*,'Heighest Point of Your Map Domain is;',maxval(dep)
+        if (width/11.<=0.2) then;call newpen2(2);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(3);else;call newpen2(5);end if
+        call rgbk(rl,gl,bl) 
+        call newpen3(0.001)
+        call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+        call newpen2(3)
+        if(paintland_local)then
+            if(HIRES_local)then 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,200.,0.,0.8,0.) ! land
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,200.,1000.,0.8,0.9,0.1) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1000.,2000.,0.65,0.75,.8) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,2000.,3000.,0.5,0.6,.9) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,3000.,10000.,0.35,0.45,.45) ! 
+                call rgbk(0.,0.,0.)
+                call newpen3(0.001)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,200.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,1000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,2000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,3000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,10000.,0.)
+                call newpen2(3)
+            else;
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,10000.,0.8,0.9,0.1) ! 
+            end if
+        endif 
+        if(paint_sea_local)then
+            if(HIRES_local)then 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-200.,0.,0.8,0.9,1.) ! <=200m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-1000.,-200.,0.65,0.75,1.) ! 200-1000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-2000.,-1000.,0.5,0.6,1.) ! 1000-2000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-3000.,-2000.,0.35,0.45,.9) ! 2000-3000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,-3000.,0.2,0.3,.8) ! >3000m
+                call rgbk(0.,0.,0.) 
+                call newpen3(0.001)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-200.,0.) 
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-1000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-2000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-3000.,0.) ! solid
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-10000.,0.) ! solid
+                call newpen2(3)
+            else
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,0.,0.8,0.9,1.) ! 
+            end if
+        end if
+
+        if(lines_local)then
+            call rgbk(1.,1.,1.)
+            if (width/11.<=0.2) then;call newpen2(3);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(4);else;call newpen2(6);end if
+            NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
+            call plot(dx*(138.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
+            call plot(dx*(138.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
+        end if
+
+        call rgbk(0.,0.,0.)
+        if(symbols_local)then 
+            call num_memori(real(ini_lat),real(fin_lat),(fin_lat-ini_lat)*2+1,symbol_freq_local,symbol_size_local,-1,height_local,-90.)
+            call num_memori(real(ini_long),real(fin_long),(fin_long-ini_long)*2+1,symbol_freq_local*2,symbol_size_local,-1,width,0.)
+        else
+            call memori((fin_lat-ini_lat)*2,symbol_size_local*0.2,symbol_freq_local,height_local,-90.,y = height_local/2.)
+            call memori((fin_long-ini_long)*2,symbol_size_local*0.2,symbol_freq_local,width,0.,x = width/2.)
+        end if
+
+        
+        ! call symbolc(width/2.,-symbol_size_local*2.6,symbol_size_local*0.8,'Longitude (deg.E)')
+        ! call symbolc(-symbol_size_local*2.5,height_local/2.,symbol_size_local*0.8,'Latitude (deg.N)',90.)
+        deallocate(dep,dep_0)
+        if(present(x))call plot(-x,0.,-3)
+        if(present(y))call plot(0.,-y,-3)
+        return
+    end subroutine
+    ! uses averaged values with 1 degree (60 arc seconds) resolution
+    subroutine GEBCOmap2(ini_long,fin_long,ini_lat,fin_lat,width,symbol_size,memori_inc,symbol_freq,r,g,b,symbols,paintland,bathy,paintsea,HIRES,lines,x,y,height)
+        use subroutines
+        implicit none
+        integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long
+        integer,intent(in),optional::symbol_freq
+        real,intent(in):: width
+        real,intent(in),optional::symbol_size,r,g,b,x,y,memori_inc
+        real,intent(out),optional::height   
+        intrinsic sin,cos,tan,asin,acos
+        real,dimension(:,:),allocatable::dep,bigdep
+        integer,dimension(:,:),allocatable::dep_0
+        logical,intent(in),optional::symbols,paintland,lines,paintsea,HIRES,bathy
+        integer::is,ie,js,je,symbol_freq_local,imax,jmax,latrange,lonrange
+        real::dx,dy,height_local,ratio,pi,symbol_size_local,rl,gl,bl,NLineYco,SLineYco,memori_inc_local
+        logical::symbols_local,paintland_local,lines_local,paint_sea_local,HIRES_local,bathy_local
+        
+        latrange = fin_lat - ini_lat
+        lonrange = fin_long - ini_long
+        if(latrange<0.or.lonrange<0)then;print*,'range of lon or lat is negative';stop;endif
+        if(ini_lat>90.or.fin_lat>90.or.ini_long>180.or.fin_long>180)then;print*,'lon or lat is out of range';stop;endif
+        if(present(x))call plot(x,0.,-3)
+        if(present(y))call plot(0.,y,-3)
+        !! local parameters
+        call rgbk(0.,0.,0.)
+        symbols_local = .true.
+        if(present(symbols))symbols_local = symbols
+        if(present(symbol_size).or.present(symbol_freq).or.present(memori_inc))symbols_local = .true.
+        rl = 0.;gl = 0.;bl = 0.
+        if(present(r))rl = r
+        if(present(g))gl = g
+        if(present(b))bl = b
+        if(present(symbol_freq))then 
+            symbol_freq_local = symbol_freq * 2
+        else
+            symbol_freq_local = 2
+        end if
+        if(present(memori_inc))then
+            memori_inc_local = memori_inc
+        else
+            memori_inc_local = 0.5
+        end if
+
+        paintland_local = .false.
+        if(present(paintland))paintland_local = paintland
+        paint_sea_local = .false.
+        if(present(paintsea))paint_sea_local = paintsea
+        lines_local = .false.
+        if(present(lines))lines_local = lines
+        HIRES_local = .false.
+        if(present(HIRES))HIRES_local = HIRES
+        bathy_local = .false.
+        if(present(bathy))bathy_local = bathy
+        
+
+        !!
+        allocate(bigdep(21600,10800))
+        open(234,file = '../Data/GEBCO/GEBCO_2024_1*1.bin',status = 'old', action = 'read', form = 'unformatted', access = 'direct', recl = 21600*10800*4, convert='big_endian')
+        read(234,rec=1) bigdep
+        close(234)
+        ! print*,size(bigdep,1),size(bigdep,2)
+
+        allocate(dep(lonrange*60,latrange*60))
+        dep = bigdep((ini_long+180)*60+1:(fin_long+180)*60,(ini_lat+90)*60+1:(fin_lat+90)*60)
+        deallocate(bigdep)
+
+        imax = size(dep,1);jmax = size(dep,2)
+        allocate(dep_0(imax,jmax))
+        ! print*,'size of dep:',imax,jmax
+        dep_0 = 1 ! mask nothing
+
+        if(present(symbol_size))then;symbol_size_local = symbol_size;else;symbol_size_local = width/11.;end if
+
+        js = 1
+        je = (fin_lat - ini_lat)*60
+        is = 1
+        ie = (fin_long - ini_long)*60
+        ! print*,is,ie,js,je
+        pi = 2.*asin(1.)
+        ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
+        height_local = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
+        if(present(height))height = height_local
+        dx = width/real(ie-is)
+        dy = height_local/real(je-js)
+        call box(width,height_local,thickness = 4)
+        
+        print*,'Deepest Point of Your Map Domain is;',minval(dep)
+        print*,'Heighest Point of Your Map Domain is;',maxval(dep)
+        if (width/11.<=0.2) then;call newpen2(2);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(3);else;call newpen2(5);end if
+        call rgbk(rl,gl,bl) 
+        call newpen3(0.005*real(width))
+        call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+        call newpen2(3)
+        call rgbk(0.,0.,0.)
+        if(paintland_local)then
+            if(HIRES_local)then 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,200.,0.,0.8,0.) ! land
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,200.,1000.,0.8,0.9,0.1) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1000.,2000.,0.65,0.75,.8) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,2000.,3000.,0.5,0.6,.9) ! 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,3000.,10000.,0.35,0.45,.45) ! 
+                call rgbk(0.,0.,0.)
+                call newpen3(0.001*width)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,200.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,1000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,2000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,3000.,0.)
+                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,10000.,0.)
+                call newpen2(3)
+            else;
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,10000.,0.8,0.9,0.1) ! 
+            end if
+        endif 
+        if(paint_sea_local)then
+            if(HIRES_local)then 
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-200.,0.,0.8,0.9,1.) ! <=200m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-1000.,-200.,0.65,0.75,1.) ! 200-1000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-2000.,-1000.,0.5,0.6,1.) ! 1000-2000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-3000.,-2000.,0.35,0.45,.9) ! 2000-3000m
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,-3000.,0.2,0.3,.8) ! >3000m
+            else
+                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,0.,0.8,0.9,1.) ! 
+            end if
+        end if
+        if(bathy_local)then 
+            call rgbk(0.,0.,0.)
+            call newpen3(0.008*width)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-200.,0.) ! 200m is black
+            call newpen3(0.005*width)
+            call rgbk(0.,0.8,0.8)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-1000.,0.) ! 1000m is dark cyan
+            call rgbk(0.,0.,0.7)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-2000.,0.) ! 2000m is dark blue
+            call rgbk(0.5,0.5,0.5)
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-3000.,0.) ! 3000m is dark grey
+            call rgbk(0.,0.,0.) 
+            call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-10000.,0.) ! 10000m is black
+        end if
+        call newpen2(3)
+        if(lines_local)then
+            call rgbk(1.,1.,1.)
+            if (width/11.<=0.2) then;call newpen2(3);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(4);else;call newpen2(6);end if
+            NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
+            call plot(dx*(138.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
+            call plot(dx*(138.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
+        end if
+
+        call rgbk(0.,0.,0.)
+        if(symbols_local)then 
+            call num_memori2(real(ini_lat),real(fin_lat),height_local,memori_inc_local,-90.,symbol_freq_local,symbol_size_local,-1)
+            call num_memori2(real(ini_long),real(fin_long),width,memori_inc_local,0.,symbol_freq_local*2,symbol_size_local,-1)
+        else
+            call memori((fin_lat-ini_lat)*2+1,symbol_size_local*0.2,symbol_freq_local,height_local,-90.,y = height_local/2.)
+            call memori((fin_long-ini_long)*2+1,symbol_size_local*0.2,symbol_freq_local,width,0.,x = width/2.)
+        end if
+
+        
+        ! call symbolc(width/2.,-symbol_size_local*2.6,symbol_size_local*0.8,'Longitude (deg.E)')
+        ! call symbolc(-symbol_size_local*2.5,height_local/2.,symbol_size_local*0.8,'Latitude (deg.N)',90.)
+        deallocate(dep,dep_0)
+        if(present(x))call plot(-x,0.,-3)
+        if(present(y))call plot(0.,-y,-3)
+        return
+    end subroutine
+
+end module
+
 module MITgcm
+    use net_cdf
     implicit none 
     contains
     ! creates array (and or corresponding bin, csv files) to be used on Northern or Southern Open Boundary conditions, calculated from any hydrographic data
@@ -12164,14 +13109,6 @@ module MITgcm
 
         deallocate(DATA_local,leapx,leapz)
     end subroutine
-    subroutine handle_err(status)
-        use netcdf
-        integer, intent(in) :: status
-        if (status /= nf90_noerr) then
-            print *, trim(nf90_strerror(status))
-            stop "Stopped"
-        end if
-    end subroutine handle_err
     ! Uc and Vc are the velocities at the center of the grid cells, averaged from velocity values on each side of the grids.
     ! Uc and Vc have the same size; (ngrids_x,ngrids_y,ngrids_z,timesteps)
     subroutine state2mat(ncfile,U,Uc,V,Vc,W,T,S,Eta,info)
@@ -12201,12 +13138,17 @@ module MITgcm
         status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
         if (status /= nf90_noerr) call handle_err(status)
 
+        if(info_local)print *, "File information:"
         if(info_local)print *, "Number of variables:", nvars
+        if(info_local)print *, "Number of dimensions defined:", ndims
+        if(info_local)print *, "Number of global attributes:", ngatts
+        if(info_local)print *, "Unlimited dimension ID:", unlimdimid
+        if(info_local)print *, "------------------------"
 
         ! Iterate through all variables to get basic idea of the file
-        do varid = 1, nvars
-            ! Get variable name and number of dimensions
-            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
+        do varid = 1, nvars ! varid apparently starts from 1
+            ! Get variable name and number of dimensions from varid
+            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims) ! this probably refers to the number of dimensions the variable has
             if (status /= nf90_noerr) call handle_err(status)
 
             if(info_local)print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
@@ -12317,221 +13259,6 @@ module MITgcm
         deallocate(U_local,V_local)
         return
         ! data obtainment ends here
-    end subroutine
-    ! Bathy is a 2D array with lon(-180:180), lat(-90:90) as its dimensions. tid has the type identifier of every grid of Bathy array.
-    subroutine readGEBCO(ncfile,bathy,ilon,flon,ilat,flat,info)
-        use netcdf
-        implicit none
-        character(len=*),intent(in) :: ncfile
-        integer :: ncid, status
-        integer :: nvars, ndims, ngatts, unlimdimid
-        integer :: varid
-        character(len=nf90_max_name) :: varname
-        integer,intent(in)::ilon,flon,ilat,flat
-        real,dimension(:,:),allocatable,intent(out)::bathy
-        ! real,dimension(:,:),allocatable,intent(out),optional::tid   
-        integer, allocatable :: dimids(:), dimlens(:)
-        integer :: i, start(2),countq(2),lonrange,latrange
-        logical,intent(in),optional::info
-        logical::info_local = .false.
-
-        lonrange = flon - ilon
-        latrange = flat - ilat
-        if(lonrange<0.or.latrange<0)then;print*,'range of lon or lat is negative';stop;endif
-
-        if(present(info))info_local = info
-        if(info_local)print*,'------------------------------------------------------------------------------------------------'
-        if(info_local)print*,'Reading file:',trim(ncfile)
-        ! Open the NetCDF file
-        status = nf90_open(trim(ncfile), nf90_nowrite, ncid)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        ! Get information about the file
-        status = nf90_inquire(ncid, ndims, nvars, ngatts, unlimdimid)
-        if (status /= nf90_noerr) call handle_err(status)
-
-        if(info_local)print *, "Number of variables:", nvars
-
-        ! Iterate through all variables to get basic idea of the file
-        if(info_local)print*,'------------------------------------------------------------------------------------------------'
-        do varid = 1, nvars
-            ! Get variable name and number of dimensions
-            status = nf90_inquire_variable(ncid, varid, varname, ndims=ndims)
-            if (status /= nf90_noerr) call handle_err(status)
-
-            if(info_local)print *, "Variable ", trim(varname), " has ", ndims, " dimensions"
-
-            ! Allocate arrays for dimension IDs and lengths
-            allocate(dimids(ndims), dimlens(ndims))
-
-            ! Get dimension IDs
-            status = nf90_inquire_variable(ncid, varid, dimids=dimids)
-            if (status /= nf90_noerr) call handle_err(status)
-
-            ! Get dimension lengths
-            do i = 1, ndims
-                status = nf90_inquire_dimension(ncid, dimids(i), len=dimlens(i))
-                if (status /= nf90_noerr) call handle_err(status)
-                if(info_local)print *, "  Dimension ", i, " length: ", dimlens(i)
-            end do
-
-            ! Allocate arrays based on variable name and then read data
-            select case(trim(varname)) ! already know the name of the variable
-            case('elevation')
-                allocate(bathy(dimlens(1)*lonrange/360,dimlens(2)*latrange/180))
-                start = [(ilon+180)*240, (ilat+90)*240]
-                countq = [lonrange*240,latrange*240]
-                ! print*,start,countq,'here'
-                status = nf90_get_var(ncid, varid, bathy, start = start, count = countq)
-                if(status /= nf90_noerr)call handle_err(status)
-                if(info_local)then 
-                    print*,'lon =',ilon,'to',flon,'lat =',ilat,'to',flat,'size of bathy:',lbound(bathy,1),ubound(bathy,1),lbound(bathy,2),ubound(bathy,2)
-                    print*,'minimum bathymetry:',minval(bathy);print*,'maximum bathymetry:',maxval(bathy)
-                end if
-            end select
-            deallocate(dimids, dimlens)
-            if(info_local)print*,'------------------------------------------------'
-        end do
-        return
-
-        
-    end subroutine
-    subroutine GEBCOmap(ini_long,fin_long,ini_lat,fin_lat,width,symbol_size,r,g,b,symbol_freq,symbols,paintland,paintsea,HIRES,lines,x,y,height)
-        use subroutines
-        implicit none
-        integer,intent(in)::ini_lat,fin_lat,ini_long,fin_long
-        integer,intent(in),optional::symbol_freq
-        real,intent(in):: width
-        real,intent(in),optional::symbol_size,r,g,b,x,y
-        real,intent(out),optional::height   
-        intrinsic sin,cos,tan,asin,acos
-        real,dimension(:,:),allocatable::dep
-        integer,dimension(:,:),allocatable::dep_0
-        logical,intent(in),optional::symbols,paintland,lines,paintsea,HIRES
-        integer::is,ie,js,je,symbol_freq_local,imax,jmax
-        real::dx,dy,height_local,ratio,pi,symbol_size_local,rl,gl,bl,NLineYco,SLineYco
-        logical::symbols_local,paintland_local,lines_local,paint_sea_local,HIRES_local
-        
-        if(present(x))call plot(x,0.,-3)
-        if(present(y))call plot(0.,y,-3)
-        !! local parameters
-        call rgbk(0.,0.,0.)
-        symbols_local = .false.
-        if(present(symbols))symbols_local = symbols
-        rl = 0.;gl = 0.;bl = 0.
-        if(present(r))rl = r
-        if(present(g))gl = g
-        if(present(b))bl = b
-        if(present(symbol_freq))then 
-            symbol_freq_local = symbol_freq
-        else
-            symbol_freq_local = 2
-        end if
-
-        paintland_local = .false.
-        if(present(paintland))paintland_local = paintland
-        paint_sea_local = .false.
-        if(present(paintsea))paint_sea_local = paintsea
-        lines_local = .false.
-        if(present(lines))lines_local = lines
-        HIRES_local = .false.
-        if(present(HIRES))HIRES_local = HIRES
-
-        !!
-        call readGEBCO('../Data/GEBCO/GEBCO_2024.nc',dep,ini_long,fin_long,ini_lat,fin_lat)
-        allocate(dep_0(size(dep,1),size(dep,2)))
-        imax = size(dep,1);jmax = size(dep,2)
-        ! print*,'size of dep:',size(dep,1),size(dep,2)
-        dep_0 = 1 ! mask nothing
-        ! dep = -dep
-        ! maxval(dep) == -9784 minval(dep) == 3660 (fuji); Note that the data is in meters and z axis is positive upwards
-        if(present(symbol_size))then;symbol_size_local = symbol_size;else;symbol_size_local = width/11.;end if
-
-        js = 1
-        je = (fin_lat - ini_lat)*240
-        is = 1
-        ie = (fin_long - ini_long)*240
-        ! print*,is,ie,js,je
-        pi = 2.*asin(1.)
-        ratio = 6357./6378./cos((ini_lat+fin_lat)/2.*pi/180.)
-        height_local = width*ratio*real(fin_lat-ini_lat)/real(fin_long-ini_long)
-        if(present(height))height = height_local
-        dx = width/real(ie-is)
-        dy = height_local/real(je-js)
-        call box(width,height_local)
-        
-        print*,'Deepest Point of Your Map Domain is;',minval(dep)
-        print*,'Heighest Point of Your Map Domain is;',maxval(dep)
-        if (width/11.<=0.2) then;call newpen2(2);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(3);else;call newpen2(5);end if
-        call rgbk(rl,gl,bl) 
-        call newpen3(0.001)
-        call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
-        call newpen2(3)
-        if(paintland_local)then
-            if(HIRES_local)then 
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,200.,0.,0.8,0.) ! land
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,200.,1000.,0.8,0.9,0.1) ! 
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1000.,2000.,0.65,0.75,.8) ! 
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,2000.,3000.,0.5,0.6,.9) ! 
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,3000.,10000.,0.35,0.45,.45) ! 
-                call rgbk(0.,0.,0.)
-                call newpen3(0.001)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,200.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,1000.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,2000.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,3000.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,10000.,0.)
-                call newpen2(3)
-            else;
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,0.,10000.,0.8,0.9,0.1) ! 
-            end if
-        endif 
-        if(paint_sea_local)then
-            if(HIRES_local)then 
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-200.,0.,0.8,0.9,1.) ! <=200m
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-1000.,-200.,0.65,0.75,1.) ! 200-1000m
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-2000.,-1000.,0.5,0.6,1.) ! 1000-2000m
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-3000.,-2000.,0.35,0.45,.9) ! 2000-3000m
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,-3000.,0.2,0.3,.8) ! >3000m
-                call rgbk(0.,0.,0.) 
-                call newpen3(0.001)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,0.,0.)
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-200.,0.) 
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-1000.,0.) ! solid
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-2000.,0.) ! solid
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-3000.,0.) ! solid
-                call pscont3(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,1,-10000.,0.) ! solid
-                call newpen2(3)
-            else
-                call pscolork(dx,dy,dep,dep_0,is,ie,js,je,imax,jmax,-10000.,0.,0.8,0.9,1.) ! 
-            end if
-        end if
-
-        if(lines_local)then
-            call rgbk(1.,1.,1.)
-            if (width/11.<=0.2) then;call newpen2(3);else if(width/11.>=0.2 .and. width/11.<=0.4) then;call newpen2(4);else;call newpen2(6);end if
-            NLineYco = dy*(41.-real(ini_lat))*120.;SLineYco = dy*(40.6-real(ini_lat))*120.
-            call plot(dx*(138.3333-real(ini_long))*80.,NLineYco,3);call plot(dx*(140.-real(ini_long))*80.,NLineYco,2)
-            call plot(dx*(138.3333-real(ini_long))*80.,SLineYco,3);call plot(dx*(139.75-real(ini_long))*80.,SLineYco,2)
-        end if
-
-        call rgbk(0.,0.,0.)
-        if(symbols_local)then 
-            call num_memori(real(ini_lat),real(fin_lat),(fin_lat-ini_lat)*2+1,symbol_freq_local,symbol_size_local,-1,height_local,-90.)
-            call num_memori(real(ini_long),real(fin_long),(fin_long-ini_long)*2+1,symbol_freq_local*2,symbol_size_local,-1,width,0.)
-        else
-            call memori((fin_lat-ini_lat)*2,symbol_size_local*0.2,symbol_freq_local,height_local,-90.,y = height_local/2.)
-            call memori((fin_long-ini_long)*2,symbol_size_local*0.2,symbol_freq_local,width,0.,x = width/2.)
-        end if
-
-        
-        ! call symbolc(width/2.,-symbol_size_local*2.6,symbol_size_local*0.8,'Longitude (deg.E)')
-        ! call symbolc(-symbol_size_local*2.5,height_local/2.,symbol_size_local*0.8,'Latitude (deg.N)',90.)
-        deallocate(dep,dep_0)
-        if(present(x))call plot(-x,0.,-3)
-        if(present(y))call plot(0.,-y,-3)
-        return
     end subroutine
 end module
 
