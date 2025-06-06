@@ -1,6 +1,5 @@
 program testing_butler_psbet
     use always 
-    implicit none 
     integer,parameter::obsdepth = 400, watercolumnheight = 200
     integer::depthindex,depdiff,dep(0:12),meanmaxlocation(3),maximumlocation(4)
     real,dimension(:),allocatable::r1,g1,b1,x1d,y1d,Jx,Jy,r2,g2,b2,r3,g3,b3
@@ -18,10 +17,10 @@ program testing_butler_psbet
     print*,gridvolume
     call calibrated_data2(sal_c5 = sal_c5,potemp_c5 = potemp_c5,match_station_labels_and_array_indices = .true.)
     call JODC_data2(potemp = temp,sal = sal,den = rho,ilat = 22,flat = 46,ilon = 121,flon = 142,calibrate1 = .true.,info = .true.)
-    sal%mean(:,121:131,22:24,:) = 0.! removing out of range kuroshio region
-    sal%mean(:,126:131,22:25,:) = 0.
-    sal%mean(:,128:131,25:27,:) = 0.
-    sal%mean(:,130:131,27:28,:) = 0.
+    ! sal%mean(:,121:131,22:24,:) = 0.! removing out of range kuroshio region
+    ! sal%mean(:,126:131,22:25,:) = 0.
+    ! sal%mean(:,128:131,25:27,:) = 0.
+    ! sal%mean(:,130:131,27:28,:) = 0.
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Initial Inspection
@@ -220,7 +219,7 @@ program testing_butler_psbet
 
         sref = 34.7
 
-    call plots2(oopt = 'otops',x = -0.5, y = -6.,nnfile = 'FreshWaterVolumeKuroshioRef2_'//trim(int2str(watercolumnheight))//'m')
+    call plots2(oopt = 'otops',x = -0.5, y = -6.,nnfile = 'FreshWaterVolumeKuroshioRef2_diffref'//trim(int2str(watercolumnheight))//'m')
     call plotsave('first')
     ! JODC Interpolated
         call plot(3.,4.,-3)
@@ -297,9 +296,9 @@ program testing_butler_psbet
         height = mapheight(width,121,135,22,34)
         do i = 0, 4
             if(i==3)cycle
-            call butler_psbet(Jsal400(meanmaxlocation(1),121:135,22:34,i*100),width,height,0.,34.,34.8,0.1,'b2r',8,5,r = r2,g = g2,b = b2)
-            call GEBCOmap2(121,135,22,34,width,symbols = .true.,height = height,symbol_freq = 2,paintland = .true.,bathy = .false.)
-            call box(width/15.,height/13.,5,x = width*(meanmaxlocation(2)-121)/15.,y = height*(meanmaxlocation(3)-22)/13.,g = 1.)
+            call butler_psbet(Jsal400(0,121:135,22:34,i*100),width,height,0.,34.,34.8,0.1,'b2r',8,5,r = r2,g = g2,b = b2)
+            call GEBCOmap2(121,135,22,34,width,symbols = .true.,height = height,symbol_freqx = 2,symbol_freqy = 4,paintland = .true.,bathy = .false.)
+            ! call box(width/15.,height/13.,5,x = width*(meanmaxlocation(2)-121)/15.,y = height*(meanmaxlocation(3)-22)/13.,g = 1.)
             call butler_cont(temp%mean(meanmaxlocation(1),121:135,22:34,JODC_dep2index(i*100)),width,height,0.,0.,1.,thicc = 5)
             call symbolc(width/2.,height+0.1,0.6,int2str(i*100)//' m')
             if(i/=4)call plot(0.,-height-1.1,-3)
@@ -335,7 +334,7 @@ program testing_butler_psbet
     !     call newpage(h = 'Freshwater Volume, 1°*1°*'//trim(int2str(watercolumnheight))//'m')
     !     call plotback('first')
     !     do i = 1,12
-    !         call GEBCOmap2(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 2,paintland = .true.)
+    !         call GEBCOmap2(126,142,32,46,width,symbols = .true.,height = height,symbol_freqx = 2,paintland = .true.)
     !         call symbolc(width/2.,height+0.2,0.8,monthnames(i))
     !         ! call butler_psk(freshwatervolume(i,121:131,22:31),width,height,0.,2.5,5.5,.5,'blue',6,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
     !         call butler_psk(freshwatervolume(i,126:142,32:46),width,height,0.,2.5,4.5,.5,'cy2b',4,bpt1 = 3,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
@@ -354,36 +353,56 @@ program testing_butler_psbet
         call newpage(h = 'Freshwater Volume, 1°*1°*'//trim(int2str(watercolumnheight))//'m;Annual')
         call plotback('first');call plot(.7,-5.,-3);call plotsave('second')
 
-            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freq = 2,paintland = .true.)
+            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freqx = 2,symbol_freqy = 4,paintland = .true.)
             call symbolc(width,height+0.2,0.8,'Annual')
+            freshwatervolume(0,140,42) = 0. ! tsugaru weird
+            freshwatervolume(0,134:142,32:34) = 0. ! pacific
+            freshwatervolume(0,142,35:42) = 0. ! east of tsugaru
+            freshwatervolume(0,141,35:38) = 0.
             call butler_psk(freshwatervolume(0,126:142,32:46),width*2,height,0.,2.5,4.5,.5,'cy2b',4,bpt1 = 3,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
             
             call plot(width*2+1.5,0.,-3)
 
-            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freq = 2,paintland = .true.)
+            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freqx = 2,symbol_freqy = 4,paintland = .true.)
             call symbolc(width,height+0.2,0.8,'Annual')
             call butler_psbet(freshwatervolume(0,126:142,32:46),width*2,height,0.,2.5,4.5,.5,'cy2b',4,bpt1 = 3,conti = 0.,continc = .2,r = r1,g = g1,b = b1)
             call butler_gridcoords(freshwatervolume(0,126:142,32:46),width*2,height)
+
             ! RUS grids
             ! call box(width*2/17.,height/15.,7,x = 2*width*2/17.,y = 7*height/15.,r = .8) ! (3,8)
             call box(width*2/17.,height/15.,7,x = 3*width*2/17.,y = 7*height/15.,r = 1.) ! (4,8)
+            call gmark(3.5*width*2/17.,7.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(3.5*width*2/17.,7.2*height/15.,0.5,1.,0.,-1) ! (4,8)
             call box(width*2/17.,height/15.,7,x = 4*width*2/17.,y = 8*height/15.,g = 1.) ! (5,9)
+            call gmark(4.5*width*2/17.,8.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(4.5*width*2/17.,8.2*height/15.,0.5,2.,0.,-1) ! (5,9)
             call box(width*2/17.,height/15.,7,x = 4*width*2/17.,y = 9*height/15.,b = 1.) ! (5,10)
+            call gmark(4.5*width*2/17.,9.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(4.5*width*2/17.,9.2*height/15.,0.5,3.,0.,-1) ! (5,10)
             ! NJP grids
             ! call box(width*2/17.,height/15.,7,x = 11*width*2/17.,y = 4*height/15.,r = .8) ! (12,5)
-            call box(width*2/17.,height/15.,7,x = 12*width*2/17.,y = 6*height/15.,r = 1.) ! (13,6)
-            call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 6*height/15.,g = 1.) ! (14,7)
-            call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 7*height/15.,b = 1.) ! (14,8)
+            ! call box(width*2/17.,height/15.,7,x = 12*width*2/17.,y = 6*height/15.,r = 1.) ! (13,7)
+            ! call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 6*height/15.,g = 1.) ! (14,7)
+            ! call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 7*height/15.,b = 1.) ! (14,8)
+            call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 7*height/15.,r = 1.) ! (14,8)
+            call gmark(13.5*width*2/17.,7.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(13.5*width*2/17.,7.2*height/15.,0.5,1.,0.,-1) ! (14,8)
+            call box(width*2/17.,height/15.,7,x = 13*width*2/17.,y = 8*height/15.,g = 1.) ! (14,9)
+            call gmark(13.5*width*2/17.,8.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(13.5*width*2/17.,8.2*height/15.,0.5,2.,0.,-1) ! (14,9)
+            call box(width*2/17.,height/15.,7,x = 14*width*2/17.,y = 9*height/15.,b = 1.) ! (15,10)
+            call gmark(14.5*width*2/17.,9.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(14.5*width*2/17.,9.2*height/15.,0.5,3.,0.,-1) ! (15,10)
             ! ECS grids
             call box(width*2/17.,height/15.,7,x = 4*width*2/17.,y = 3*height/15.,r = 1.) ! (5,4)
+            call gmark(4.5*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(4.5*width*2/17.,3.2*height/15.,0.5,1.,0.,-1) ! (5,4)
             call box(width*2/17.,height/15.,7,x = 5*width*2/17.,y = 3*height/15.,g = 1.) ! (6,4)
+            call gmark(5.5*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(5.5*width*2/17.,3.2*height/15.,0.5,2.,0.,-1) ! (6,4)
             call box(width*2/17.,height/15.,7,x = 6*width*2/17.,y = 3*height/15.,b = 1.) ! (7,4)
+            call gmark(6.5*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(6.5*width*2/17.,3.2*height/15.,0.5,3.,0.,-1) ! (7,4)
             ! call box(width*2/17.,height/15.,7,x = 8*width*2/17.,y = 3*height/15.) ! (9,4)
+            ! call box(width*2/17.,height/15.,7,x = 5*width*2/17.,y = 3*height/15.,r = 1.) ! (6,4)
+            ! call box(width*2/17.,height/15.,7,x = 6*width*2/17.,y = 3*height/15.,g = 1.) ! (7,4)
+            ! call box(width*2/17.,height/15.,7,x = 7*width*2/17.,y = 4*height/15.,b = 1.) ! (8,5)
 
             call plot(width*2+1.5,0.,-3)
 
             call symbolc(width,height+0.2,0.8,'Data num')
-            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freq = 2,paintland = .true.)
+            call GEBCOmap2(126,142,32,46,width*2,symbols = .true.,height = height,symbol_freqx = 2,symbol_freqy = 4,paintland = .true.)
             call butler_datanum(freshwatervolume(:,126:142,32:46),width*2,height,1)
 
             call ocenter(y = -7.)
@@ -393,60 +412,102 @@ program testing_butler_psbet
 
     ! Regional analysis
         height2 = height/2.
-        call newpage('Regional Analysis')
-        call plotback('first');call plot(1.,1.,-3);call plotsave('third')
+        call newpage(h = 'Regional Analysis')
+        call plotback('first');call plot(1.,.5,-3);call plotsave('third')
+            ! legend
+            call box(width*2/17.,height/15.,7,x = 4*width*2/17.,y = 3*height/15.,r = 1.) ! (5,4)
+            call gmark(4.5*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(4.5*width*2/17.,3.2*height/15.,0.5,1.,0.,-1) ! (5,4)
+            call box(width*2/17.,height/15.,7,x = 5.3*width*2/17.,y = 3*height/15.,g = 1.) ! (6,4)
+            call gmark(5.8*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(5.8*width*2/17.,3.2*height/15.,0.5,2.,0.,-1) ! (6,4)
+            call box(width*2/17.,height/15.,7,x = 6.6*width*2/17.,y = 3*height/15.,b = 1.) ! (7,4)
+            call gmark(7.1*width*2/17.,3.5*height/15.,0.5,1);call rgbk(1.,1.,1.);call numberc(7.1*width*2/17.,3.2*height/15.,0.5,3.,0.,-1) ! (7,4)
 
         ! ECS
-        ! 130,35 red
+        ! 130,35 red (5,4)
         call butler_linegraph([freshwatervolume(1:,125+5,31+4),freshwatervolume(1,125+5,31+4)],8.,height2,1.,6.,0.,.true.,blabel = 'Months',rl = 1.,tlabel = 'ECS',lthick = 6)
-        call mod12_memori(13,8.,0.6,gap = 2)
-        ! 131,35 green 
+        ! 131,35 green(6,4)
         call butler_linegraph([freshwatervolume(1:,125+6,31+4),freshwatervolume(1,125+6,31+4)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 6)
-        call mod12_memori(13,8.,0.6,gap = 2)
-        ! 132,35 blue
+        ! 132,35 blue(7,4)
         call butler_linegraph([freshwatervolume(1:,125+7,31+4),freshwatervolume(1,125+7,31+4)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
+        call newpen2d(4,-4)
+        call plot(0.,(sum(freshwatervolume(0,125+5:125+7,31+4))/3.-1)/5.*height2,3);call plot(8.,(sum(freshwatervolume(0,125+5:125+7,31+4))/3.-1)/5.*height2,2)
         ! ! 134,35
         ! call butler_linegraph([freshwatervolume(1:,125+9,31+4),freshwatervolume(1,125+9,31+4)],8.,height2,1.,6.,0.,.false.,lthick = 5)
+        ! call mod12_memori(13,8.,0.6,gap = 2) 
+
+        ! ! red (6,4) ! just an inspection diff ref botsu
+        ! call butler_linegraph([freshwatervolume(1:,125+6,31+4),freshwatervolume(1,125+6,31+4)],8.,height2,1.,6.,0.,.true.,blabel = 'Months',rl = 1.,tlabel = 'ECS',lthick = 6)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! green(7,4)
+        ! call butler_linegraph([freshwatervolume(1:,125+7,31+4),freshwatervolume(1,125+7,31+4)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 6)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! blue(8,5)
+        ! call butler_linegraph([freshwatervolume(1:,125+8,31+5),freshwatervolume(1,125+8,31+5)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
         ! call mod12_memori(13,8.,0.6,gap = 2)
 
-        call header('Monthly Salinity',y = -9.5)
+        call header('Monthly Salinity',y = -9.4)
         call plot(0.,-4.,-3)
         call num_memori2(0.,300.,-height2,50.,-90.,2,0.7,-1)
         call mod12_memori(13,8.,gap = 2,y = -height2)
-        Jsal2(1:12,:) = Jsal400(1:12,125+6,31+4,:);Jsal2(13,:) = Jsal2(1,:)
-        ! Jrho(1:12,0:12) = rho%mean(1:12,125+6,31+4,0:12);Jrho(13,:) = Jrho(1,:) 
-        Jrho2(1:12,:) = Jrho400(1:12,125+6,31+4,:);Jrho2(13,:) = Jrho2(1,:)
+        Jsal2(1:12,:) = Jsal400(1:12,125+6,31+4,:);Jsal2(13,:) = Jsal2(1,:) ! using 6,4
+        Jrho2(1:12,:) = Jrho400(1:12,125+6,31+4,:);Jrho2(13,:) = Jrho2(1,:) ! using 6,4
+        ! Jsal2(1:12,:) = Jsal400(1:12,125+8,31+5,:);Jsal2(13,:) = Jsal2(1,:) ! using 8,5
+        ! Jrho2(1:12,:) = Jrho400(1:12,125+8,31+5,:);Jrho2(13,:) = Jrho2(1,:) ! using 8,5
         ! print*,Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
+        call symbolc(4.,0.2,1.,'ECS-2')
+
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,g = 1.)
+        call gmark(4.,-height2-1.25,0.5,1);call rgbk(1.,1.,1.);call numberc(4.,-height2-1.4,0.5,2.,0.,-1)
 
         ! NJP
         call plotback('third');call plot(8.+1.5,0.,-3)
         ! 137,36
         ! call butler_linegraph([freshwatervolume(1:,125+12,31+5),freshwatervolume(1,125+12,31+5)],8.,height2,1.,6.,0.,.true.,blabel = 'Months',rl = .8,tlabel = 'NJP',lthick = 6)
         ! call mod12_memori(13,8.,0.6,gap = 2)
-        ! 138,37
-        call butler_linegraph([freshwatervolume(1:,125+13,31+6),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,blabel = 'Months',tlabel = 'NJP')
+        ! ! 138,37
+        ! call butler_linegraph([freshwatervolume(1:,125+13,31+6),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,blabel = 'Months',tlabel = 'NJP')
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! 139,38
+        ! call butler_linegraph([freshwatervolume(1:,125+14,31+7),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! 139,39
+        ! call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+
+        ! 14,8 ! diff ref
+        call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,blabel = 'Months',tlabel = 'NJP')
         call mod12_memori(13,8.,0.6,gap = 2)
-        ! 139,38
-        call butler_linegraph([freshwatervolume(1:,125+14,31+7),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
+        ! 14,9
+        call butler_linegraph([freshwatervolume(1:,125+14,31+9),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
-        ! 139,39
-        call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
+        ! 15,10
+        call butler_linegraph([freshwatervolume(1:,125+15,31+10),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
+        call newpen2d(4,-4)
+        total = (freshwatervolume(0,125+14,31+8) + freshwatervolume(0,125+14,31+9) + freshwatervolume(0,125+15,31+10))/3.
+        call plot(0.,(total-1)/5.*height2,3);call plot(8.,(total-1)/5.*height2,2)
+
 
         call plot(0.,-4.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
         call mod12_memori(13,8.,gap = 2,y = -height2)
-        Jsal2(1:12,:) = Jsal400(1:12,125+14,31+8,:);Jsal2(13,:) = Jsal2(1,:)
+        Jsal2(1:12,:) = Jsal400(1:12,125+15,31+10,:);Jsal2(13,:) = Jsal2(1,:)
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+14,31+8,0:12);Jrho(13,:) = Jrho(1,:)
-        Jrho2(1:12,:) = Jrho400(1:12,125+14,31+8,:);Jrho2(13,:) = Jrho2(1,:)
+        Jrho2(1:12,:) = Jrho400(1:12,125+15,31+10,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4,r = r3,g = g3,b = b3)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
+        call symbolc(4.,0.2,1.,'NJP-3')
+
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
-        call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-2.5,x = 4.)
+        call gmark(4.,-height2-1.25,0.5,1);call rgbk(1.,1.,1.);call numberc(4.,-height2-1.4,0.5,3.,0.,-1)
+        call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-2.25,x = 4.)
 
 
 
@@ -464,6 +525,9 @@ program testing_butler_psbet
         ! 130,41
         call butler_linegraph([freshwatervolume(1:,125+5,31+10),freshwatervolume(1,125+5,31+10)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
+        call newpen2d(4,-4)
+        total = (freshwatervolume(0,125+4,31+8) + freshwatervolume(0,125+5,31+9) + freshwatervolume(0,125+5,31+10))/3.
+        call plot(0.,(total-1)/5.*height2,3);call plot(8.,(total-1)/5.*height2,2)
 
         call plot(0.,-4.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
@@ -472,8 +536,12 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+5,31+10,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+5,31+10,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
+        call symbolc(4.,0.2,1.,'RUS-3')
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
+        call gmark(4.,-height2-1.25,0.5,1);call rgbk(1.,1.,1.);call numberc(4.,-height2-1.4,0.5,3.,0.,-1)
 
         
 
@@ -481,7 +549,7 @@ program testing_butler_psbet
 
     ! Regional analysis appendix
 
-        call newpage('RUS')
+        call newpage(h = 'RUS')
         call plotback('third')
         ! RUS
         ! 128,39
@@ -510,8 +578,10 @@ program testing_butler_psbet
         Jsal2(1:12,:) = Jsal400(1:12,125+4,31+8,:);Jsal2(13,:) = Jsal2(1,:)
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+4,31+8,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+4,31+8,:);Jrho2(13,:) = Jrho2(1,:)
-        call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,r = 1.)
         call plot(9.5,0.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
@@ -520,7 +590,9 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+5,31+9,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+5,31+9,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,g = 1.)
         call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-3.,x = 4.)
         call plot(9.5,0.,-3)
@@ -530,60 +602,100 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+5,31+10,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+5,31+10,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
 
         ! NJP
-        call newpage('NJP')
+        call newpage(h = 'NJP')
         call plotback('third')
         ! call butler_linegraph([freshwatervolume(1:,125+12,31+5),freshwatervolume(1,125+12,31+5)],8.,height2,1.,6.,0.,.true.,blabel = 'Months',rl = .8,tlabel = 'NJP',lthick = 6)
         ! call mod12_memori(13,8.,0.6,gap = 2)
-        ! 138,37
-        call butler_linegraph([freshwatervolume(1:,125+13,31+6),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,tlabel = 'NJP',blabel = 'Months')
+        ! ! 138,37
+        ! call butler_linegraph([freshwatervolume(1:,125+13,31+6),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,tlabel = 'NJP',blabel = 'Months')
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! 139,38
+        ! call butler_linegraph([freshwatervolume(1:,125+14,31+7),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! ! 139,39
+        ! call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
+        ! call mod12_memori(13,8.,0.6,gap = 2)
+        ! 14,8 ! diff ref
+        call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+13,31+6)],8.,height2,1.,6.,0.,.false.,rl = 1.,lthick = 6,tlabel = 'NJP',blabel = 'Months')
         call mod12_memori(13,8.,0.6,gap = 2)
-        ! 139,38
-        call butler_linegraph([freshwatervolume(1:,125+14,31+7),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
+        ! 14,9
+        call butler_linegraph([freshwatervolume(1:,125+14,31+9),freshwatervolume(1,125+14,31+7)],8.,height2,1.,6.,0.,.false.,gl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
-        ! 139,39
-        call butler_linegraph([freshwatervolume(1:,125+14,31+8),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
+        ! 15,10
+        call butler_linegraph([freshwatervolume(1:,125+15,31+10),freshwatervolume(1,125+14,31+8)],8.,height2,1.,6.,0.,.false.,bl = 1.,lthick = 5)
         call mod12_memori(13,8.,0.6,gap = 2)
 
         ! Salinity Profiles of each grid
         call plotback('third');call plot(0.,-2.,-3)
         call num_memori2(0.,300.,-height2,50.,-90.,2,0.7,-1)
-        ! call mod12_memori(13,6.,gap = 2,y = -height2)
-        ! Jsal2(1:12,:) = Jsal400(1:12,125+12,31+5,:);Jsal2(13,:) = Jsal2(1,:)
-        ! call butler_psk(Jsal2(:,:300), 6., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        ! call box(0.5,0.5,8,x = 2.75,y = -height2-1.5,r = .8)
-        ! call plot(7.,0.,-3)
-        ! call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
-        call mod12_memori(13,8.,gap = 2,y = -height2)
-        Jsal2(1:12,:) = Jsal400(1:12,125+13,31+6,:);Jsal2(13,:) = Jsal2(1,:)
-        ! Jrho(1:12,0:12) = rho%mean(1:12,125+13,31+6,0:12);Jrho(13,:) = Jrho(1,:)
-        Jrho2(1:12,:) = Jrho400(1:12,125+13,31+6,:);Jrho2(13,:) = Jrho2(1,:)
+        ! prior references
+            ! ! call mod12_memori(13,6.,gap = 2,y = -height2)
+            ! ! Jsal2(1:12,:) = Jsal400(1:12,125+12,31+5,:);Jsal2(13,:) = Jsal2(1,:)
+            ! ! call butler_psk(Jsal2(:,:300), 6., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
+            ! ! call box(0.5,0.5,8,x = 2.75,y = -height2-1.5,r = .8)
+            ! ! call plot(7.,0.,-3)
+            ! ! call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
+            ! call mod12_memori(13,8.,gap = 2,y = -height2)
+            ! Jsal2(1:12,:) = Jsal400(1:12,125+13,31+6,:);Jsal2(13,:) = Jsal2(1,:)
+            ! Jrho2(1:12,:) = Jrho400(1:12,125+13,31+6,:);Jrho2(13,:) = Jrho2(1,:)
+            ! call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
+            ! call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+            ! call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,r = 1.)
+            ! call plot(9.5,0.,-3)
+            ! call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
+            ! call mod12_memori(13,8.,gap = 2,y = -height2)
+            ! Jsal2(1:12,:) = Jsal400(1:12,125+14,31+7,:);Jsal2(13,:) = Jsal2(1,:)
+            ! ! Jrho(1:12,0:12) = rho%mean(1:12,125+14,31+7,0:12);Jrho(13,:) = Jrho(1,:)
+            ! Jrho2(1:12,:) = Jrho400(1:12,125+14,31+7,:);Jrho2(13,:) = Jrho2(1,:)
+            ! call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
+            ! call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+            ! call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,g = 1.)
+            ! call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-3.,x = 4.)
+            ! call plot(9.5,0.,-3)
+            ! call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
+            ! call mod12_memori(13,8.,gap = 2,y = -height2)
+            ! Jsal2(1:12,:) = Jsal400(1:12,125+14,31+8,:);Jsal2(13,:) = Jsal2(1,:)
+            ! ! Jrho(1:12,0:12) = rho%mean(1:12,125+14,31+8,0:12);Jrho(13,:) = Jrho(1,:)
+            ! Jrho2(1:12,:) = Jrho400(1:12,125+14,31+8,:);Jrho2(13,:) = Jrho2(1,:)
+            ! call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
+            ! call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+            ! call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
+        ! diff ref below
+        Jsal2(1:12,:) = Jsal400(1:12,125+14,31+8,:);Jsal2(13,:) = Jsal2(1,:)
+        Jrho2(1:12,:) = Jrho400(1:12,125+14,31+8,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,r = 1.)
         call plot(9.5,0.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
         call mod12_memori(13,8.,gap = 2,y = -height2)
-        Jsal2(1:12,:) = Jsal400(1:12,125+14,31+7,:);Jsal2(13,:) = Jsal2(1,:)
+        Jsal2(1:12,:) = Jsal400(1:12,125+14,31+9,:);Jsal2(13,:) = Jsal2(1,:)
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+14,31+7,0:12);Jrho(13,:) = Jrho(1,:)
-        Jrho2(1:12,:) = Jrho400(1:12,125+14,31+7,:);Jrho2(13,:) = Jrho2(1,:)
+        Jrho2(1:12,:) = Jrho400(1:12,125+14,31+9,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,g = 1.)
         call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-3.,x = 4.)
         call plot(9.5,0.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
         call mod12_memori(13,8.,gap = 2,y = -height2)
-        Jsal2(1:12,:) = Jsal400(1:12,125+14,31+8,:);Jsal2(13,:) = Jsal2(1,:)
-        ! Jrho(1:12,0:12) = rho%mean(1:12,125+14,31+8,0:12);Jrho(13,:) = Jrho(1,:)
-        Jrho2(1:12,:) = Jrho400(1:12,125+14,31+8,:);Jrho2(13,:) = Jrho2(1,:)
+        Jsal2(1:12,:) = Jsal400(1:12,125+15,31+10,:);Jsal2(13,:) = Jsal2(1,:)
+        Jrho2(1:12,:) = Jrho400(1:12,125+15,31+10,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
-
         ! ECS
         call newpage(h = 'ECS')
         call plotback('third')
@@ -614,7 +726,9 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+6,31+4,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+6,31+4,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,r = 1.)
         call plot(9.5,0.,-3)
         call memori(9,0.15,2,-height2,rangle = -90.,y = -height2/2.)
@@ -623,7 +737,9 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+7,31+4,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+7,31+4,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,g = 1.)
         call colorscale(r3,g3,b3,33.8,34.4,2,0.7,1,10.,0.3,lt = 1, gt = 1,y = -height2-3.,x = 4.)
         call plot(9.5,0.,-3)
@@ -633,7 +749,9 @@ program testing_butler_psbet
         ! Jrho(1:12,0:12) = rho%mean(1:12,125+9,31+4,0:12);Jrho(13,:) = Jrho(1,:)
         Jrho2(1:12,:) = Jrho400(1:12,125+9,31+4,:);Jrho2(13,:) = Jrho2(1,:)
         call butler_psk(Jsal2(:,:300), 8., -height2, 0., 33.8, 34.4, 0.1, 'b2r', 6, bpt1 = 4)
-        call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,0.2,5)
+                call butler_cont(Jrho2(:,:300),8.,-height2,0.,20.,1.,thicc = 1,r = 1.,g = 1.,b = 1.)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.,1.,thicc = 1,contq = 1)
+        call butler_cont(Jrho2(:,:300),8.,-height2,0.,27.1,0.1)
         call box(0.5,0.5,8,x = 3.75,y = -height2-1.5,b = 1.)
 
     ! Regional analysis appendix
@@ -642,7 +760,7 @@ program testing_butler_psbet
     !     call newpage
     !     call plotback('first')
     !     do i = 1,12
-    !         call GEBCOmap2(121,142,22,46,width,symbols = .true.,height = height,symbol_freq = 2,paintland = .false.)
+    !         call GEBCOmap2(121,142,22,46,width,symbols = .true.,height = height,symbol_freqx = 2,paintland = .false.)
     !         call symbolc(width/2.,height+0.2,0.8,monthnames(i))
     !         call butler_psk(freshwaterratio(i,:,:),width,height,0.,2.,4.,.5,'blue',4,conti = 0.,continc = .1,r = r1,g = g1,b = b1)
     !         call plot(width+0.8,0.,-3)
@@ -680,7 +798,7 @@ program testing_butler_psbet
     !                 end do
     !             end do
     !         end if
-    !         call GEBCOmap2(126,142,32,46,width,symbols = .true.,height = height,symbol_freq = 2,paintland = .false.)
+    !         call GEBCOmap2(126,142,32,46,width,symbols = .true.,height = height,symbol_freqx = 2,paintland = .false.)
     !         if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
     !         if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
     !         call butler_psk(somejodcarray(i,126:142,32:46),width,height,0.,-.8,.8,.4,'r2b',4,3,conti = -100.,continc = .2,r = r1,g = g1,b = b1)
@@ -701,7 +819,7 @@ program testing_butler_psbet
         ! call plotback('first')
         ! somejodcarray = somejodcarray / watercolumnheight * 100.
         ! do i = 1,12
-        !     call GEBCOmap2(121,142,22,46,width,symbols = .true.,height = height,symbol_freq = 2,paintland = .false.)
+        !     call GEBCOmap2(121,142,22,46,width,symbols = .true.,height = height,symbol_freqx = 2,paintland = .false.)
         !     if(i==1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(12))
         !     if(i/=1)call symbolc(width/2.,height+0.2,0.8,monthnames(i)//' - '//monthnames(i-1))
         !     call butler_psk(somejodcarray(i,:,:),width,height,0.,-0.5,0.5,.1,'r2b',10,6,conti = -100.,continc = .1,r = r1,g = g1,b = b1)

@@ -80,7 +80,11 @@ program era5
 
         call plots2(nnfile = 'ERA5_TAP-MAT',oopt = 'otops',mode = 'land', y = -6.,h = 'ERA5 TAP-MAT')
         call plotsave('first')
-        call butler_linegraph(tap_mat_monthlyloop,10.,5.,-6.,6.,mem = .true.,tlabel = 'TAP-MAT',memsymfreq = 2,error_1D = tap_mat_semloop)
+        call butler_linegraph(tap_mat_monthlyloop,10.,5.,-6.,6.,mem = .true.,tlabel = 'TAP-MAT',memsymfreq = 2,error_1D = tap_mat_semloop,maskbelow = 0.)
+        call plot(0.,-7.,-3)
+        call butler_linegraph(reshape(transpose(tap_mat),[15*12]),25.,5.,-8.,8.,mem = .true.,tlabel = 'TAP-MAT',memsymfreq = 2,maskbelow = 0.)
+        call mod12_memori(180,25.,symbol_size = 0.4,num_freq = 6,gap = 2)
+        
 
     call plote
 end program
