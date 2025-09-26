@@ -1,10 +1,9 @@
 #.gitignore
 .DS_Store
 *.ps
+*.nc
 
 aomori/Data/JODC/JODC_DATA.bin
 aomori/Data/JODC/JODC_DATA.bin
 aomori/nonames/JODC_PT_Data_Inspection4_x.pdf
-aomori/Data/GEBCO/GEBCO_2024_TID.nc
-aomori/Data/GEBCO/GEBCO_2024.nc
-
+aomori/Data/GEBCO/GEBCO_2024_1*1.bin

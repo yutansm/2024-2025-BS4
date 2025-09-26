@@ -4,7 +4,7 @@ program hakidame
     real,parameter::width = 25.,height=13.,width2 = 5.,height2 = 3.
     real,dimension(15,12,5)::Q_per_station
     real,dimension(:,:),allocatable::geovel2d
-    real,dimension(15,12,5,400)::geovel
+    real,dimension(15,12,5,100)::geovel
     real,dimension(15,12)::Q_1thru2,Q_1thru3,Q_1thru4,Q_1thru5,Q_1thru6    ! transport through stations 
     real,dimension(:),allocatable::av12,av23,av34,av45,av56,s12,s23,s34,s45,s56,sem12,sem23,sem34,sem45,sem56
     real,dimension(:),allocatable::avQ_1thru2,avQ_1thru3,avQ_1thru4,avQ_1thru5,avQ_1thru6,sQ_1thru2,sQ_1thru3,sQ_1thru4,sQ_1thru5,sQ_1thru6,semQ_1thru2,semQ_1thru3,semQ_1thru4,semQ_1thru5,semQ_1thru6
@@ -23,7 +23,7 @@ program hakidame
     call calibrated_data51(potemp_c5,sal_c5) ! 15*12*2*9*400
     do y = 1, 15
         do m = 1, 12
-            call calc_geovel(geovel2d,delta_x,temp_2D = potemp_c5(y,m,1,4:9,:),sal_2D = sal_c5(y,m,1,4:9,:),lat = 41.)
+            call calc_geovel(geovel2d,delta_x,temp_2D = potemp_c5(y,m,1,4:9,:100),sal_2D = sal_c5(y,m,1,4:9,:100),lat = 41.)
             geovel(y,m,:,:) = geovel2d
             deallocate(geovel2d)
         end do
@@ -66,7 +66,7 @@ program hakidame
         av56(1) = (av56(12) + av56(2))/2. ; av56(7) = (av56(6) + av56(8))/2.
 
 
-        ! looping
+        ! looping to get Jan -> Jan
         av12loop(1:12) = av12 ; av12loop(13:14) = av12(1:2)
         av23loop(1:12) = av23 ; av23loop(13:14) = av23(1:2)
         av34loop(1:12) = av34 ; av34loop(13:14) = av34(1:2)
@@ -118,39 +118,10 @@ program hakidame
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! individual stations
     ! call plots2(oopt = 'otops',nnfile = 'geo_transport',y = -height2,h = 'Monthly Geostrophic Transports [Sv]')
-    call plots2(oopt = 'otops',psfile = '../Plots/Favorites/geo_transport2.ps',h = 'Monthly Geostrophic Transports [Sv]')
-    ! call plotsave('first')
-    ! do i = 1, 5
-    !     if(i == 1)then 
-    !         avarray = av12loop ; semarray = sem12loop
-    !         tlabel = 'Station 1-2'
-    !     else if(i == 2)then
-    !         avarray = av23loop ; semarray = sem23loop
-    !         tlabel = 'Station 2-3'
-    !     else if(i == 3)then
-    !         avarray = av34loop ; semarray = sem34loop
-    !         tlabel = 'Station 3-4'
-    !     else if(i == 4)then
-    !         avarray = av45loop ; semarray = sem45loop
-    !         tlabel = 'Station 4-5'
-    !     else if(i == 5)then
-    !         avarray = av56loop ; semarray = sem56loop
-    !         tlabel = 'Station 5-6'
-    !     end if
-    !     call mod12_memori(14,width2)
-    !     if(i==1)memstat = .true.
-    !     if(i/=1)memstat = .false.
-    !     if(i/=1)then 
-    !         call memori(3,0.05,1,height2,-90.,y = height2/2.,lthick = 3)
-    !     end if
-    !     call butler_linegraph(avarray,width2,height2,0.,1.,error_1D = semarray,mem = memstat,memiter = 3,tlabel = tlabel)
-    !     call plot(width2+.5,0.,-3)
-    ! end do
-
-    ! all stations
-    ! call plotback('first')
+    call plots2(oopt = 'otops',psfile = '../Plots/Favorites/geo_transport_100dbref.ps',h = 'Monthly Geostrophic Transports [Sv]')
     call plot(1.,-height-1.,-3)
 
+    call plotsave('first')
     do i = 1, 5
         if(i == 1)then 
             avarray = avQ_1thru2loop ; semarray = semQ_1thru2loop
@@ -188,9 +159,53 @@ program hakidame
         end if
         if(i==1)then 
             call mod12_memori(14,width,symbol_size = 1.)
-            call num_memori(0.,3.,7,1,1.,1,height,-90)
+            call num_memori(0.,3.,7,1,1.,1,height,-90.)
         end if
         call butler_linegraph(avarray,width,height,0.,3.,error_1D = semarray,rl = r1,gl = g1,bl = b1,lthick = lthick,blabel = 'Months')
+    end do
+
+    call newpage('first')
+
+        do i = 1, 5
+        if(i == 1)then 
+            avarray = avQ_1thru2loop ; semarray = semQ_1thru2loop
+            tlabel = 'Station 1-2'
+            ! r1 = 1.;g1 = 0.;b1 = 0.
+            r1 = 0.;g1 = 0.;b1 = 0.
+            ! lthick = 11
+            lthick = 11
+        else if(i == 5)then
+            cycle
+            ! avarray = avQ_1thru3loop ; semarray = semQ_1thru3loop
+            ! tlabel = 'Station 1-3'
+            ! r1 = 0.;g1 = 1.;b1 = 0.
+            ! lthick = 9
+        else if(i == 3)then
+            avarray = avQ_1thru4loop ; semarray = semQ_1thru4loop
+            tlabel = 'Station 1-4'
+            ! r1 = 0.;g1 = 0.;b1 = 1.
+            r1 = 0.6;g1 = 0.6;b1 = 0.6
+            ! lthick = 7
+            lthick = 8
+        else if(i == 4)then
+            cycle
+            ! avarray = avQ_1thru5loop ; semarray = semQ_1thru5loop
+            ! tlabel = 'Station 1-5'
+            ! r1 = 1.;g1 = .5;b1 = 0.
+            ! lthick = 5
+        else if(i == 2)then
+            avarray = avQ_1thru6loop ; semarray = semQ_1thru6loop
+            tlabel = 'Station 1-6'
+            ! r1 = 1.;g1 = 0.;b1 = 1.
+            r1 = 0.;g1 = 0.;b1 = 0.
+            ! lthick = 3
+            lthick = 11
+        end if
+        if(i==1)then 
+            call mod12_memori(14,width,symbol_size = 1.)
+            call num_memori2(0.,1.5,height,inc = 0.5,rangle = -90.,symbol_size = 1.)
+        end if
+        call butler_linegraph(avarray,width,height,0.,1.5,error_1D = semarray,rl = r1,gl = g1,bl = b1,lthick = lthick,blabel = 'Months')
     end do
     call plote
 end program

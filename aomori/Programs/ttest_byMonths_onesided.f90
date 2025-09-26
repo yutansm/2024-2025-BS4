@@ -25,10 +25,10 @@ program hakidame
     call avsemdata_5D(sal_c5,'dim1',mean_4D=avsal_c5,s_4D=sem_sal_c5,dataquan_4D=data_sal_c5)
     call avsemdata_5D(sigma_c5,'dim1',mean_4D=avsigma_c5,s_4D=sem_sigma_c5,dataquan_4D=data_sigma_c5)
     call avsemdata_5D(geovel_5,'dim1',mean_4D=avgeovel_5,s_4D=sem_geovel_5,dataquan_4D=data_geovel_5)
-    print*,minex0(D4=avpotemp_c5),maxval(avpotemp_c5),'avpotemp_c5'
-    print*,minex0(D4=avsal_c5),maxval(avsal_c5),'avsal_c5'
-    print*,minex0(D4=avsigma_c5),maxval(avsigma_c5),'avsigma_c5'
-    print*,minex0(D4=avgeovel_5),maxval(avgeovel_5),'avgeovel_5'
+    ! print*,minex0(D4=avpotemp_c5),maxval(avpotemp_c5),'avpotemp_c5'
+    ! print*,minex0(D4=avsal_c5),maxval(avsal_c5),'avsal_c5'
+    ! print*,minex0(D4=avsigma_c5),maxval(avsigma_c5),'avsigma_c5'
+    ! print*,minex0(D4=avgeovel_5),maxval(avgeovel_5),'avgeovel_5'
 
 
     do m = 1,months
@@ -45,28 +45,30 @@ program hakidame
         ! elseif(m==12)then;month1 = 12;month2 = 10
         ! else;cycle
         ! end if
-        if(m==10)then;month1 = 2;month2 = 10
+        ! if(m==10)then;month1 = 2;month2 = 10
         ! elseif(m==10)then;month1 = 12;month2 = 10
+        if(m==1)then 
+            month1 = 2;month2 = 9
         else;cycle
         end if
 
         
-    call plots(0.,0.,9,'../Plots/Favorites/t_bymonths_t95-onetailed/'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
+    call plots(0.,0.,9,'../nonames/ttests/t95-onetailed'//monthnames(month1)(1:3)//'-'//monthnames(month2)(1:3)//'.ps')
     call plotmove(0.5,0.95);call symbolc(0.,-0.5,1.,"Welch's T Test "//trim(monthnames(month1))//' - '//trim(monthnames(month2)),0.)
 
     call plot(-width1-2.,-2.,-3)
 ! potemp sal ps and contour
     call symbolc(width1/2.,0.3,0.8,monthnames(month1),0.)
-    call num_memori(0.,400.,41,10,0.6,-1,-height1,-90);call st_memori(1,6,width1,1,0.7,y=-height1)
+    call num_memori(0.,400.,41,10,0.6,-1,-height1,-90.);call st_memori(1,6,width1,1,0.7,y=-height1)
     call butler_psk(avsal_c5(month1,1,4:9,:),width1,-height1,0.,33.95,34.3,0.05,'b2w2r',7,bpt1=4,r=r1,g=g1,b=b1)
     call butler_cont(avpotemp_c5(month1,1,4:9,:),width1,-height1,0.,0.,1.,thicc=5)
     call newpen2(5);call plot(width1+1.,-height1/2.,3);call plot(width1+2.5,-height1/2.,2);call newpen2(3)
     call plot(width1+4.,0.,-3)
-    call num_memori(0.,400.,41,10,0.6,-1,-height1,-90);call st_memori(1,6,width1,1,0.7,y=-height1)
+    call num_memori(0.,400.,41,10,0.6,-1,-height1,-90.);call st_memori(1,6,width1,1,0.7,y=-height1)
     call butler_psk(avsal_c5(month2,1,4:9,:),width1,-height1,0.,33.95,34.3,0.05,'b2w2r',7,bpt1=4)
     call symbolc(width1/2.,0.3,0.8,monthnames(month2),0.)
     call butler_cont(avpotemp_c5(month2,1,4:9,:),width1,-height1,0.,0.,1.,thicc=5)
-    call colorscale(7,r1,g1,b1,33.95,34.3,2,0.5,2,height1-1.,0.3,lt = 1,gt = 1,rangle=90.,x= width1+2.,y = -height1/2.,symbol_start = 2)
+    call colorscale(r1,g1,b1,33.95,34.3,2,0.5,2,height1-1.,0.3,lt = 1,gt = 1,rangle=90.,x= width1+2.,y = -height1/2.,symbol_start = 2)
 
     ! if(month1==1.or.month1==2.or.month1==7 .or.month1 ==8)then 
     !     diffp(6,:) = avpotemp_c5(month1,1,9,:)-avpotemp_c5(month2,1,9,:);diffp(1:5,:) = 0.
@@ -79,17 +81,17 @@ program hakidame
         diffsig = avsigma_c5(month1,1,4:9,:)-avsigma_c5(month2,1,4:9,:)
         diffgeo = avgeovel_5(month1,1,:,:)-avgeovel_5(month2,1,:,:)
     ! end if
-    print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffp),maxval(diffp),'diffp'
-    print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsal),maxval(diffsal),'diffsal'
-    print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsig),maxval(diffsig),'diffsig'
-    print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffgeo),maxval(diffgeo),'diffgeo'
+    ! print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffp),maxval(diffp),'diffp'
+    ! print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsal),maxval(diffsal),'diffsal'
+    ! print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffsig),maxval(diffsig),'diffsig'
+    ! print*,monthnames(month1),'-',monthnames(month2),minex0(D2=diffgeo),maxval(diffgeo),'diffgeo'
 
 
 ! diff potemp 
     call plotmove2(4.,15.5);call plotsave('potemp')
     call symbolc(width2/2.,0.3,0.7,'PoTemp',0.)
     call symbolc(-2.,-height2/2.,0.8,'diff',0.)
-    call num_memori(0.,400.,41,10,0.5,-1,-height2,-90)
+    call num_memori(0.,400.,41,10,0.5,-1,-height2,-90.)
     call st_memori(1,6,width2,1,0.5,y=-height2)
     call butler_psmask(diffp,width2,-height2,-100.,0.,r=0.8,g=0.8,b=0.8)
     call butler_cont(diffp,width2,-height2,0.,-100.,1.,thicc=5)
@@ -130,7 +132,7 @@ program hakidame
         end do
     end do
     call symbolc(-2.2,-height2/2.,0.7,"Welch;T-Test",0.)
-    call num_memori(0.,400.,41,10,0.5,-1,-height2,-90)
+    call num_memori(0.,400.,41,10,0.5,-1,-height2,-90.)
     call st_memori(1,6,width2,1,0.5,y=-height2)
     call butler_imask(testmatrix,width2,-height2,0)
     call butler_imask(testmatrix,width2,-height2,1,r=1.,g=0.5,b=0.5)
